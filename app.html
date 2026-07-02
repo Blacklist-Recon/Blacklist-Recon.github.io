@@ -685,7 +685,7 @@ async function loadBounties() {
 }
 
 // ── APP SHELL ─────────────────────────────────────────────────────────────
-function showApp() {
+async function showApp() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').classList.add('visible');
 
@@ -695,6 +695,12 @@ function showApp() {
   } else {
     badge.innerHTML = `Role: <span>${esc(identity.role)}</span>`;
   }
+  try {
+    const aliasRes = await api('/alias/get');
+    if (aliasRes.alias) {
+      badge.innerHTML = `<span>${esc(aliasRes.alias)}</span> · ${esc(identity.role)}`;
+    }
+  } catch(e) {}
 
   buildNav();
   navigate('board');
@@ -1132,10 +1138,10 @@ async function renderRoster(main) {
 async function renderAdmin(main) {
   main.innerHTML = `<div class="loading">Loading...</div>`;
   try {
-    const [allBal, roles] = await Promise.all([
-      api('/balance/all'),
-      api('/roles/list'),
-    ]);
+    let allBal = { factionPool: { total: 0 }, memberBalances: {} };
+    let roles  = { roles: { admin: [], lister: [], verifier: [], hunter: [] } };
+    try { allBal = await api('/balance/all'); } catch(e) {}
+    try { roles  = await api('/roles/list');  } catch(e) {}
     const pool    = allBal.factionPool || { total: 0 };
     const balances = allBal.memberBalances || {};
     const roleData = roles.roles || {};
@@ -1198,6 +1204,12 @@ async function renderAdmin(main) {
       <div class="section-head">Member Balances</div>
       ${memberRows}
 
+      <div class="section-head">Your Alias</div>
+      <div id="alias-msg"></div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <input id="alias-input" type="text" placeholder="Your codename e.g. The Handler" style="flex:1;" />
+        <button class="btn btn-red" id="alias-save-btn">Save Alias</button>
+      </div>
       <div class="section-head">Manage Roles</div>
       <div id="role-msg"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
@@ -1223,6 +1235,27 @@ async function renderAdmin(main) {
           await renderAdmin(main);
         } catch (e) { msgEl.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; btn.disabled = false; }
       }));
+
+    try {
+      const aliasRes = await api('/alias/get');
+      const aliasInput = main.querySelector('#alias-input');
+      if (aliasInput && aliasRes.alias) aliasInput.value = aliasRes.alias;
+    } catch(e) {}
+
+    const aliasSaveBtn = main.querySelector('#alias-save-btn');
+    if (aliasSaveBtn) {
+      aliasSaveBtn.addEventListener('click', async () => {
+        const alias = main.querySelector('#alias-input').value.trim();
+        const msgEl = main.querySelector('#alias-msg');
+        if (!alias) { msgEl.innerHTML = '<div class="msg-error">Enter an alias.</div>'; return; }
+        aliasSaveBtn.disabled = true;
+        try {
+          await api('/alias/set', { alias });
+          msgEl.innerHTML = '<div class="msg-success">Alias saved! You now appear as ' + esc(alias) + ' to others.</div>';
+        } catch(e) { msgEl.innerHTML = '<div class="msg-error">' + esc(e.message) + '</div>'; }
+        aliasSaveBtn.disabled = false;
+      });
+    }
 
     main.querySelectorAll('[data-act]').forEach(btn =>
       btn.addEventListener('click', async () => {
