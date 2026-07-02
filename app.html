@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blacklist HQ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --void: #080a0a;
+    --ash: #0c0a0a;
+    --obsidian: #120d0d;
+    --slate: #1a1010;
+    --border: #2e1f1f;
+    --muted: #4a2020;
+    --dim: #7d5252;
+    --text: #e6c8c8;
+    --bright: #f5dada;
+    --blood: #8b1a1a;
+    --crimson: #c0392b;
+    --ember: #e04f4f;
+    --gold: #c9a84c;
+    --gold-dim: #7a5f28;
+    --green: #5fe04f;
+    --amber: #e0a14f;
+    --blue: #4f9ce0;
+    --purple: #c14fe0;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--void);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* ── SCANLINES ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.02) 2px, rgba(0,0,0,0.02) 4px);
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ── LOGIN ── */
+  #login-screen {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    background: radial-gradient(ellipse 80% 60% at 50% 30%, rgba(139,26,26,0.1) 0%, transparent 70%);
+  }
+  .login-skull { font-size: 48px; margin-bottom: 16px; }
+  .login-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 22px;
+    letter-spacing: 6px;
+    color: var(--ember);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .login-sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-bottom: 40px;
+  }
+  .login-box {
+    width: 100%;
+    max-width: 380px;
+    background: var(--ash);
+    border: 1px solid var(--border);
+    padding: 28px;
+  }
+  .login-box label {
+    display: block;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .login-box input {
+    width: 100%;
+    background: var(--void);
+    border: 1px solid var(--border);
+    color: var(--bright);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+    outline: none;
+  }
+  .login-box input:focus { border-color: var(--ember); }
+  .btn-primary {
+    width: 100%;
+    padding: 12px;
+    background: var(--blood);
+    border: 1px solid var(--crimson);
+    color: var(--bright);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary:hover { background: var(--crimson); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .login-error {
+    color: var(--ember);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    margin-top: 12px;
+    text-align: center;
+  }
+
+  /* ── APP SHELL ── */
+  #app { display: none; flex-direction: column; min-height: 100vh; }
+  #app.visible { display: flex; }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background: rgba(8,10,10,0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .topbar-brand {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 14px;
+    letter-spacing: 3px;
+    color: var(--ember);
+    text-transform: uppercase;
+  }
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .agent-badge {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--dim);
+    text-transform: uppercase;
+  }
+  .agent-badge span { color: var(--ember); }
+  .btn-logout {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--dim);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    padding: 4px 10px;
+    cursor: pointer;
+    text-transform: uppercase;
+  }
+  .btn-logout:hover { color: var(--ember); border-color: var(--ember); }
+
+  /* ── BOTTOM NAV (mobile) ── */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    display: flex;
+    background: rgba(8,10,10,0.97);
+    border-top: 1px solid var(--border);
+    z-index: 100;
+  }
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 4px 8px;
+    cursor: pointer;
+    color: var(--dim);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    gap: 4px;
+    border: none;
+    background: none;
+    transition: color 0.15s;
+  }
+  .nav-item .nav-icon { font-size: 18px; line-height: 1; }
+  .nav-item.active { color: var(--ember); }
+  .nav-item:hover { color: var(--text); }
+
+  /* ── DESKTOP SIDEBAR ── */
+  .desktop-layout {
+    display: flex;
+    flex: 1;
+    padding-bottom: 60px;
+  }
+  @media (min-width: 768px) {
+    .bottom-nav { display: none; }
+    .desktop-layout { padding-bottom: 0; }
+    .sidebar {
+      display: flex !important;
+      flex-direction: column;
+      width: 200px;
+      min-width: 200px;
+      border-right: 1px solid var(--border);
+      padding: 20px 0;
+      background: var(--ash);
+      position: sticky;
+      top: 53px;
+      height: calc(100vh - 53px);
+      overflow-y: auto;
+    }
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      cursor: pointer;
+      color: var(--dim);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: all 0.15s;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+    .sidebar-item .nav-icon { font-size: 16px; }
+    .sidebar-item.active { color: var(--ember); background: rgba(139,26,26,0.15); border-left: 2px solid var(--ember); }
+    .sidebar-item:hover:not(.active) { color: var(--text); background: rgba(255,255,255,0.03); }
+  }
+  .sidebar { display: none; }
+
+  /* ── MAIN CONTENT ── */
+  .main-content {
+    flex: 1;
+    padding: 20px;
+    max-width: 860px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  /* ── PAGE HEADER ── */
+  .page-header {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .page-eyebrow {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: var(--blood);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .page-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--bright);
+    letter-spacing: 1px;
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--obsidian);
+    border: 1px solid var(--border);
+    padding: 16px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .card-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    gap: 8px;
+  }
+  .card-row:last-child { margin-bottom: 0; }
+  .card-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--dim);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .card-value {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--bright);
+    text-align: right;
+    word-break: break-word;
+  }
+
+  /* ── STATUS BADGES ── */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-radius: 2px;
+  }
+  .badge-requested      { background: #3a3320; color: #e0c84f; }
+  .badge-payment_pending { background: #3a2c20; color: #e0a14f; }
+  .badge-listed         { background: #1a2030; color: #4f9ce0; }
+  .badge-approved       { background: #1a2030; color: #4f9ce0; }
+  .badge-claimed        { background: #2c2038; color: #c14fe0; }
+  .badge-completed      { background: #1f2e1f; color: #5fe04f; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    background: var(--slate);
+    border: 1px solid var(--muted);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    padding: 6px 14px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn:hover { background: var(--blood); border-color: var(--ember); color: var(--bright); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-green { background: #0a200a; border-color: #204a20; color: #9ae89a; }
+  .btn-green:hover { background: #102e10; border-color: #2d6a2d; }
+  .btn-red { background: #200a0a; border-color: #4a2020; color: #e89a9a; }
+  .btn-red:hover { background: #2e1010; }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
+  /* ── FORMS ── */
+  .form-group { margin-bottom: 14px; }
+  .form-label {
+    display: block;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .form-hint {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  input, select, textarea {
+    width: 100%;
+    background: var(--void);
+    border: 1px solid var(--border);
+    color: var(--bright);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--ember); }
+  select option { background: var(--ash); }
+
+  /* ── STATS GRID ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--obsidian);
+    border: 1px solid var(--border);
+    padding: 16px;
+    text-align: center;
+  }
+  .stat-value {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 28px;
+    color: var(--ember);
+    text-shadow: 0 0 20px rgba(224,79,79,0.3);
+    margin-bottom: 4px;
+  }
+  .stat-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--dim);
+    text-transform: uppercase;
+  }
+
+  /* ── EMPTY / ERROR / SUCCESS ── */
+  .empty {
+    text-align: center;
+    padding: 40px 20px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 2px;
+  }
+  .msg-error {
+    background: rgba(139,26,26,0.15);
+    border: 1px solid var(--blood);
+    color: var(--ember);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+  }
+  .msg-success {
+    background: rgba(31,46,31,0.5);
+    border: 1px solid #204a20;
+    color: var(--green);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+  }
+  .loading {
+    text-align: center;
+    padding: 40px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--dim);
+    text-transform: uppercase;
+  }
+
+  /* ── SECTION HEAD ── */
+  .section-head {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: var(--blood);
+    text-transform: uppercase;
+    margin: 24px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── FILTER BAR ── */
+  .filter-bar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .filter-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--dim);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    padding: 5px 12px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.15s;
+  }
+  .filter-btn.active { border-color: var(--ember); color: var(--ember); background: rgba(139,26,26,0.15); }
+  .filter-btn:hover:not(.active) { border-color: var(--dim); color: var(--text); }
+
+  /* ── ROSTER TABLE ── */
+  .roster-table { width: 100%; border-collapse: collapse; }
+  .roster-table th {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--dim);
+    text-transform: uppercase;
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .roster-table td {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--text);
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(46,31,31,0.4);
+  }
+  .roster-table tr:hover td { background: rgba(139,26,26,0.05); }
+
+  /* ── BALANCE BIG ── */
+  .balance-hero {
+    text-align: center;
+    padding: 28px;
+    background: var(--obsidian);
+    border: 1px solid var(--border);
+    margin-bottom: 20px;
+    position: relative;
+  }
+  .balance-hero::before, .balance-hero::after {
+    content: '';
+    position: absolute;
+    width: 10px; height: 10px;
+    border-color: var(--ember);
+    border-style: solid;
+  }
+  .balance-hero::before { top: -1px; left: -1px; border-width: 1px 0 0 1px; }
+  .balance-hero::after  { bottom: -1px; right: -1px; border-width: 0 1px 1px 0; }
+  .balance-amount {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 42px;
+    color: var(--ember);
+    text-shadow: 0 0 30px rgba(224,79,79,0.4);
+    margin-bottom: 4px;
+  }
+  .balance-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--dim);
+    text-transform: uppercase;
+  }
+  .balance-agent {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--blood);
+    letter-spacing: 2px;
+    margin-top: 8px;
+  }
+
+  /* ── HIST ROWS ── */
+  .hist-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(46,31,31,0.4);
+    gap: 12px;
+  }
+  .hist-row:last-child { border-bottom: none; }
+  .hist-target { font-size: 13px; color: var(--bright); }
+  .hist-date { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--dim); }
+  .hist-amount { font-family: 'Share Tech Mono', monospace; font-size: 13px; color: var(--green); white-space: nowrap; }
+
+  /* ── PROOF INPUT ── */
+  .proof-input-row { display: flex; gap: 8px; align-items: flex-start; margin-top: 10px; }
+  .proof-input-row input { flex: 1; margin: 0; }
+
+  @media (max-width: 767px) {
+    .main-content { padding: 16px; }
+    .card-row { flex-direction: column; align-items: flex-start; gap: 2px; }
+    .card-value { text-align: left; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-skull">☠</div>
+  <div class="login-title">Blacklist HQ</div>
+  <div class="login-sub">Blacklist Recon · Command Center</div>
+  <div class="login-box">
+    <label>Torn API Key</label>
+    <input type="password" id="api-key-input" placeholder="Paste your Torn API key" autocomplete="off" />
+    <button class="btn-primary" id="login-btn">Authenticate</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="topbar-brand">☠ Blacklist HQ</div>
+    <div class="topbar-right">
+      <div class="agent-badge" id="agent-badge"></div>
+      <button class="btn-logout" id="logout-btn">Logout</button>
+    </div>
+  </div>
+
+  <div class="desktop-layout">
+    <!-- Sidebar (desktop) -->
+    <nav class="sidebar" id="sidebar"></nav>
+
+    <!-- Main -->
+    <main class="main-content" id="main-content">
+      <div class="loading">Loading...</div>
+    </main>
+  </div>
+
+  <!-- Bottom nav (mobile) -->
+  <nav class="bottom-nav" id="bottom-nav"></nav>
+</div>
+
+<script>
+const WORKER_URL = 'https://torn-bounty-board.pearcej29.workers.dev';
+const PRICE_UNIT = 1_000_000;
+const HUNTER_CUT = 0.75;
+const ADMIN_CUT  = 0.25;
+
+let apiKey   = localStorage.getItem('blhq_api_key') || '';
+let identity = null;
+let bounties = [];
+let tiers    = {};
+let currentPage = 'board';
+let filterStatus = 'all';
+
+function fmt(n)  { return '$' + Math.round(n).toLocaleString(); }
+function hunterPay(p) { return Math.round(p * PRICE_UNIT * HUNTER_CUT); }
+function adminPay(p)  { return Math.round(p * PRICE_UNIT * ADMIN_CUT);  }
+function esc(s)  { const d = document.createElement('div'); d.textContent = String(s||''); return d.innerHTML; }
+function statusBadge(s) { return `<span class="badge badge-${s}">${s.replace('_',' ')}</span>`; }
+function priceFor(price, role) {
+  return (role === 'admin' || role === 'lister') ? fmt(price * PRICE_UNIT) : fmt(hunterPay(price));
+}
+
+// ── API ───────────────────────────────────────────────────────────────────
+async function api(path, body = {}) {
+  const res = await fetch(WORKER_URL + path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ apiKey, ...body }),
+  });
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || 'Unknown error');
+  return data;
+}
+
+// ── AUTH ──────────────────────────────────────────────────────────────────
+async function login() {
+  const key = document.getElementById('api-key-input').value.trim();
+  if (!key) return;
+  const btn = document.getElementById('login-btn');
+  const errEl = document.getElementById('login-error');
+  btn.disabled = true;
+  btn.textContent = 'Authenticating...';
+  errEl.textContent = '';
+  try {
+    apiKey = key;
+    const res = await api('/whoami');
+    identity = { tornId: res.tornId, name: res.name, role: res.role };
+    localStorage.setItem('blhq_api_key', apiKey);
+    await loadBounties();
+    showApp();
+  } catch (e) {
+    errEl.textContent = e.message;
+    btn.disabled = false;
+    btn.textContent = 'Authenticate';
+  }
+}
+
+function logout() {
+  apiKey = '';
+  identity = null;
+  localStorage.removeItem('blhq_api_key');
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('api-key-input').value = '';
+}
+
+async function loadBounties() {
+  const res = await api('/bounties/list');
+  bounties = res.bounties;
+  tiers    = res.tiers;
+}
+
+// ── APP SHELL ─────────────────────────────────────────────────────────────
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+
+  const badge = document.getElementById('agent-badge');
+  if (identity.role === 'admin') {
+    badge.innerHTML = `<span>${esc(identity.name)}</span> · Admin`;
+  } else {
+    badge.innerHTML = `Role: <span>${esc(identity.role)}</span>`;
+  }
+
+  buildNav();
+  navigate('board');
+
+  // Poll every 30s
+  setInterval(async () => {
+    await loadBounties();
+    if (currentPage === 'board') renderPage();
+  }, 30000);
+}
+
+function navItems() {
+  const items = [
+    { id: 'board',   icon: '🎯', label: 'Board'   },
+    { id: 'balance', icon: '💰', label: 'Balance'  },
+  ];
+  if (identity.role === 'admin' || identity.role === 'lister') {
+    items.splice(1, 0, { id: 'new',    icon: '➕', label: 'New'    });
+    items.splice(2, 0, { id: 'review', icon: '📋', label: 'Review' });
+  }
+  if (identity.role === 'admin') {
+    items.push({ id: 'roster',  icon: '👥', label: 'Roster'  });
+    items.push({ id: 'admin',   icon: '⚙️', label: 'Admin'   });
+  }
+  return items;
+}
+
+function buildNav() {
+  const items = navItems();
+  const sidebar = document.getElementById('sidebar');
+  const bottomNav = document.getElementById('bottom-nav');
+
+  sidebar.innerHTML = items.map(i => `
+    <button class="sidebar-item ${currentPage === i.id ? 'active' : ''}" data-page="${i.id}">
+      <span class="nav-icon">${i.icon}</span>${i.label}
+    </button>
+  `).join('');
+
+  bottomNav.innerHTML = items.map(i => `
+    <button class="nav-item ${currentPage === i.id ? 'active' : ''}" data-page="${i.id}">
+      <span class="nav-icon">${i.icon}</span>${i.label}
+    </button>
+  `).join('');
+
+  sidebar.querySelectorAll('[data-page]').forEach(el =>
+    el.addEventListener('click', () => navigate(el.dataset.page)));
+  bottomNav.querySelectorAll('[data-page]').forEach(el =>
+    el.addEventListener('click', () => navigate(el.dataset.page)));
+}
+
+function navigate(page) {
+  currentPage = page;
+  filterStatus = 'all';
+  buildNav();
+  renderPage();
+  window.scrollTo(0, 0);
+}
+
+function renderPage() {
+  const main = document.getElementById('main-content');
+  if (currentPage === 'board')   renderBoard(main);
+  if (currentPage === 'new')     renderNew(main);
+  if (currentPage === 'review')  renderReview(main);
+  if (currentPage === 'balance') renderBalance(main);
+  if (currentPage === 'roster')  renderRoster(main);
+  if (currentPage === 'admin')   renderAdmin(main);
+}
+
+// ── BOARD ─────────────────────────────────────────────────────────────────
+function renderBoard(main) {
+  const isPriv = identity.role === 'admin' || identity.role === 'lister';
+  const allStatuses = isPriv
+    ? ['all','requested','payment_pending','listed','claimed','completed']
+    : ['all','listed','claimed','completed'];
+
+  let filtered = bounties.filter(b => filterStatus === 'all' || b.status === filterStatus);
+
+  const filterBtns = allStatuses.map(s => `
+    <button class="filter-btn ${filterStatus === s ? 'active' : ''}" data-filter="${s}">
+      ${s === 'all' ? 'All' : s.replace('_',' ')}
+    </button>
+  `).join('');
+
+  const cards = filtered.length === 0
+    ? `<div class="empty">No bounties match this filter</div>`
+    : filtered.map(b => {
+        const target = b.targetName
+          ? esc(b.targetName) + (b.targetXid ? ` [${esc(b.targetXid)}]` : '')
+          : esc(b.targetLabel || 'Hidden');
+        const poster = b.posterLabel ? esc(b.posterLabel) : '—';
+        const claimed = b.claimedByName ? esc(b.claimedByName) : '—';
+        const priceLabel = (identity.role === 'admin' || identity.role === 'lister') ? 'Price' : 'Payout (75%)';
+
+        let actions = '';
+        if (b.status === 'listed' && (identity.role === 'hunter' || identity.role === 'admin')) {
+          actions += `<button class="btn btn-red" data-action="claim" data-id="${b.id}">Claim</button>`;
+        }
+        if (b.status === 'claimed' && (identity.role === 'verifier' || identity.role === 'admin')) {
+          actions += `<button class="btn btn-green" data-action="complete" data-id="${b.id}">Mark Complete</button>`;
+        }
+
+        return `
+          <div class="card">
+            <div class="card-row">
+              <span class="card-label">Target</span>
+              <span class="card-value">${target}</span>
+            </div>
+            <div class="card-row">
+              <span class="card-label">Tier</span>
+              <span class="card-value">${esc(b.tierLabel)}</span>
+            </div>
+            <div class="card-row">
+              <span class="card-label">${priceLabel}</span>
+              <span class="card-value">${priceFor(b.price, identity.role)}</span>
+            </div>
+            <div class="card-row">
+              <span class="card-label">Client</span>
+              <span class="card-value">${poster}</span>
+            </div>
+            <div class="card-row">
+              <span class="card-label">Status</span>
+              <span class="card-value">${statusBadge(b.status)}</span>
+            </div>
+            ${b.claimedByName ? `<div class="card-row"><span class="card-label">Agent</span><span class="card-value">${claimed}</span></div>` : ''}
+            ${b.notes ? `<div class="card-row"><span class="card-label">Notes</span><span class="card-value">${esc(b.notes)}</span></div>` : ''}
+            ${actions ? `<div class="btn-row">${actions}</div>` : ''}
+          </div>
+        `;
+      }).join('');
+
+  main.innerHTML = `
+    <div class="page-header">
+      <div class="page-eyebrow">Blacklist Recon</div>
+      <div class="page-title">🎯 Target Board</div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value">${bounties.filter(b=>b.status==='listed').length}</div>
+        <div class="stat-label">Open</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${bounties.filter(b=>b.status==='claimed').length}</div>
+        <div class="stat-label">Active</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${bounties.filter(b=>b.status==='completed').length}</div>
+        <div class="stat-label">Completed</div>
+      </div>
+    </div>
+    <div class="filter-bar">${filterBtns}</div>
+    ${cards}
+  `;
+
+  main.querySelectorAll('.filter-btn').forEach(btn =>
+    btn.addEventListener('click', () => { filterStatus = btn.dataset.filter; renderBoard(main); }));
+
+  main.querySelectorAll('[data-action]').forEach(btn =>
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      try {
+        if (btn.dataset.action === 'claim')    await api('/bounties/claim',    { bountyId: btn.dataset.id });
+        if (btn.dataset.action === 'complete') await api('/bounties/complete', { bountyId: btn.dataset.id });
+        await loadBounties();
+        renderBoard(main);
+      } catch (e) {
+        btn.disabled = false;
+        alert(e.message);
+      }
+    }));
+}
+
+// ── NEW BOUNTY ────────────────────────────────────────────────────────────
+function renderNew(main) {
+  const tierOptions = Object.entries(tiers).map(([key, t]) => {
+    const note = key === 'standard' ? '$1,000,000 fixed'
+      : key === 'war_support'       ? '$3.5M – $5M'
+      : 'From $3M (evaluated)';
+    return `<option value="${key}">${esc(t.label)} — ${note}</option>`;
+  }).join('');
+
+  main.innerHTML = `
+    <div class="page-header">
+      <div class="page-eyebrow">Blacklist Recon</div>
+      <div class="page-title">➕ New Contract</div>
+    </div>
+    <div id="new-msg"></div>
+    <div class="form-group">
+      <label class="form-label">Target Name</label>
+      <input id="n-name" type="text" placeholder="Player name in Torn" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Target XID (optional)</label>
+      <input id="n-xid" type="text" placeholder="e.g. 1234567" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tier</label>
+      <select id="n-tier">${tierOptions}</select>
+      <div class="form-hint" id="n-tier-hint"></div>
+    </div>
+    <div class="form-group" id="n-price-group">
+      <label class="form-label">Price ($ millions)</label>
+      <input id="n-price" type="number" min="1" step="0.5" placeholder="e.g. 3.5" />
+      <div class="form-hint" id="n-price-hint"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes / Hit Count</label>
+      <textarea id="n-notes" rows="3" placeholder="Number of hits, any context..."></textarea>
+    </div>
+    <button class="btn btn-red" id="n-submit" style="width:100%;padding:12px;">Submit Contract Request</button>
+  `;
+
+  const tierSel    = main.querySelector('#n-tier');
+  const priceGroup = main.querySelector('#n-price-group');
+  const tierHint   = main.querySelector('#n-tier-hint');
+  const priceHint  = main.querySelector('#n-price-hint');
+  const priceInput = main.querySelector('#n-price');
+
+  function updateTier() {
+    const key = tierSel.value;
+    if (key === 'standard') {
+      priceGroup.style.display = 'none';
+      tierHint.textContent = 'Fixed price: $1,000,000. No override needed.';
+    } else if (key === 'war_support') {
+      priceGroup.style.display = 'block';
+      priceInput.min = '3.5'; priceInput.max = '5'; priceInput.step = '0.5';
+      priceInput.placeholder = '3.5 to 5';
+      tierHint.textContent = 'Range: $3,500,000 – $5,000,000.';
+      priceHint.textContent = 'Enter 3.5, 4, 4.5, or 5';
+    } else {
+      priceGroup.style.display = 'block';
+      priceInput.min = '3'; priceInput.max = ''; priceInput.step = '0.5';
+      priceInput.placeholder = 'Minimum 3';
+      tierHint.textContent = 'Starts at $3M. Admin will confirm price before listing.';
+      priceHint.textContent = 'Enter a number (millions)';
+    }
+  }
+  tierSel.addEventListener('change', updateTier);
+  updateTier();
+
+  main.querySelector('#n-submit').addEventListener('click', async () => {
+    const name     = main.querySelector('#n-name').value.trim();
+    const xid      = main.querySelector('#n-xid').value.trim();
+    const tier     = tierSel.value;
+    const priceRaw = priceInput.value.trim();
+    const notes    = main.querySelector('#n-notes').value.trim();
+    const msgEl    = main.querySelector('#new-msg');
+    msgEl.innerHTML = '';
+
+    if (!name) { msgEl.innerHTML = `<div class="msg-error">Target name is required.</div>`; return; }
+
+    const btn = main.querySelector('#n-submit');
+    btn.disabled = true;
+    try {
+      await api('/bounties/create', {
+        targetName: name, targetXid: xid, tier,
+        price: tier === 'standard' ? 1 : (priceRaw ? parseFloat(priceRaw) : undefined),
+        notes,
+      });
+      await loadBounties();
+      msgEl.innerHTML = `<div class="msg-success">Contract submitted successfully.</div>`;
+      main.querySelector('#n-name').value = '';
+      main.querySelector('#n-xid').value  = '';
+      main.querySelector('#n-notes').value = '';
+      priceInput.value = '';
+    } catch (e) {
+      msgEl.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`;
+    }
+    btn.disabled = false;
+  });
+}
+
+// ── REVIEW ────────────────────────────────────────────────────────────────
+function renderReview(main) {
+  const pending = bounties.filter(b => ['requested','payment_pending'].includes(b.status));
+
+  const cards = pending.length === 0
+    ? `<div class="empty">Nothing awaiting review</div>`
+    : pending.map(b => `
+        <div class="card" id="card-${b.id}">
+          <div class="card-row"><span class="card-label">Target</span><span class="card-value">${esc(b.targetName||'')}</span></div>
+          <div class="card-row"><span class="card-label">Tier</span><span class="card-value">${esc(b.tierLabel)}</span></div>
+          <div class="card-row"><span class="card-label">Price</span><span class="card-value">${fmt(b.price * PRICE_UNIT)}</span></div>
+          <div class="card-row"><span class="card-label">Hunter gets</span><span class="card-value" style="color:var(--green)">${fmt(hunterPay(b.price))}</span></div>
+          <div class="card-row"><span class="card-label">Admin cut</span><span class="card-value" style="color:var(--amber)">${fmt(adminPay(b.price))}</span></div>
+          <div class="card-row"><span class="card-label">Requested by</span><span class="card-value">${esc(b.posterLabel||'')}</span></div>
+          ${b.notes ? `<div class="card-row"><span class="card-label">Notes</span><span class="card-value">${esc(b.notes)}</span></div>` : ''}
+          <div class="card-row"><span class="card-label">Status</span><span class="card-value">${statusBadge(b.status)}</span></div>
+          ${b.paymentProof ? `<div class="card-row"><span class="card-label">Proof</span><span class="card-value">${esc(b.paymentProof)}</span></div>` : ''}
+          ${b.status === 'requested' ? `
+            <div class="form-group" style="margin-top:12px;">
+              <label class="form-label">Adjust Price ($ millions, optional)</label>
+              <input class="adj-price" data-id="${b.id}" type="number" min="1" step="0.5" placeholder="leave blank to keep" />
+            </div>
+            <div class="proof-input-row">
+              <input class="proof-inp" data-id="${b.id}" type="text" placeholder="Payment proof (log link or item ID)" />
+              <button class="btn btn-red" data-action="submit-payment" data-id="${b.id}">Submit</button>
+            </div>
+          ` : ''}
+          ${b.status === 'payment_pending' ? `
+            <div class="btn-row">
+              <button class="btn btn-green" data-action="approve" data-id="${b.id}">Approve &amp; List</button>
+            </div>
+          ` : ''}
+          <div class="review-msg" data-id="${b.id}"></div>
+        </div>
+      `).join('');
+
+  main.innerHTML = `
+    <div class="page-header">
+      <div class="page-eyebrow">Blacklist Recon</div>
+      <div class="page-title">📋 Review Queue</div>
+    </div>
+    ${cards}
+  `;
+
+  main.querySelectorAll('[data-action="submit-payment"]').forEach(btn =>
+    btn.addEventListener('click', async () => {
+      const id    = btn.dataset.id;
+      const proof = main.querySelector(`.proof-inp[data-id="${id}"]`).value.trim();
+      const adj   = main.querySelector(`.adj-price[data-id="${id}"]`).value.trim();
+      const msgEl = main.querySelector(`.review-msg[data-id="${id}"]`);
+      if (!proof) { msgEl.innerHTML = `<div class="msg-error">Proof is required.</div>`; return; }
+      btn.disabled = true;
+      try {
+        await api('/bounties/submit-payment', {
+          bountyId: id, proof,
+          ...(adj ? { adjustedPrice: parseFloat(adj) } : {}),
+        });
+        await loadBounties();
+        renderReview(main);
+      } catch (e) { msgEl.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; btn.disabled = false; }
+    }));
+
+  main.querySelectorAll('[data-action="approve"]').forEach(btn =>
+    btn.addEventListener('click', async () => {
+      const id    = btn.dataset.id;
+      const msgEl = main.querySelector(`.review-msg[data-id="${id}"]`);
+      btn.disabled = true;
+      try {
+        await api('/bounties/approve-payment', { bountyId: id });
+        await loadBounties();
+        renderReview(main);
+      } catch (e) { msgEl.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; btn.disabled = false; }
+    }));
+}
+
+// ── BALANCE ───────────────────────────────────────────────────────────────
+async function renderBalance(main) {
+  main.innerHTML = `<div class="loading">Loading balance...</div>`;
+  try {
+    const res  = await api('/balance/get');
+    const bal  = res.balance;
+    const hist = res.history || [];
+    const agentNum = res.agentNumber;
+
+    const histRows = hist.length === 0
+      ? `<div class="empty">No completed contracts yet</div>`
+      : [...hist].reverse().map(h => `
+          <div class="hist-row">
+            <div>
+              <div class="hist-target">${esc(h.target||'Unknown')}</div>
+              <div class="hist-date">${new Date(h.completedAt).toLocaleDateString()}</div>
+            </div>
+            <div class="hist-amount">+${fmt(h.hunterPayout)}</div>
+          </div>`).join('');
+
+    main.innerHTML = `
+      <div class="page-header">
+        <div class="page-eyebrow">Blacklist Recon</div>
+        <div class="page-title">💰 My Balance</div>
+      </div>
+      <div class="balance-hero">
+        <div class="balance-amount">${fmt(bal.total)}</div>
+        <div class="balance-label">Available Balance</div>
+        ${identity.role !== 'admin' ? `<div class="balance-agent">Agent #${agentNum||'?'}</div>` : `<div class="balance-agent">${esc(identity.name)}</div>`}
+        ${bal.pendingWithdrawal > 0 ? `<div style="color:var(--amber);font-family:'Share Tech Mono',monospace;font-size:11px;margin-top:8px;">⏳ ${fmt(bal.pendingWithdrawal)} withdrawal pending</div>` : ''}
+      </div>
+      <div class="form-group" style="display:flex;gap:8px;">
+        <input id="withdraw-amt" type="number" min="1" placeholder="Amount to withdraw" style="flex:1;margin:0;" />
+        <button class="btn btn-red" id="withdraw-btn">Request</button>
+      </div>
+      <div id="withdraw-msg"></div>
+      <div class="section-head">Payout History</div>
+      ${histRows}
+    `;
+
+    main.querySelector('#withdraw-btn').addEventListener('click', async () => {
+      const amount = Number(main.querySelector('#withdraw-amt').value);
+      const msgEl  = main.querySelector('#withdraw-msg');
+      if (!amount || amount <= 0) { msgEl.innerHTML = `<div class="msg-error">Enter a valid amount.</div>`; return; }
+      try {
+        await api('/balance/request-withdrawal', { amount });
+        msgEl.innerHTML = `<div class="msg-success">Withdrawal requested! Admin will process soon.</div>`;
+        await renderBalance(main);
+      } catch (e) { msgEl.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; }
+    });
+
+  } catch (e) {
+    main.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`;
+  }
+}
+
+// ── ROSTER (admin only) ───────────────────────────────────────────────────
+async function renderRoster(main) {
+  main.innerHTML = `<div class="loading">Loading roster...</div>`;
+  try {
+    const res  = await api('/agent-map');
+    const roster = res.roster || {};
+    const rows = Object.entries(roster).length === 0
+      ? `<tr><td colspan="3" style="text-align:center;color:var(--dim);padding:20px;">No agents yet</td></tr>`
+      : Object.entries(roster).sort((a,b) => a[1].agentNumber - b[1].agentNumber).map(([tornId, r]) => `
+          <tr>
+            <td style="color:var(--ember);">Agent #${r.agentNumber}</td>
+            <td>${esc(r.name)}</td>
+            <td><a href="https://www.torn.com/profiles.php?XID=${tornId}" target="_blank" style="color:var(--dim);font-size:10px;">${tornId} ↗</a></td>
+          </tr>`).join('');
+
+    main.innerHTML = `
+      <div class="page-header">
+        <div class="page-eyebrow">Admin · Blacklist Recon</div>
+        <div class="page-title">👥 Agent Roster</div>
+      </div>
+      <div class="section-head">Active Agents</div>
+      <table class="roster-table">
+        <thead><tr><th>Agent</th><th>Real Name</th><th>Torn ID</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+  } catch (e) {
+    main.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`;
+  }
+}
+
+// ── ADMIN PANEL ───────────────────────────────────────────────────────────
+async function renderAdmin(main) {
+  main.innerHTML = `<div class="loading">Loading...</div>`;
+  try {
+    const [allBal, roles] = await Promise.all([
+      api('/balance/all'),
+      api('/roles/list'),
+    ]);
+    const pool    = allBal.factionPool || { total: 0 };
+    const balances = allBal.memberBalances || {};
+    const roleData = roles.roles || {};
+    const roleNames = ['admin','lister','verifier','hunter'];
+
+    const memberRows = Object.entries(balances).length === 0
+      ? `<div class="empty">No balances yet</div>`
+      : Object.entries(balances).map(([id, m]) => `
+          <div class="card">
+            <div class="card-row">
+              <span class="card-label">Agent</span>
+              <span class="card-value">${esc(m.name)}</span>
+            </div>
+            <div class="card-row">
+              <span class="card-label">Balance</span>
+              <span class="card-value" style="color:var(--green)">${fmt(m.total)}</span>
+            </div>
+            ${m.pendingWithdrawal > 0 ? `
+              <div class="card-row">
+                <span class="card-label">Pending</span>
+                <span class="card-value" style="color:var(--amber)">${fmt(m.pendingWithdrawal)}</span>
+              </div>
+              <div class="btn-row">
+                <a href="https://www.torn.com/trade.php#step=start&userID=${id}" target="_blank" class="btn">Open Trade ↗</a>
+                <button class="btn btn-green" data-action="pay" data-id="${id}">Mark Paid</button>
+              </div>
+            ` : ''}
+            <div class="pay-msg" data-id="${id}"></div>
+          </div>`).join('');
+
+    const roleCards = roleNames.map(r => `
+      <div class="card">
+        <div class="card-row">
+          <span class="card-label">${r}</span>
+          <span class="card-value" style="color:var(--dim)">${(roleData[r]||[]).join(', ') || '—'}</span>
+        </div>
+      </div>`).join('');
+
+    main.innerHTML = `
+      <div class="page-header">
+        <div class="page-eyebrow">Admin · Blacklist Recon</div>
+        <div class="page-title">⚙️ Admin Panel</div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value">${fmt(pool.total)}</div>
+          <div class="stat-label">Faction Pool</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${bounties.filter(b=>b.status==='completed').length}</div>
+          <div class="stat-label">Completed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${Object.values(balances).filter(b=>b.pendingWithdrawal>0).length}</div>
+          <div class="stat-label">Pending Payouts</div>
+        </div>
+      </div>
+
+      <div class="section-head">Member Balances</div>
+      ${memberRows}
+
+      <div class="section-head">Manage Roles</div>
+      <div id="role-msg"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <input id="role-id" type="text" placeholder="Torn player ID" style="flex:1;min-width:140px;" />
+        <select id="role-sel" style="flex:1;min-width:120px;">
+          ${roleNames.map(r=>`<option value="${r}">${r}</option>`).join('')}
+        </select>
+        <button class="btn btn-green" data-act="add">Add</button>
+        <button class="btn btn-red" data-act="remove">Remove</button>
+      </div>
+      <div class="section-head">Current Roles</div>
+      ${roleCards}
+    `;
+
+    main.querySelectorAll('[data-action="pay"]').forEach(btn =>
+      btn.addEventListener('click', async () => {
+        const id    = btn.dataset.id;
+        const msgEl = main.querySelector(`.pay-msg[data-id="${id}"]`);
+        btn.disabled = true;
+        try {
+          await api('/balance/approve-withdrawal', { targetTornId: id });
+          msgEl.innerHTML = `<div class="msg-success">Marked as paid.</div>`;
+          await renderAdmin(main);
+        } catch (e) { msgEl.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; btn.disabled = false; }
+      }));
+
+    main.querySelectorAll('[data-act]').forEach(btn =>
+      btn.addEventListener('click', async () => {
+        const tornId = main.querySelector('#role-id').value.trim();
+        const role   = main.querySelector('#role-sel').value;
+        const msgEl  = main.querySelector('#role-msg');
+        if (!tornId) { msgEl.innerHTML = `<div class="msg-error">Enter a Torn ID.</div>`; return; }
+        btn.disabled = true;
+        try {
+          await api('/roles/set', { targetTornId: tornId, role, action: btn.dataset.act });
+          msgEl.innerHTML = `<div class="msg-success">Role updated.</div>`;
+          await renderAdmin(main);
+        } catch (e) { msgEl.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; btn.disabled = false; }
+      }));
+
+  } catch (e) {
+    main.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`;
+  }
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+document.getElementById('login-btn').addEventListener('click', login);
+document.getElementById('api-key-input').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+document.getElementById('logout-btn').addEventListener('click', logout);
+
+// Auto-login if key saved
+if (apiKey) {
+  (async () => {
+    try {
+      const res = await api('/whoami');
+      identity = { tornId: res.tornId, name: res.name, role: res.role };
+      await loadBounties();
+      showApp();
+    } catch (e) {
+      localStorage.removeItem('blhq_api_key');
+      apiKey = '';
+    }
+  })();
+}
+</script>
+</body>
+</html>
