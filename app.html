@@ -571,6 +571,70 @@
     .card-value { text-align: left; }
   }
 
+  /* ── MESSAGES ── */
+  .msg-badge {
+    display: inline-block;
+    background: var(--ember);
+    color: #000;
+    font-size: 9px;
+    font-weight: 700;
+    border-radius: 10px;
+    padding: 1px 5px;
+    margin-left: 4px;
+    vertical-align: middle;
+    animation: pulse-badge 2s ease-in-out infinite;
+  }
+  @keyframes pulse-badge {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  .inbox-card {
+    background: var(--obsidian);
+    border: 1px solid var(--border);
+    padding: 16px;
+    margin-bottom: 10px;
+    transition: border-color 0.2s;
+  }
+  .inbox-card.unread { border-left: 3px solid var(--ember); }
+  .inbox-card.read   { opacity: 0.7; }
+  .inbox-subject {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--bright);
+    margin-bottom: 6px;
+  }
+  .inbox-message {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.6;
+    margin-bottom: 8px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .inbox-meta {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--dim);
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+  .inbox-hint {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+  .inbox-note {
+    background: rgba(139,26,26,0.1);
+    border: 1px solid var(--border);
+    padding: 8px 10px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--dim);
+    margin-top: 8px;
+  }
+
   /* ── CHAT ── */
   .chat-window {
     display: flex;
@@ -787,9 +851,47 @@ async function showApp() {
   buildNav();
   navigate('board');
 
-  // Poll every 30s
+  // Poll every 30s for bounties + unread count
+  let lastUnread = 0;
+  async function pollUnread() {
+    if (identity.role !== 'admin' && identity.role !== 'lister') return;
+    try {
+      const res = await api('/messages/unread');
+      const count = res.unread || 0;
+      // Update nav badge
+      updateUnreadBadge(count);
+      // Notify if new messages came in
+      if (count > lastUnread && lastUnread !== -1) {
+        showNotification(`📨 ${count} unread message${count > 1 ? 's' : ''} in Blacklist HQ`);
+      }
+      lastUnread = count;
+    } catch(e) {}
+  }
+  function updateUnreadBadge(count) {
+    document.querySelectorAll('[data-page="messages"]').forEach(el => {
+      const existing = el.querySelector('.msg-badge');
+      if (existing) existing.remove();
+      if (count > 0) {
+        const badge = document.createElement('span');
+        badge.className = 'msg-badge';
+        badge.textContent = count;
+        el.appendChild(badge);
+      }
+    });
+  }
+  function showNotification(text) {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('Blacklist HQ', { body: text, icon: '/favicon.ico' });
+    }
+  }
+  // Request notification permission
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+  pollUnread();
   setInterval(async () => {
     await loadBounties();
+    await pollUnread();
     if (currentPage === 'board') renderPage();
   }, 30000);
 }
@@ -804,6 +906,9 @@ function navItems() {
     items.splice(2, 0, { id: 'review', icon: '📋', label: 'Review' });
   }
   items.push({ id: 'chat', icon: '💬', label: 'Chat' });
+  if (identity.role === 'admin' || identity.role === 'lister') {
+    items.push({ id: 'messages', icon: '📨', label: 'Messages' });
+  }
   if (identity.role === 'admin') {
     items.push({ id: 'roster',  icon: '👥', label: 'Roster'  });
     items.push({ id: 'admin',   icon: '⚙️', label: 'Admin'   });
@@ -849,6 +954,7 @@ function renderPage() {
   if (currentPage === 'review')  renderReview(main);
   if (currentPage === 'balance') renderBalance(main);
   if (currentPage === 'chat')    renderChat(main);
+  if (currentPage === 'messages') renderMessages(main);
   if (currentPage === 'roster')  renderRoster(main);
   if (currentPage === 'admin')   renderAdmin(main);
 }
@@ -1397,6 +1503,108 @@ async function renderAdmin(main) {
     });
 
   } catch (e) {
+    main.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`;
+  }
+}
+
+// ── MESSAGES ─────────────────────────────────────────────────────────────
+async function renderMessages(main) {
+  main.innerHTML = `<div class="loading">Loading messages...</div>`;
+  try {
+    const res      = await api('/messages/list');
+    const messages = res.messages || [];
+
+    const cards = messages.length === 0
+      ? `<div class="empty">No messages yet</div>`
+      : messages.map(m => {
+          const time = new Date(m.timestamp).toLocaleString();
+          return `
+            <div class="inbox-card ${m.read ? 'read' : 'unread'}" id="imsg-${m.id}">
+              <div class="inbox-subject">${esc(m.subject || 'No subject')}</div>
+              <div class="inbox-meta">${time} ${!m.read ? '· <span style="color:var(--ember);">UNREAD</span>' : ''}</div>
+              <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:8px;padding:8px;background:rgba(139,26,26,0.1);border:1px solid var(--border);">
+                <div>
+                  <div style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:2px;">Torn Username</div>
+                  <div style="font-family:Share Tech Mono,monospace;font-size:13px;color:var(--gold);">${esc(m.tornUsername || '—')}</div>
+                </div>
+                <div>
+                  <div style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:2px;">Torn ID</div>
+                  <div style="font-family:Share Tech Mono,monospace;font-size:13px;color:var(--gold);">
+                    ${m.tornId ? `<a href="https://www.torn.com/profiles.php?XID=${esc(m.tornId)}" target="_blank" style="color:var(--gold);text-decoration:none;">${esc(m.tornId)} ↗</a>` : '—'}
+                  </div>
+                </div>
+                ${m.tornId ? `
+                <div>
+                  <div style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:2px;">Send Message</div>
+                  <a href="https://www.torn.com/messages.php#/p=compose&XID=${esc(m.tornId)}" target="_blank"
+                    style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--ember);text-decoration:none;">Message in Torn ↗</a>
+                </div>` : ''}
+              </div>
+              ${m.contactHint ? `<div class="inbox-hint">📡 ${esc(m.contactHint)}</div>` : ''}
+              <div class="inbox-message">${esc(m.message)}</div>
+              ${m.notes ? `<div class="inbox-note">📝 Note: ${esc(m.notes)}</div>` : ''}
+              <div class="btn-row">
+                ${!m.read ? `<button class="btn btn-green" data-action="mark-read" data-id="${m.id}">Mark Read</button>` : ''}
+                <button class="btn" data-action="add-note" data-id="${m.id}">📝 Add Note</button>
+                <button class="btn" style="color:var(--dim);" data-action="delete-msg" data-id="${m.id}">🗑 Delete</button>
+              </div>
+              <div class="note-form" data-id="${m.id}" style="display:none;margin-top:10px;">
+                <input type="text" class="note-input" data-id="${m.id}" placeholder="Add a private note..." maxlength="500"
+                  style="width:100%;margin-bottom:6px;" value="${esc(m.notes||'')}" />
+                <button class="btn btn-red" data-action="save-note" data-id="${m.id}">Save Note</button>
+              </div>
+              <div class="msg-feedback" data-id="${m.id}"></div>
+            </div>
+          `;
+        }).join('');
+
+    main.innerHTML = `
+      <div class="page-header">
+        <div class="page-eyebrow">Blacklist Recon</div>
+        <div class="page-title">📨 Inbox <span style="font-size:14px;color:var(--dim);">(${messages.filter(m=>!m.read).length} unread)</span></div>
+      </div>
+      ${cards}
+    `;
+
+    // Wire buttons
+    main.querySelectorAll('[data-action="mark-read"]').forEach(btn =>
+      btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        try {
+          await api('/messages/read', { messageId: btn.dataset.id });
+          await renderMessages(main);
+        } catch(e) { btn.disabled = false; }
+      }));
+
+    main.querySelectorAll('[data-action="add-note"]').forEach(btn =>
+      btn.addEventListener('click', () => {
+        const form = main.querySelector(`.note-form[data-id="${btn.dataset.id}"]`);
+        form.style.display = form.style.display === 'none' ? 'block' : 'none';
+      }));
+
+    main.querySelectorAll('[data-action="save-note"]').forEach(btn =>
+      btn.addEventListener('click', async () => {
+        const note  = main.querySelector(`.note-input[data-id="${btn.dataset.id}"]`).value.trim();
+        const msgEl = main.querySelector(`.msg-feedback[data-id="${btn.dataset.id}"]`);
+        btn.disabled = true;
+        try {
+          await api('/messages/note', { messageId: btn.dataset.id, note });
+          msgEl.innerHTML = `<div class="msg-success" style="margin-top:6px;">Note saved.</div>`;
+          await renderMessages(main);
+        } catch(e) { msgEl.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; btn.disabled = false; }
+      }));
+
+    main.querySelectorAll('[data-action="delete-msg"]').forEach(btn =>
+      btn.addEventListener('click', async () => {
+        if (!confirm('Delete this message?')) return;
+        btn.disabled = true;
+        try {
+          await api('/messages/delete', { messageId: btn.dataset.id });
+          await renderMessages(main);
+        } catch(e) { btn.disabled = false; }
+      }));
+
+  } catch(e) {
     main.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`;
   }
 }
