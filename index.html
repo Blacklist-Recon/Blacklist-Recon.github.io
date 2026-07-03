@@ -480,6 +480,7 @@
     <li><a href="#how-it-works">Process</a></li>
     <li><a href="#recruitment">Join</a></li>
     <li><a href="#rules">Terms</a></li>
+    <li><a href="#contact">Contact</a></li>
     <li><a href="app.html" style="color:var(--gold);border:1px solid var(--gold-dim);padding:4px 12px;">HQ Login</a></li>
   </ul>
 </nav>
@@ -587,7 +588,7 @@
     </div>
   </div>
   <p style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--dim);margin-top:16px;line-height:1.8;">
-    To place a contract, send an in-game Torn message to <span style="color:var(--gold);">The Handler</span> with your target name and desired tier. Payment instructions will be sent back to you privately. Your identity is never disclosed.
+    To place a contract, use the <a href="#contact" style="color:var(--gold);">anonymous contact form</a> below or send an in-game Torn message to <span style="color:var(--gold);">The Handler</span>. Payment instructions will be sent back to you privately. Your identity is never disclosed.
   </p>
 </section>
 </div>
@@ -642,6 +643,100 @@
 </section>
 </div>
 </div>
+
+<!-- CONTACT -->
+<div id="contact">
+<div class="wrap">
+<section>
+  <p class="section-eyebrow">Anonymous Contact</p>
+  <h2 class="section-title">Message The Handler</h2>
+  <div class="section-divider"></div>
+  <p style="font-size:15px;color:var(--dim);max-width:520px;line-height:1.8;margin-bottom:32px;">
+    Send an anonymous message directly to Blacklist Recon command. No account required. No identity collected. Messages are received privately.
+  </p>
+
+  <div id="contact-msg"></div>
+  <div style="max-width:520px;">
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:200px;">
+        <label style="display:block;font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:6px;">Torn Username <span style="color:var(--ember);">*</span></label>
+        <input id="contact-username" type="text" placeholder="Your Torn username" maxlength="100"
+          style="width:100%;background:var(--ash);border:1px solid var(--border);color:var(--bright);font-family:Share Tech Mono,monospace;font-size:13px;padding:10px 14px;margin-bottom:16px;outline:none;box-sizing:border-box;" />
+      </div>
+      <div style="flex:1;min-width:160px;">
+        <label style="display:block;font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:6px;">Torn ID <span style="color:var(--ember);">*</span></label>
+        <input id="contact-tornid" type="number" placeholder="e.g. 1234567" maxlength="20"
+          style="width:100%;background:var(--ash);border:1px solid var(--border);color:var(--bright);font-family:Share Tech Mono,monospace;font-size:13px;padding:10px 14px;margin-bottom:16px;outline:none;box-sizing:border-box;" />
+      </div>
+    </div>
+
+    <label style="display:block;font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:6px;">Subject</label>
+    <input id="contact-subject" type="text" placeholder="e.g. Contract Inquiry, War Support, Payment" maxlength="100"
+      style="width:100%;background:var(--ash);border:1px solid var(--border);color:var(--bright);font-family:Share Tech Mono,monospace;font-size:13px;padding:10px 14px;margin-bottom:16px;outline:none;box-sizing:border-box;" />
+
+    <label style="display:block;font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:6px;">Message <span style="color:var(--ember);">*</span></label>
+    <textarea id="contact-message" rows="5" placeholder="Describe your contract request, target, payment confirmation, or inquiry..." maxlength="1000"
+      style="width:100%;background:var(--ash);border:1px solid var(--border);color:var(--bright);font-family:Share Tech Mono,monospace;font-size:13px;padding:10px 14px;margin-bottom:20px;outline:none;box-sizing:border-box;resize:vertical;"></textarea>
+
+    <p style="font-family:Share Tech Mono,monospace;font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:16px;">
+      * Required fields. Your Torn ID is used so we can look up and contact you in-game. It is never shared publicly.
+    </p>
+
+    <button id="contact-submit" onclick="sendContactMessage()"
+      style="width:100%;padding:14px;background:var(--blood);border:1px solid var(--crimson);color:var(--bright);font-family:Share Tech Mono,monospace;font-size:12px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;">
+      Send Message →
+    </button>
+  </div>
+</section>
+</div>
+</div>
+
+<script>
+async function sendContactMessage() {
+  const username = document.getElementById('contact-username').value.trim();
+  const tornId   = document.getElementById('contact-tornid').value.trim();
+  const subject  = document.getElementById('contact-subject').value.trim();
+  const message  = document.getElementById('contact-message').value.trim();
+  const msgEl    = document.getElementById('contact-msg');
+  const btn      = document.getElementById('contact-submit');
+
+  if (!username || !tornId || !message) {
+    msgEl.innerHTML = '<p style="color:#e04f4f;font-family:Share Tech Mono,monospace;font-size:12px;margin-bottom:16px;">Please fill in your Torn Username, Torn ID, and Message.</p>';
+    return;
+  }
+  if (isNaN(tornId)) {
+    msgEl.innerHTML = '<p style="color:#e04f4f;font-family:Share Tech Mono,monospace;font-size:12px;margin-bottom:16px;">Torn ID must be a number.</p>';
+    return;
+  }
+
+  btn.disabled    = true;
+  btn.textContent = 'Sending...';
+  msgEl.innerHTML = '';
+
+  try {
+    const res = await fetch('https://torn-bounty-board.pearcej29.workers.dev/messages/send', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ subject, message, tornUsername: username, tornId }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      msgEl.innerHTML = '<p style="color:#5fe04f;font-family:Share Tech Mono,monospace;font-size:12px;margin-bottom:16px;">Message sent. The Handler will be in touch shortly.</p>';
+      document.getElementById('contact-username').value = '';
+      document.getElementById('contact-tornid').value   = '';
+      document.getElementById('contact-subject').value  = '';
+      document.getElementById('contact-message').value  = '';
+    } else {
+      msgEl.innerHTML = `<p style="color:#e04f4f;font-family:Share Tech Mono,monospace;font-size:12px;margin-bottom:16px;">${data.error}</p>`;
+    }
+  } catch(e) {
+    msgEl.innerHTML = '<p style="color:#e04f4f;font-family:Share Tech Mono,monospace;font-size:12px;margin-bottom:16px;">Failed to send. Please try again.</p>';
+  }
+
+  btn.disabled    = false;
+  btn.textContent = 'Send Message →';
+}
+</script>
 
 <!-- FOOTER -->
 <footer>
