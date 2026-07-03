@@ -495,15 +495,27 @@
   <div class="hero-divider"></div>
   <p class="hero-sub">Elite contract hunters operating out of Torn City. Every target. Every timezone. No questions asked.</p>
 
-  <!-- LIVE BOUNTY COUNTER -->
-  <div class="bounty-counter-hero">
-    <div class="counter-label">Contracts Fulfilled</div>
-    <div class="counter-value loading" id="bountyCount">—</div>
-    <div class="counter-sublabel">Total Completed Bounties</div>
-    <div class="counter-pulse">
-      <div class="pulse-dot"></div>
-      <div class="pulse-text" id="counterStatus">Connecting to worker...</div>
+  <!-- LIVE STATS COUNTERS -->
+  <div style="display:flex;gap:1px;margin-bottom:52px;background:var(--border);">
+    <div class="bounty-counter-hero" style="flex:1;margin-bottom:0;border:none;">
+      <div class="counter-label">Contracts Fulfilled</div>
+      <div class="counter-value loading" id="bountyCount">—</div>
+      <div class="counter-sublabel">Completed</div>
     </div>
+    <div class="bounty-counter-hero" style="flex:1;margin-bottom:0;border:none;">
+      <div class="counter-label">Active Contracts</div>
+      <div class="counter-value loading" id="activeCount">—</div>
+      <div class="counter-sublabel">In Progress</div>
+    </div>
+    <div class="bounty-counter-hero" style="flex:1;margin-bottom:0;border:none;">
+      <div class="counter-label">Network Size</div>
+      <div class="counter-value loading" id="memberCount">—</div>
+      <div class="counter-sublabel">Active Agents</div>
+    </div>
+  </div>
+  <div class="counter-pulse" style="margin-bottom:52px;margin-top:-40px;">
+    <div class="pulse-dot"></div>
+    <div class="pulse-text" id="counterStatus">Connecting...</div>
   </div>
 
   <div class="hero-ctas">
@@ -754,23 +766,29 @@ async function sendContactMessage() {
   const el = document.getElementById('bountyCount');
   const status = document.getElementById('counterStatus');
 
+  const activeEl = document.getElementById('activeCount');
+  const memberEl = document.getElementById('memberCount');
+
   async function fetchBountyCount() {
     try {
-      const res = await fetch(`${WORKER_URL}/stats`, {
-        headers: { 'Content-Type': 'application/json' }
-      });
+      const res = await fetch(`${WORKER_URL}/stats`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      const count = data.completedBounties ?? data.completed ?? 0;
 
       el.classList.remove('loading');
-      el.textContent = count.toString().padStart(3, '0');
-      status.textContent = 'Live · updates every 30s';
+      activeEl.classList.remove('loading');
+      memberEl.classList.remove('loading');
+
+      el.textContent      = (data.completedBounties ?? 0).toString().padStart(3, '0');
+      activeEl.textContent = (data.activeBounties    ?? 0).toString().padStart(3, '0');
+      memberEl.textContent = (data.memberCount        ?? 0).toString().padStart(3, '0');
+      status.textContent  = 'Live · updates every 30s';
     } catch (err) {
       el.classList.add('loading');
-      el.textContent = '—';
+      activeEl.classList.add('loading');
+      memberEl.classList.add('loading');
+      el.textContent = activeEl.textContent = memberEl.textContent = '—';
       status.textContent = 'Worker offline';
-      console.warn('Bounty counter fetch failed:', err);
     }
   }
 
