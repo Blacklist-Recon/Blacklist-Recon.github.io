@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blacklist Recon Banner 2</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #000; width: 1200px; height: 480px; overflow: hidden; }
+
+  .banner {
+    width: 1200px;
+    height: 480px;
+    background: #050708;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Radial burst background */
+  .burst {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 80% at 50% 50%, rgba(100,10,10,0.4) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 30% at 50% 50%, rgba(180,20,20,0.15) 0%, transparent 40%);
+    animation: burstPulse 5s ease-in-out infinite;
+  }
+  @keyframes burstPulse {
+    0%,100% { opacity: 0.7; }
+    50% { opacity: 1; }
+  }
+
+  /* Rotating ring */
+  .ring {
+    position: absolute;
+    width: 520px; height: 520px;
+    border: 1px solid rgba(139,26,26,0.2);
+    border-radius: 50%;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    animation: spin 30s linear infinite;
+  }
+  .ring2 {
+    position: absolute;
+    width: 380px; height: 380px;
+    border: 1px solid rgba(139,26,26,0.12);
+    border-radius: 50%;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    animation: spin 20s linear infinite reverse;
+  }
+  .ring3 {
+    position: absolute;
+    width: 240px; height: 240px;
+    border: 1px solid rgba(224,79,79,0.08);
+    border-radius: 50%;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    animation: spin 12s linear infinite;
+  }
+  @keyframes spin { from{transform:translate(-50%,-50%) rotate(0deg)} to{transform:translate(-50%,-50%) rotate(360deg)} }
+
+  /* Crosshair lines */
+  .crosshair-h {
+    position: absolute;
+    left: 0; right: 0;
+    top: 50%;
+    height: 1px;
+    background: linear-gradient(to right, transparent 5%, rgba(139,26,26,0.15) 30%, rgba(224,79,79,0.3) 50%, rgba(139,26,26,0.15) 70%, transparent 95%);
+  }
+  .crosshair-v {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 50%;
+    width: 1px;
+    background: linear-gradient(to bottom, transparent 5%, rgba(139,26,26,0.15) 30%, rgba(224,79,79,0.3) 50%, rgba(139,26,26,0.15) 70%, transparent 95%);
+  }
+
+  /* Scanlines */
+  .scanlines {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 3px);
+    pointer-events: none;
+  }
+
+  /* Corner skulls */
+  .corner-skull {
+    position: absolute;
+    font-size: 36px;
+    opacity: 0.12;
+    animation: cornerFloat 6s ease-in-out infinite;
+  }
+  .corner-skull.tl { top: 24px; left: 32px; animation-delay: 0s; }
+  .corner-skull.tr { top: 24px; right: 32px; animation-delay: 1.5s; }
+  .corner-skull.bl { bottom: 24px; left: 32px; animation-delay: 3s; }
+  .corner-skull.br { bottom: 24px; right: 32px; animation-delay: 4.5s; }
+  @keyframes cornerFloat {
+    0%,100% { opacity: 0.12; transform: scale(1); }
+    50% { opacity: 0.2; transform: scale(1.1); }
+  }
+
+  /* Corner brackets */
+  .bracket {
+    position: absolute;
+    width: 28px; height: 28px;
+    border-color: #2e1f1f;
+    border-style: solid;
+    z-index: 4;
+  }
+  .bracket.tl { top: 12px; left: 12px; border-width: 1px 0 0 1px; }
+  .bracket.tr { top: 12px; right: 12px; border-width: 1px 1px 0 0; }
+  .bracket.bl { bottom: 12px; left: 12px; border-width: 0 0 1px 1px; }
+  .bracket.br { bottom: 12px; right: 12px; border-width: 0 1px 1px 0; }
+
+  /* Content */
+  .content {
+    position: relative;
+    z-index: 3;
+    text-align: center;
+  }
+
+  .skull-icon {
+    font-size: 80px;
+    line-height: 1;
+    margin-bottom: 8px;
+    animation: skullGlow 3s ease-in-out infinite;
+    display: block;
+  }
+  @keyframes skullGlow {
+    0%,100% { text-shadow: 0 0 20px rgba(224,79,79,0.4); filter: brightness(1); }
+    50% { text-shadow: 0 0 60px rgba(224,79,79,0.9), 0 0 120px rgba(139,26,26,0.5); filter: brightness(1.2); }
+  }
+
+  .title {
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: 86px;
+    color: #f5dada;
+    line-height: 0.95;
+    letter-spacing: -2px;
+    text-shadow: 0 0 100px rgba(224,79,79,0.35);
+    margin-bottom: 4px;
+  }
+  .subtitle {
+    font-family: 'Cinzel', serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: #e04f4f;
+    letter-spacing: 18px;
+    text-shadow: 0 0 40px rgba(224,79,79,0.7);
+    margin-bottom: 20px;
+  }
+
+  .stats-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 20px;
+    border: 1px solid #2e1f1f;
+    background: rgba(8,10,10,0.7);
+    backdrop-filter: blur(4px);
+  }
+  .stat {
+    padding: 14px 36px;
+    text-align: center;
+    border-right: 1px solid #2e1f1f;
+  }
+  .stat:last-child { border-right: none; }
+  .stat-num {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 32px;
+    color: #e04f4f;
+    text-shadow: 0 0 20px rgba(224,79,79,0.5);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: #5a3030;
+    text-transform: uppercase;
+  }
+
+  .bottom-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    justify-content: center;
+  }
+  .live-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border: 1px solid #2e1f1f;
+  }
+  .live-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #e04f4f;
+    animation: blink 2s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+  .live-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: #5a3030;
+    text-transform: uppercase;
+  }
+  .url-text {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: #3a1a1a;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="burst"></div>
+  <div class="ring"></div>
+  <div class="ring2"></div>
+  <div class="ring3"></div>
+  <div class="crosshair-h"></div>
+  <div class="crosshair-v"></div>
+  <div class="scanlines"></div>
+  <div class="corner-skull tl">☠</div>
+  <div class="corner-skull tr">☠</div>
+  <div class="corner-skull bl">☠</div>
+  <div class="corner-skull br">☠</div>
+  <div class="bracket tl"></div>
+  <div class="bracket tr"></div>
+  <div class="bracket bl"></div>
+  <div class="bracket br"></div>
+
+  <div class="content">
+    <span class="skull-icon">☠</span>
+    <div class="title">BLACKLIST</div>
+    <div class="subtitle">RECON</div>
+
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-num" id="s-completed">—</div>
+        <div class="stat-label">Contracts Fulfilled</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" id="s-active">—</div>
+        <div class="stat-label">Active Now</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" id="s-agents">—</div>
+        <div class="stat-label">Active Agents</div>
+      </div>
+    </div>
+
+    <div class="bottom-row">
+      <div class="live-pill">
+        <div class="live-dot"></div>
+        <div class="live-label">Live Data</div>
+      </div>
+      <div class="url-text">blacklist-recon.github.io</div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function fetchStats() {
+  try {
+    const res  = await fetch('https://torn-bounty-board.pearcej29.workers.dev/stats');
+    const data = await res.json();
+    document.getElementById('s-completed').textContent = String(data.completedBounties ?? 0).padStart(3,'0');
+    document.getElementById('s-active').textContent    = String(data.activeBounties    ?? 0).padStart(3,'0');
+    document.getElementById('s-agents').textContent    = String(data.memberCount        ?? 0).padStart(3,'0');
+  } catch(e) {}
+}
+fetchStats();
+setInterval(fetchStats, 30000);
+</script>
+</body>
+</html>
