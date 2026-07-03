@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blacklist Recon — Now Recruiting</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&family=Cinzel:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #080a0a;
+    color: #e6c8c8;
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(224,79,79,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(224,79,79,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: gridMove 20s linear infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Radial glow */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 0%, rgba(139,26,26,0.25) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 30% at 80% 80%, rgba(139,26,26,0.1) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  @keyframes gridMove {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(40px, 40px); }
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 40px 24px 60px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+  .skull {
+    font-size: 52px;
+    display: block;
+    margin-bottom: 16px;
+    animation: float 3s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  .tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 6px;
+    color: #8b1a1a;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .title {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(32px, 7vw, 56px);
+    font-weight: 900;
+    color: #f5dada;
+    line-height: 1;
+    text-shadow: 0 0 60px rgba(224,79,79,0.4);
+    margin-bottom: 8px;
+  }
+  .title span {
+    color: #e04f4f;
+    display: block;
+    font-size: 0.5em;
+    letter-spacing: 10px;
+    text-shadow: 0 0 30px rgba(224,79,79,0.6);
+  }
+  .divider {
+    width: 1px;
+    height: 48px;
+    background: linear-gradient(to bottom, #8b1a1a, transparent);
+    margin: 24px auto;
+  }
+  .tagline {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 2px;
+    color: #7d5252;
+    text-transform: uppercase;
+  }
+  .tagline span { color: #e04f4f; }
+
+  /* Sections */
+  .section {
+    margin-bottom: 32px;
+    border: 1px solid #2e1f1f;
+    background: rgba(12,10,10,0.8);
+    backdrop-filter: blur(4px);
+    position: relative;
+    overflow: hidden;
+  }
+  .section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(to right, transparent, #e04f4f, transparent);
+  }
+  .section-head {
+    padding: 14px 20px;
+    background: rgba(139,26,26,0.15);
+    border-bottom: 1px solid #2e1f1f;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: #e04f4f;
+    text-transform: uppercase;
+  }
+  .section-body { padding: 20px; }
+
+  /* Items */
+  .item {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(46,31,31,0.5);
+  }
+  .item:last-child { border-bottom: none; padding-bottom: 0; }
+  .item-icon {
+    font-size: 16px;
+    min-width: 24px;
+    padding-top: 1px;
+  }
+  .item-text { flex: 1; line-height: 1.6; }
+  .item-text strong {
+    display: block;
+    font-size: 15px;
+    font-weight: 700;
+    color: #f5dada;
+    margin-bottom: 2px;
+  }
+  .item-text span {
+    font-size: 13px;
+    color: #7d5252;
+    line-height: 1.6;
+  }
+
+  /* Highlight box */
+  .highlight {
+    background: rgba(139,26,26,0.12);
+    border: 1px solid #8b1a1a;
+    padding: 20px;
+    margin-bottom: 32px;
+    text-align: center;
+    position: relative;
+  }
+  .highlight::before, .highlight::after {
+    content: '';
+    position: absolute;
+    width: 10px; height: 10px;
+    border-color: #e04f4f;
+    border-style: solid;
+  }
+  .highlight::before { top: -1px; left: -1px; border-width: 1px 0 0 1px; }
+  .highlight::after  { bottom: -1px; right: -1px; border-width: 0 1px 1px 0; }
+  .highlight p {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    color: #e6c8c8;
+    letter-spacing: 1px;
+    line-height: 1.8;
+  }
+  .highlight p strong { color: #e04f4f; }
+
+  /* Steps */
+  .step {
+    display: flex;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(46,31,31,0.5);
+    align-items: flex-start;
+  }
+  .step:last-child { border-bottom: none; }
+  .step-num {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: #8b1a1a;
+    letter-spacing: 1px;
+    min-width: 28px;
+    padding-top: 1px;
+  }
+  .step-text { font-size: 14px; color: #c8a8a8; line-height: 1.6; }
+  .step-text strong { color: #f5dada; }
+
+  /* CTA */
+  .cta {
+    text-align: center;
+    margin-top: 40px;
+  }
+  .cta-skull {
+    font-size: 28px;
+    display: block;
+    margin-bottom: 12px;
+  }
+  .cta-main {
+    font-family: 'Cinzel', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #f5dada;
+    margin-bottom: 8px;
+  }
+  .cta-sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: #7d5252;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+  .cta-btn {
+    display: inline-block;
+    padding: 14px 40px;
+    background: #8b1a1a;
+    border: 1px solid #c0392b;
+    color: #f5dada;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+  .cta-btn:hover { background: #c0392b; border-color: #e04f4f; }
+  .cta-fine {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: #4a2020;
+    margin-top: 16px;
+    text-transform: uppercase;
+  }
+
+  /* Payout badge */
+  .payout-badge {
+    text-align: center;
+    padding: 24px;
+    background: rgba(12,10,10,0.9);
+    border: 1px solid #2e1f1f;
+    margin-bottom: 32px;
+    position: relative;
+  }
+  .payout-num {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 64px;
+    color: #e04f4f;
+    text-shadow: 0 0 40px rgba(224,79,79,0.5);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .payout-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: #7d5252;
+    text-transform: uppercase;
+  }
+  .payout-sub {
+    font-size: 13px;
+    color: #5a3030;
+    margin-top: 8px;
+    font-family: 'Share Tech Mono', monospace;
+    letter-spacing: 1px;
+  }
+
+  /* Footer line */
+  .footer-line {
+    text-align: center;
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid #1a0a0a;
+  }
+  .footer-brand {
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    letter-spacing: 4px;
+    color: #4a2020;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <span class="skull">☠</span>
+    <div class="tag">Blacklist Recon · Torn City · Now Recruiting</div>
+    <h1 class="title">
+      We're Building
+      <span>The Network</span>
+    </h1>
+    <div class="divider"></div>
+    <p class="tagline">Hunters Wanted · <span>No Questions Asked</span> · Get Paid</p>
+  </div>
+
+  <!-- PAYOUT -->
+  <div class="payout-badge">
+    <div class="payout-num">75%</div>
+    <div class="payout-label">Your Cut — Every Contract</div>
+    <div class="payout-sub">Tracked automatically. Request withdrawal anytime.</div>
+  </div>
+
+  <!-- WHAT WE ARE -->
+  <div class="highlight">
+    <p>
+      Blacklist Recon is not a faction.<br>
+      We are a <strong>private contract network</strong> operating across Torn City.<br>
+      Stay in your faction. Keep your life. <strong>Collect your cut.</strong>
+    </p>
+  </div>
+
+  <!-- WHAT WE OFFER -->
+  <div class="section">
+    <div class="section-head">// What You Get</div>
+    <div class="section-body">
+      <div class="item">
+        <div class="item-icon">💰</div>
+        <div class="item-text">
+          <strong>75% of every contract — automatically tracked</strong>
+          <span>No chasing payments. Your balance updates the moment a contract is verified complete. Request a withdrawal and it's processed by admin directly.</span>
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-icon">🎯</div>
+        <div class="item-text">
+          <strong>Private contract board — claim on your schedule</strong>
+          <span>Access a live board of active contracts. Pick your targets when you're ready. No pressure, no quotas.</span>
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-icon">🔒</div>
+        <div class="item-text">
+          <strong>You never know who posted — and they never know you</strong>
+          <span>Client identities are sealed. Only The Handler and trusted Listers ever see who placed a contract. Hunters receive a target and a payout. Nothing else.</span>
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-icon">⚔️</div>
+        <div class="item-text">
+          <strong>No faction switch required</strong>
+          <span>Stay exactly where you are. Blacklist Recon is a network, not a faction. Your faction life is untouched.</span>
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-icon">👁️</div>
+        <div class="item-text">
+          <strong>Your identity is protected within the network</strong>
+          <span>Other hunters never know who you are. Clients never know who came for their target. The only record is between you and the contract board — and the target's attack log. That's the nature of the job. Own your hits.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div class="section">
+    <div class="section-head">// How It Works</div>
+    <div class="section-body">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-text"><strong>Get access.</strong> Message The Handler in-game. Once vetted you receive access to the private contract board.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-text"><strong>Pick your target.</strong> Browse active contracts. Claim the ones you want. No one else can take a contract you've claimed.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-text"><strong>Execute.</strong> Hit the target. Mark it done on the board. A verifier confirms completion.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">04</div>
+        <div class="step-text"><strong>Get paid.</strong> 75% of the contract value hits your balance automatically. Request withdrawal whenever you want.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WHO WE WANT -->
+  <div class="section">
+    <div class="section-head">// Who We Want</div>
+    <div class="section-body">
+      <div class="item">
+        <div class="item-icon">✦</div>
+        <div class="item-text"><strong>Active combat players who hit hard and show up</strong><span>If you can't handle a fight, this isn't for you.</span></div>
+      </div>
+      <div class="item">
+        <div class="item-icon">✦</div>
+        <div class="item-text"><strong>Players who want income without faction politics</strong><span>Side work. No drama. Just contracts and payouts.</span></div>
+      </div>
+      <div class="item">
+        <div class="item-icon">✦</div>
+        <div class="item-text"><strong>People who don't ask questions</strong><span>Money is there. Target is there. That's all you need.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta">
+    <span class="cta-skull">☠</span>
+    <div class="cta-main">Ready to Work?</div>
+    <div class="cta-sub">Message The Handler in-game to apply</div>
+    <a href="https://blacklist-recon.github.io/app.html" class="cta-btn">View the Board →</a>
+    <div class="cta-fine">
+      Blacklist Recon · We find them. You finish them.<br>
+      blacklist-recon.github.io
+    </div>
+  </div>
+
+  <div class="footer-line">
+    <div class="footer-brand">Blacklist Recon · Torn City</div>
+  </div>
+
+</div>
+</body>
+</html>
