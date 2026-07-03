@@ -910,6 +910,7 @@ function renderBoard(main) {
             </div>
             ${b.claimedByName ? `<div class="card-row"><span class="card-label">Agent</span><span class="card-value">${claimed}</span></div>` : ''}
             ${b.notes ? `<div class="card-row"><span class="card-label">Notes</span><span class="card-value">${esc(b.notes)}</span></div>` : ''}
+            ${identity.role === 'admin' ? `<div class="btn-row"><button class="btn" style="color:var(--dim);font-size:10px;" data-action="delete" data-id="${b.id}">🗑 Delete</button></div>` : ''}
             ${actions ? `<div class="btn-row">${actions}</div>` : ''}
           </div>
         `;
@@ -943,10 +944,16 @@ function renderBoard(main) {
 
   main.querySelectorAll('[data-action]').forEach(btn =>
     btn.addEventListener('click', async () => {
+      const action = btn.dataset.action;
+      const id     = btn.dataset.id;
+      if (action === 'delete') {
+        if (!confirm('Delete this bounty? If completed, payouts will be reversed.')) return;
+      }
       btn.disabled = true;
       try {
-        if (btn.dataset.action === 'claim')    await api('/bounties/claim',    { bountyId: btn.dataset.id });
-        if (btn.dataset.action === 'complete') await api('/bounties/complete', { bountyId: btn.dataset.id });
+        if (action === 'claim')    await api('/bounties/claim',    { bountyId: id });
+        if (action === 'complete') await api('/bounties/complete', { bountyId: id });
+        if (action === 'delete')   await api('/bounties/delete',   { bountyId: id });
         await loadBounties();
         renderBoard(main);
       } catch (e) {
@@ -1088,6 +1095,9 @@ function renderReview(main) {
               <button class="btn btn-green" data-action="approve" data-id="${b.id}">Approve &amp; List</button>
             </div>
           ` : ''}
+          <div class="btn-row">
+            <button class="btn" style="color:var(--dim);font-size:10px;" data-action="delete-review" data-id="${b.id}">🗑 Delete Bounty</button>
+          </div>
           <div class="review-msg" data-id="${b.id}"></div>
         </div>
       `).join('');
@@ -1294,6 +1304,13 @@ async function renderAdmin(main) {
       </div>
       <div class="section-head">Member Balances</div>
       ${memberRows}
+      <div class="section-head">Reset Balances</div>
+      <div id="reset-msg"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+        <input id="reset-id" type="text" placeholder="Torn ID to reset (blank = reset ALL)" style="flex:1;min-width:160px;" />
+        <button class="btn btn-red" id="reset-one-btn">Reset Player</button>
+        <button class="btn" style="color:var(--dim);" id="reset-all-btn">⚠ Reset Everyone</button>
+      </div>
 
       <div class="section-head">Manage Roles</div>
       <div id="role-msg"></div>
@@ -1355,6 +1372,29 @@ async function renderAdmin(main) {
           await renderAdmin(main);
         } catch (e) { msgEl.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; btn.disabled = false; }
       }));
+
+    // Reset balance buttons
+    const resetMsg = main.querySelector('#reset-msg');
+    main.querySelector('#reset-one-btn').addEventListener('click', async () => {
+      const tornId = main.querySelector('#reset-id').value.trim();
+      if (!tornId) { resetMsg.innerHTML = `<div class="msg-error">Enter a Torn ID to reset a single player.</div>`; return; }
+      if (!confirm(`Reset balance for ${tornId}? This cannot be undone.`)) return;
+      try {
+        await api('/balance/reset', { targetTornId: tornId });
+        resetMsg.innerHTML = `<div class="msg-success">Balance reset for ${tornId}.</div>`;
+        await renderAdmin(main);
+      } catch(e) { resetMsg.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; }
+    });
+
+    main.querySelector('#reset-all-btn').addEventListener('click', async () => {
+      if (!confirm('Reset ALL member balances and faction pool? This cannot be undone.')) return;
+      if (!confirm('Are you sure? This will wipe every balance including the faction pool.')) return;
+      try {
+        await api('/balance/reset', {});
+        resetMsg.innerHTML = `<div class="msg-success">All balances and faction pool have been reset.</div>`;
+        await renderAdmin(main);
+      } catch(e) { resetMsg.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; }
+    });
 
   } catch (e) {
     main.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`;
