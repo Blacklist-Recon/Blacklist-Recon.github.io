@@ -570,6 +570,88 @@
     .card-row { flex-direction: column; align-items: flex-start; gap: 2px; }
     .card-value { text-align: left; }
   }
+
+  /* ── CHAT ── */
+  .chat-window {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 200px);
+    min-height: 400px;
+    background: var(--obsidian);
+    border: 1px solid var(--border);
+  }
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .chat-messages::-webkit-scrollbar { width: 4px; }
+  .chat-messages::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 2px; }
+  .chat-msg {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-width: 85%;
+  }
+  .chat-msg.mine { align-self: flex-end; align-items: flex-end; }
+  .chat-msg.theirs { align-self: flex-start; align-items: flex-start; }
+  .chat-bubble {
+    padding: 8px 12px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+    word-break: break-word;
+  }
+  .chat-msg.mine .chat-bubble {
+    background: var(--blood);
+    border: 1px solid var(--crimson);
+    color: var(--bright);
+    border-radius: 8px 8px 0 8px;
+  }
+  .chat-msg.theirs .chat-bubble {
+    background: var(--slate);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px 8px 8px 0;
+  }
+  .chat-msg.admin-msg .chat-bubble {
+    background: rgba(139,26,26,0.3);
+    border-color: var(--ember);
+  }
+  .chat-meta {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: var(--dim);
+    letter-spacing: 1px;
+    padding: 0 4px;
+  }
+  .chat-sender { color: var(--ember); }
+  .chat-input-row {
+    display: flex;
+    gap: 8px;
+    padding: 12px;
+    border-top: 1px solid var(--border);
+    background: var(--ash);
+  }
+  .chat-input-row input {
+    flex: 1;
+    margin: 0;
+    background: var(--void);
+  }
+  .chat-empty {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
 </style>
 </head>
 <body>
@@ -721,6 +803,7 @@ function navItems() {
     items.splice(1, 0, { id: 'new',    icon: '➕', label: 'New'    });
     items.splice(2, 0, { id: 'review', icon: '📋', label: 'Review' });
   }
+  items.push({ id: 'chat', icon: '💬', label: 'Chat' });
   if (identity.role === 'admin') {
     items.push({ id: 'roster',  icon: '👥', label: 'Roster'  });
     items.push({ id: 'admin',   icon: '⚙️', label: 'Admin'   });
@@ -765,6 +848,7 @@ function renderPage() {
   if (currentPage === 'new')     renderNew(main);
   if (currentPage === 'review')  renderReview(main);
   if (currentPage === 'balance') renderBalance(main);
+  if (currentPage === 'chat')    renderChat(main);
   if (currentPage === 'roster')  renderRoster(main);
   if (currentPage === 'admin')   renderAdmin(main);
 }
@@ -1110,10 +1194,11 @@ async function renderRoster(main) {
     const res  = await api('/agent-map');
     const roster = res.roster || {};
     const rows = Object.entries(roster).length === 0
-      ? `<tr><td colspan="3" style="text-align:center;color:var(--dim);padding:20px;">No agents yet</td></tr>`
+      ? `<tr><td colspan="4" style="text-align:center;color:var(--dim);padding:20px;">No agents yet</td></tr>`
       : Object.entries(roster).sort((a,b) => a[1].agentNumber - b[1].agentNumber).map(([tornId, r]) => `
           <tr>
             <td style="color:var(--ember);">Agent #${r.agentNumber}</td>
+            <td style="color:var(--gold);">${esc(r.alias)}</td>
             <td>${esc(r.name)}</td>
             <td><a href="https://www.torn.com/profiles.php?XID=${tornId}" target="_blank" style="color:var(--dim);font-size:10px;">${tornId} ↗</a></td>
           </tr>`).join('');
@@ -1125,7 +1210,7 @@ async function renderRoster(main) {
       </div>
       <div class="section-head">Active Agents</div>
       <table class="roster-table">
-        <thead><tr><th>Agent</th><th>Real Name</th><th>Torn ID</th></tr></thead>
+        <thead><tr><th>Agent</th><th>Alias</th><th>Real Name</th><th>Torn ID</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     `;
@@ -1274,6 +1359,114 @@ async function renderAdmin(main) {
   } catch (e) {
     main.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`;
   }
+}
+
+// ── CHAT ──────────────────────────────────────────────────────────────────
+let chatPollInterval = null;
+let lastMessageTime  = 0;
+let myDisplayName    = null;
+
+async function getMyDisplayName() {
+  if (myDisplayName) return myDisplayName;
+  try {
+    const res = await api('/alias/get');
+    const agentRes = await api('/balance/get');
+    myDisplayName = res.alias || (agentRes.agentNumber ? `Agent #${agentRes.agentNumber}` : identity.name);
+  } catch(e) {
+    myDisplayName = identity.name;
+  }
+  return myDisplayName;
+}
+
+async function renderChat(main) {
+  const displayName = await getMyDisplayName();
+
+  main.innerHTML = `
+    <div class="page-header">
+      <div class="page-eyebrow">Blacklist Recon</div>
+      <div class="page-title">💬 Ops Channel</div>
+    </div>
+    <div class="chat-window">
+      <div class="chat-messages" id="chat-msgs"><div class="chat-empty">Loading messages...</div></div>
+      <div class="chat-input-row">
+        <input id="chat-input" type="text" placeholder="Type a message... (500 chars max)" maxlength="500" />
+        <button class="btn btn-red" id="chat-send">Send</button>
+      </div>
+    </div>
+  `;
+
+  async function loadMessages(initial = false) {
+    try {
+      const res      = await api('/chat/messages', { since: initial ? 0 : lastMessageTime });
+      const msgsEl   = main.querySelector('#chat-msgs');
+      if (!msgsEl) return;
+      const msgs     = res.messages || [];
+      if (msgs.length === 0 && initial) {
+        msgsEl.innerHTML = '<div class="chat-empty">No messages yet. Say something.</div>';
+        return;
+      }
+      if (msgs.length > 0) {
+        lastMessageTime = Math.max(...msgs.map(m => m.timestamp));
+        if (initial) msgsEl.innerHTML = '';
+        msgs.forEach(m => {
+          const isMine    = m.sender === displayName;
+          const isAdmin   = m.role === 'admin';
+          const time      = new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          const div       = document.createElement('div');
+          div.className   = `chat-msg ${isMine ? 'mine' : 'theirs'} ${isAdmin ? 'admin-msg' : ''}`;
+          div.dataset.id  = m.id;
+          div.innerHTML   = `
+            <div class="chat-meta">
+              <span class="chat-sender">${esc(m.sender)}</span> · ${time}
+              ${identity.role === 'admin' && !isMine ? `<button onclick="deleteMsg('${m.id}')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px;margin-left:6px;">✕</button>` : ''}
+            </div>
+            <div class="chat-bubble">${esc(m.message)}</div>
+          `;
+          msgsEl.appendChild(div);
+        });
+        msgsEl.scrollTop = msgsEl.scrollHeight;
+      }
+    } catch(e) {}
+  }
+
+  window.deleteMsg = async (id) => {
+    try {
+      await api('/chat/delete', { messageId: id });
+      const el = main.querySelector(`[data-id="${id}"]`);
+      if (el) el.remove();
+    } catch(e) {}
+  };
+
+  await loadMessages(true);
+
+  // Poll every 5 seconds
+  if (chatPollInterval) clearInterval(chatPollInterval);
+  chatPollInterval = setInterval(() => {
+    if (currentPage === 'chat') loadMessages(false);
+    else clearInterval(chatPollInterval);
+  }, 5000);
+
+  const sendBtn   = main.querySelector('#chat-send');
+  const chatInput = main.querySelector('#chat-input');
+
+  async function sendMessage() {
+    const msg = chatInput.value.trim();
+    if (!msg) return;
+    sendBtn.disabled = true;
+    chatInput.value  = '';
+    try {
+      await api('/chat/send', { message: msg });
+      await loadMessages(false);
+    } catch(e) {
+      chatInput.value = msg;
+    }
+    sendBtn.disabled = false;
+    chatInput.focus();
+  }
+
+  sendBtn.addEventListener('click', sendMessage);
+  chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
+  chatInput.focus();
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────
