@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Cinzel:wght@700;900&display=swap" rel="stylesheet">
-
 <style>
   :root {
     --void: #080a0c;
@@ -29,7 +28,6 @@
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   html { scroll-behavior: smooth; }
 
   body {
@@ -39,23 +37,112 @@
     font-size: 16px;
     line-height: 1.6;
     overflow-x: hidden;
+    cursor: none;
   }
 
-  /* ── SCANLINE OVERLAY ── */
+  /* ── CUSTOM CURSOR ── */
+  #cursor {
+    position: fixed;
+    pointer-events: none;
+    z-index: 99999;
+    transform: translate(-50%,-50%);
+    transition: transform 0.05s;
+  }
+  #cursor svg { width: 44px; height: 44px; }
+  #cursor-trail {
+    position: fixed;
+    width: 8px; height: 8px;
+    background: rgba(231,76,60,0.4);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 99998;
+    transform: translate(-50%,-50%);
+    transition: left 0.15s ease, top 0.15s ease;
+  }
+
+  /* ── CANVAS LAYERS ── */
+  #bg-canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+  #bullet-canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  /* ── SCANLINES ── */
   body::before {
     content: '';
     position: fixed;
     inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(0,0,0,0.03) 2px,
-      rgba(0,0,0,0.03) 4px
-    );
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
     pointer-events: none;
     z-index: 9999;
   }
+
+  /* ── INTRO OVERLAY ── */
+  #intro {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 9998;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    animation: introOut 0.8s ease 4s forwards;
+  }
+  @keyframes introOut { to { opacity: 0; pointer-events: none; } }
+
+  .intro-skull {
+    font-size: 80px;
+    animation: iSkull 4s ease forwards;
+  }
+  @keyframes iSkull {
+    0% { opacity:0; transform:scale(0.3) rotate(-20deg); filter:blur(20px); }
+    30% { opacity:1; transform:scale(1.1) rotate(0deg); filter:blur(0); }
+    60% { transform:scale(1); }
+    85% { opacity:1; }
+    100% { opacity:0; transform:scale(1.5); filter:blur(10px); }
+  }
+
+  .intro-terminal {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: var(--blood);
+    text-align: center;
+    line-height: 2.5;
+  }
+  .intro-terminal span {
+    display: block;
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  .intro-terminal span.show {
+    animation: termLine 0.3s ease forwards;
+  }
+  @keyframes termLine { to { opacity: 1; transform: none; } }
+
+  .intro-progress {
+    width: 240px; height: 1px;
+    background: #111;
+    position: relative;
+    overflow: hidden;
+  }
+  .intro-progress-bar {
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    background: var(--ember);
+    animation: iBar 3.5s ease forwards;
+    box-shadow: 0 0 10px var(--ember);
+  }
+  @keyframes iBar { from{width:0} to{width:100%} }
 
   /* ── NAV ── */
   nav {
@@ -66,10 +153,12 @@
     justify-content: space-between;
     align-items: center;
     padding: 14px 40px;
-    background: rgba(8,10,12,0.92);
+    background: rgba(8,10,12,0.95);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border);
+    transition: border-color 0.3s;
   }
+  nav.scrolled { border-bottom-color: var(--blood); }
   .nav-brand {
     font-family: 'Cinzel', serif;
     font-size: 15px;
@@ -78,7 +167,18 @@
     color: var(--gold);
     text-decoration: none;
     text-transform: uppercase;
+    position: relative;
   }
+  .nav-brand::after {
+    content: '';
+    position: absolute;
+    bottom: -2px; left: 0; right: 0;
+    height: 1px;
+    background: var(--gold);
+    transform: scaleX(0);
+    transition: transform 0.3s;
+  }
+  .nav-brand:hover::after { transform: scaleX(1); }
   .nav-links { display: flex; gap: 32px; list-style: none; }
   .nav-links a {
     font-family: 'Share Tech Mono', monospace;
@@ -88,8 +188,19 @@
     text-decoration: none;
     text-transform: uppercase;
     transition: color 0.2s;
+    position: relative;
   }
-  .nav-links a:hover { color: var(--gold); }
+  .nav-links a::before {
+    content: '';
+    position: absolute;
+    bottom: -2px; left: 0; right: 0;
+    height: 1px;
+    background: var(--ember);
+    transform: scaleX(0);
+    transition: transform 0.2s;
+  }
+  .nav-links a:hover { color: var(--bright); }
+  .nav-links a:hover::before { transform: scaleX(1); }
 
   /* ── HERO ── */
   #hero {
@@ -101,10 +212,7 @@
     text-align: center;
     padding: 120px 40px 80px;
     position: relative;
-    background:
-      radial-gradient(ellipse 80% 60% at 50% 30%, rgba(139,26,26,0.12) 0%, transparent 70%),
-      radial-gradient(ellipse 60% 40% at 50% 80%, rgba(26,143,160,0.06) 0%, transparent 60%),
-      var(--void);
+    z-index: 3;
   }
 
   .hero-eyebrow {
@@ -114,8 +222,15 @@
     color: var(--blood);
     text-transform: uppercase;
     margin-bottom: 28px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 4.5s forwards;
+  }
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(20px); }
+    to   { opacity:1; transform:translateY(0); }
   }
 
+  /* ── GLITCH TITLE ── */
   .hero-title {
     font-family: 'Cinzel', serif;
     font-size: clamp(48px, 9vw, 108px);
@@ -125,7 +240,44 @@
     text-shadow: 0 0 80px rgba(139,26,26,0.4);
     letter-spacing: -1px;
     margin-bottom: 8px;
+    position: relative;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 4.8s forwards;
   }
+  .hero-title .glitch {
+    position: relative;
+    display: inline-block;
+  }
+  .hero-title .glitch::before,
+  .hero-title .glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+  }
+  .hero-title .glitch::before {
+    color: #ff2020;
+    animation: glitch1 6s infinite 5s;
+    clip-path: polygon(0 0,100% 0,100% 40%,0 40%);
+  }
+  .hero-title .glitch::after {
+    color: #00ffff;
+    animation: glitch2 6s infinite 5s;
+    clip-path: polygon(0 60%,100% 60%,100% 100%,0 100%);
+  }
+  @keyframes glitch1 {
+    0%,85%,100%{transform:none;opacity:0}
+    87%{transform:translate(-3px,1px);opacity:.7}
+    90%{transform:translate(3px,-1px);opacity:.7}
+    92%{transform:none;opacity:0}
+  }
+  @keyframes glitch2 {
+    0%,83%,100%{transform:none;opacity:0}
+    85%{transform:translate(3px,2px);opacity:.7}
+    88%{transform:translate(-3px,-2px);opacity:.7}
+    90%{transform:none;opacity:0}
+  }
+
   .hero-title span {
     display: block;
     color: var(--gold);
@@ -139,6 +291,8 @@
     height: 60px;
     background: linear-gradient(to bottom, var(--blood), transparent);
     margin: 36px auto;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 5.1s forwards;
   }
 
   .hero-sub {
@@ -149,30 +303,39 @@
     letter-spacing: 0.5px;
     line-height: 1.7;
     margin-bottom: 48px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 5.3s forwards;
   }
 
-  /* ── BOUNTY COUNTER ── */
+  /* ── COUNTERS ── */
+  .stats-bar {
+    display: flex;
+    gap: 1px;
+    margin-bottom: 52px;
+    background: var(--border);
+    opacity: 0;
+    animation: fadeUp 0.8s ease 5.5s forwards;
+  }
   .bounty-counter-hero {
+    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 6px;
-    margin-bottom: 52px;
     padding: 24px 48px;
-    border: 1px solid var(--border);
-    background: rgba(13,17,23,0.8);
+    background: rgba(13,17,23,0.9);
     position: relative;
+    overflow: hidden;
   }
-  .bounty-counter-hero::before,
-  .bounty-counter-hero::after {
+  .bounty-counter-hero::before {
     content: '';
     position: absolute;
-    width: 8px; height: 8px;
-    border-color: var(--gold);
-    border-style: solid;
+    top: 0; left: -100%;
+    width: 50%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(231,76,60,0.04), transparent);
+    animation: sweep 5s ease-in-out infinite;
   }
-  .bounty-counter-hero::before { top: -1px; left: -1px; border-width: 1px 0 0 1px; }
-  .bounty-counter-hero::after  { bottom: -1px; right: -1px; border-width: 0 1px 1px 0; }
+  @keyframes sweep { 0%{left:-100%} 100%{left:200%} }
 
   .counter-label {
     font-family: 'Share Tech Mono', monospace;
@@ -198,22 +361,14 @@
     color: var(--gold-dim);
     text-transform: uppercase;
   }
-  .counter-pulse {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 4px;
-  }
+  .counter-pulse { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
   .pulse-dot {
     width: 6px; height: 6px;
     border-radius: 50%;
     background: var(--cyan-bright);
-    animation: pulse 2s ease-in-out infinite;
+    animation: pulseAnim 2s ease-in-out infinite;
   }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.3; transform: scale(0.7); }
-  }
+  @keyframes pulseAnim { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.3;transform:scale(0.7)} }
   .pulse-text {
     font-family: 'Share Tech Mono', monospace;
     font-size: 9px;
@@ -222,7 +377,14 @@
     text-transform: uppercase;
   }
 
-  .hero-ctas { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+  .hero-ctas {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 5.7s forwards;
+  }
 
   .btn-primary {
     display: inline-block;
@@ -236,8 +398,19 @@
     text-transform: uppercase;
     border: 1px solid var(--crimson);
     transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
   }
-  .btn-primary:hover { background: var(--crimson); border-color: var(--ember); }
+  .btn-primary::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg,transparent,rgba(255,255,255,0.06),transparent);
+    transform: translateX(-100%);
+    transition: transform 0.4s;
+  }
+  .btn-primary:hover::after { transform: translateX(100%); }
+  .btn-primary:hover { background: var(--crimson); border-color: var(--ember); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(139,26,26,0.4); }
 
   .btn-secondary {
     display: inline-block;
@@ -252,10 +425,24 @@
     border: 1px solid var(--gold-dim);
     transition: all 0.2s;
   }
-  .btn-secondary:hover { background: rgba(201,168,76,0.08); border-color: var(--gold); }
+  .btn-secondary:hover { background: rgba(201,168,76,0.08); border-color: var(--gold); transform: translateY(-2px); }
+
+  /* ── SCROLL REVEAL ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+  .reveal-left {
+    opacity: 0;
+    transform: translateX(-40px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal-left.visible { opacity: 1; transform: translateX(0); }
 
   /* ── SECTIONS ── */
-  .wrap { max-width: 960px; margin: 0 auto; padding: 0 40px; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 40px; position: relative; z-index: 3; }
 
   section {
     padding: 100px 0;
@@ -283,7 +470,18 @@
     width: 40px; height: 1px;
     background: var(--blood);
     margin-bottom: 40px;
+    position: relative;
+    overflow: hidden;
   }
+  .section-divider::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: var(--ember);
+    animation: dividerSlide 2s ease-in-out infinite;
+  }
+  @keyframes dividerSlide { 0%{left:-100%} 100%{left:200%} }
 
   /* ── SERVICES ── */
   .services-grid {
@@ -297,9 +495,21 @@
     background: var(--ash);
     padding: 36px 32px;
     position: relative;
-    transition: background 0.2s;
+    transition: background 0.3s, transform 0.3s;
+    overflow: hidden;
   }
-  .service-card:hover { background: var(--obsidian); }
+  .service-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(to right, var(--blood), var(--ember));
+    transform: scaleX(0);
+    transition: transform 0.4s;
+    transform-origin: left;
+  }
+  .service-card:hover { background: var(--obsidian); transform: translateY(-4px); }
+  .service-card:hover::before { transform: scaleX(1); }
   .service-tier {
     font-family: 'Share Tech Mono', monospace;
     font-size: 10px;
@@ -320,41 +530,38 @@
     font-size: 22px;
     color: var(--ember);
     margin-bottom: 14px;
+    text-shadow: 0 0 12px rgba(231,76,60,0.3);
   }
-  .service-desc {
-    font-size: 14px;
-    color: var(--dim);
-    line-height: 1.6;
-  }
+  .service-desc { font-size: 14px; color: var(--dim); line-height: 1.6; }
 
   /* ── HOW IT WORKS ── */
-  .steps { display: flex; flex-direction: column; gap: 0; }
+  .steps { display: flex; flex-direction: column; }
   .payment-step {
     display: flex;
     gap: 28px;
     align-items: flex-start;
     padding: 32px 0;
     border-bottom: 1px solid var(--border);
+    transition: background 0.2s;
+    border-radius: 2px;
   }
+  .payment-step:hover { background: rgba(139,26,26,0.04); padding-left: 12px; }
   .payment-step:last-child { border-bottom: none; }
   .step-num {
     font-family: 'Share Tech Mono', monospace;
-    font-size: 13px;
-    color: var(--blood);
+    font-size: 28px;
+    color: rgba(139,26,26,0.3);
     letter-spacing: 2px;
-    min-width: 32px;
+    min-width: 40px;
     padding-top: 2px;
+    font-weight: 700;
+    transition: color 0.3s;
   }
-  .step-content strong {
-    display: block;
-    font-family: 'Cinzel', serif;
-    font-size: 17px;
-    color: var(--bright);
-    margin-bottom: 6px;
-  }
+  .payment-step:hover .step-num { color: var(--ember); }
+  .step-content strong { display: block; font-family: 'Cinzel', serif; font-size: 17px; color: var(--bright); margin-bottom: 6px; }
   .step-content p { font-size: 15px; color: var(--dim); }
 
-  /* ── PAYMENT CONTACTS ── */
+  /* ── CONTACT CARD ── */
   .payment-contacts { display: flex; flex-wrap: wrap; gap: 16px; }
   .contact-card {
     display: flex;
@@ -364,28 +571,26 @@
     background: var(--ash);
     border: 1px solid var(--border);
     text-decoration: none;
-    transition: all 0.2s;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .contact-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 40%, rgba(139,26,26,0.05));
+    opacity: 0;
+    transition: opacity 0.3s;
   }
   .contact-card:hover { border-color: var(--gold-dim); background: var(--obsidian); }
-  .contact-avatar {
-    font-size: 28px;
-    line-height: 1;
-  }
-  .contact-info strong {
-    display: block;
-    font-family: 'Cinzel', serif;
-    font-size: 16px;
-    color: var(--gold);
-  }
-  .contact-info span {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 11px;
-    color: var(--dim);
-    letter-spacing: 1px;
-  }
+  .contact-card:hover::after { opacity: 1; }
+  .contact-avatar { font-size: 28px; line-height: 1; }
+  .contact-info strong { display: block; font-family: 'Cinzel', serif; font-size: 16px; color: var(--gold); }
+  .contact-info span { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--dim); letter-spacing: 1px; }
 
   /* ── RULES ── */
-  .rules-list { list-style: none; display: flex; flex-direction: column; gap: 0; }
+  .rules-list { list-style: none; display: flex; flex-direction: column; }
   .rules-list li {
     display: flex;
     gap: 20px;
@@ -394,7 +599,9 @@
     font-size: 15px;
     color: var(--dim);
     line-height: 1.6;
+    transition: color 0.2s, padding-left 0.2s;
   }
+  .rules-list li:hover { color: var(--text); padding-left: 8px; }
   .rules-list li::before {
     content: '//';
     font-family: 'Share Tech Mono', monospace;
@@ -403,6 +610,7 @@
     letter-spacing: 2px;
     min-width: 24px;
     padding-top: 2px;
+    flex-shrink: 0;
   }
   .rules-list li strong { color: var(--text); }
 
@@ -410,15 +618,7 @@
   #recruitment {
     background: linear-gradient(to bottom, var(--void), var(--ash) 30%, var(--ash) 70%, var(--void));
   }
-
-  .recruit-intro {
-    font-size: 16px;
-    color: var(--dim);
-    max-width: 560px;
-    line-height: 1.7;
-    margin-bottom: 48px;
-  }
-
+  .recruit-intro { font-size: 16px; color: var(--dim); max-width: 560px; line-height: 1.7; margin-bottom: 48px; }
   .typeform-wrapper {
     border: 1px solid var(--border);
     background: var(--ash);
@@ -431,6 +631,24 @@
     top: 0; left: 0; right: 0;
     height: 2px;
     background: linear-gradient(to right, var(--blood), var(--gold), var(--blood));
+    animation: borderGlow 3s ease-in-out infinite;
+  }
+  @keyframes borderGlow { 0%,100%{opacity:.6} 50%{opacity:1} }
+
+  /* ── CONTACT FORM ── */
+  #contact input, #contact textarea {
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  #contact input:focus, #contact textarea:focus {
+    border-color: var(--blood) !important;
+    box-shadow: 0 0 0 1px var(--blood);
+    outline: none;
+  }
+  #contact-submit:hover {
+    background: var(--crimson) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(139,26,26,0.4);
+    transition: all 0.2s;
   }
 
   /* ── FOOTER ── */
@@ -439,6 +657,8 @@
     border-top: 1px solid var(--border);
     text-align: center;
     background: var(--void);
+    position: relative;
+    z-index: 3;
   }
   .footer-logo {
     font-family: 'Cinzel', serif;
@@ -448,23 +668,36 @@
     color: var(--gold);
     margin-bottom: 16px;
   }
-  .footer-sub {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 2px;
-    color: var(--muted);
-  }
+  .footer-sub { font-family: 'Share Tech Mono', monospace; font-size: 11px; letter-spacing: 2px; color: var(--muted); }
   .footer-sub a { color: var(--dim); text-decoration: none; }
   .footer-sub a:hover { color: var(--gold); }
 
+  /* ── BULLET HOLE ── */
+  .bullet-hole {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9990;
+    transform: translate(-50%,-50%);
+    animation: bulletFade 4s ease forwards;
+  }
+  @keyframes bulletFade {
+    0% { opacity:1; transform:translate(-50%,-50%) scale(0.2); }
+    10% { transform:translate(-50%,-50%) scale(1); }
+    70% { opacity:1; }
+    100% { opacity:0; }
+  }
+
   /* ── RESPONSIVE ── */
   @media (max-width: 640px) {
+    body { cursor: auto; }
+    #cursor, #cursor-trail { display: none; }
     nav { padding: 12px 20px; }
     .nav-links { display: none; }
     .wrap { padding: 0 20px; }
     section { padding: 70px 0; }
     .hero-ctas { flex-direction: column; align-items: center; }
     .btn-primary, .btn-secondary { width: 100%; text-align: center; }
+    .stats-bar { flex-direction: column; gap: 1px; }
     .bounty-counter-hero { padding: 20px 28px; }
     .counter-value { font-size: 48px; }
   }
@@ -472,8 +705,38 @@
 </head>
 <body>
 
+<!-- CURSOR -->
+<div id="cursor">
+  <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="22" cy="22" r="20" stroke="rgba(139,26,26,0.5)" stroke-width="0.5"/>
+    <circle cx="22" cy="22" r="12" stroke="rgba(231,76,60,0.4)" stroke-width="0.5"/>
+    <circle cx="22" cy="22" r="3" stroke="#e74c3c" stroke-width="1" fill="rgba(231,76,60,0.2)"/>
+    <line x1="22" y1="2" x2="22" y2="14" stroke="#e74c3c" stroke-width="0.5" opacity="0.7"/>
+    <line x1="22" y1="30" x2="22" y2="42" stroke="#e74c3c" stroke-width="0.5" opacity="0.7"/>
+    <line x1="2" y1="22" x2="14" y2="22" stroke="#e74c3c" stroke-width="0.5" opacity="0.7"/>
+    <line x1="30" y1="22" x2="42" y2="22" stroke="#e74c3c" stroke-width="0.5" opacity="0.7"/>
+  </svg>
+</div>
+<div id="cursor-trail"></div>
+
+<!-- CANVASES -->
+<canvas id="bg-canvas"></canvas>
+<canvas id="bullet-canvas"></canvas>
+
+<!-- INTRO -->
+<div id="intro">
+  <div class="intro-skull">☠</div>
+  <div class="intro-terminal">
+    <span id="it1">// Blacklist Recon</span>
+    <span id="it2">// Contract Network — Torn City</span>
+    <span id="it3">// Initializing secure channel...</span>
+    <span id="it4">// Access granted.</span>
+  </div>
+  <div class="intro-progress"><div class="intro-progress-bar"></div></div>
+</div>
+
 <!-- NAV -->
-<nav>
+<nav id="main-nav">
   <a class="nav-brand" href="#hero">Blacklist Recon</a>
   <ul class="nav-links">
     <li><a href="#services">Services</a></li>
@@ -489,31 +752,30 @@
 <div id="hero">
   <p class="hero-eyebrow">A Blacklist Recon Operation · Torn City</p>
   <h1 class="hero-title">
-    Blacklist
+    <span class="glitch" data-text="Blacklist">Blacklist</span>
     <span>Recon</span>
   </h1>
   <div class="hero-divider"></div>
   <p class="hero-sub">Elite contract hunters operating out of Torn City. Every target. Every timezone. No questions asked.</p>
 
-  <!-- LIVE STATS COUNTERS -->
-  <div style="display:flex;gap:1px;margin-bottom:52px;background:var(--border);">
-    <div class="bounty-counter-hero" style="flex:1;margin-bottom:0;border:none;">
+  <div class="stats-bar">
+    <div class="bounty-counter-hero">
       <div class="counter-label">Contracts Fulfilled</div>
       <div class="counter-value loading" id="bountyCount">—</div>
       <div class="counter-sublabel">Completed</div>
     </div>
-    <div class="bounty-counter-hero" style="flex:1;margin-bottom:0;border:none;">
+    <div class="bounty-counter-hero">
       <div class="counter-label">Active Contracts</div>
       <div class="counter-value loading" id="activeCount">—</div>
       <div class="counter-sublabel">In Progress</div>
     </div>
-    <div class="bounty-counter-hero" style="flex:1;margin-bottom:0;border:none;">
+    <div class="bounty-counter-hero">
       <div class="counter-label">Network Size</div>
       <div class="counter-value loading" id="memberCount">—</div>
       <div class="counter-sublabel">Active Agents</div>
     </div>
   </div>
-  <div class="counter-pulse" style="margin-bottom:52px;margin-top:-40px;">
+  <div class="counter-pulse" style="margin-bottom:52px;margin-top:-40px;opacity:0;animation:fadeUp 0.8s ease 5.5s forwards;">
     <div class="pulse-dot"></div>
     <div class="pulse-text" id="counterStatus">Connecting...</div>
   </div>
@@ -529,28 +791,29 @@
 <div id="services">
 <div class="wrap">
 <section>
-  <p class="section-eyebrow">What We Do</p>
-  <h2 class="section-title">Contract Tiers</h2>
-  <div class="section-divider"></div>
-
+  <div class="reveal">
+    <p class="section-eyebrow">What We Do</p>
+    <h2 class="section-title">Contract Tiers</h2>
+    <div class="section-divider"></div>
+  </div>
   <div class="services-grid">
-    <div class="service-card">
+    <div class="service-card reveal" style="transition-delay:0.1s">
       <div class="service-tier">Tier I</div>
       <div class="service-name">Standard Hit</div>
       <div class="service-price">$1M</div>
       <div class="service-desc">Single hospitalization on your specified target. Confirmed within 24 hours of payment. Ideal for personal grudges or one-time retaliation.</div>
     </div>
-    <div class="service-card">
+    <div class="service-card reveal" style="transition-delay:0.2s">
       <div class="service-tier">Tier II</div>
       <div class="service-name">War Support</div>
       <div class="service-price">$3M</div>
       <div class="service-desc">Sustained pressure during faction wars — repeated hits on priority targets to drain resources and keep them off the chain.</div>
     </div>
-    <div class="service-card">
+    <div class="service-card reveal" style="transition-delay:0.3s">
       <div class="service-tier">Tier III — High Value</div>
       <div class="service-name">High-Value Contract</div>
       <div class="service-price">$4M–$5M</div>
-      <div class="service-desc">Extended campaign targeting strong or well-protected players. Priority queue. Coordinated multi-Reaper execution. Results guaranteed or contract extended.</div>
+      <div class="service-desc">Extended campaign targeting strong or well-protected players. Priority queue. Coordinated execution. Results guaranteed or contract extended.</div>
     </div>
   </div>
 </section>
@@ -561,36 +824,37 @@
 <div id="how-it-works">
 <div class="wrap">
 <section>
-  <p class="section-eyebrow">The Process</p>
-  <h2 class="section-title">How Contracts Work</h2>
-  <div class="section-divider"></div>
-
+  <div class="reveal">
+    <p class="section-eyebrow">The Process</p>
+    <h2 class="section-title">How Contracts Work</h2>
+    <div class="section-divider"></div>
+  </div>
   <div class="steps">
-    <div class="payment-step">
-      <span class="step-num">I</span>
+    <div class="payment-step reveal-left" style="transition-delay:0.1s">
+      <span class="step-num">01</span>
       <div class="step-content">
         <strong>Send Payment</strong>
         <p>After your contract is confirmed, payment instructions will be sent to you privately in-game by <span style="color:var(--gold);">The Handler</span>. All transactions are handled discreetly.</p>
       </div>
     </div>
-    <div class="payment-step">
-      <span class="step-num">II</span>
+    <div class="payment-step reveal-left" style="transition-delay:0.2s">
+      <span class="step-num">02</span>
       <div class="step-content">
         <strong>Submit Your Contract</strong>
         <p>Provide the target's Torn name or XID, the type of hit you want, and any timing requirements. Anonymous — your identity is never disclosed to the operator or the target.</p>
       </div>
     </div>
-    <div class="payment-step">
-      <span class="step-num">III</span>
+    <div class="payment-step reveal-left" style="transition-delay:0.3s">
+      <span class="step-num">03</span>
       <div class="step-content">
         <strong>Contract Confirmed</strong>
-        <p>Once payment is verified, your contract goes live and is assigned to an available Reaper. You receive confirmation when the hit is complete.</p>
+        <p>Once payment is verified, your contract goes live and is assigned to an available hunter. You receive confirmation when the hit is complete.</p>
       </div>
     </div>
   </div>
 
   <p style="font-size:11px; letter-spacing:2px; color:var(--blood); text-transform:uppercase; margin: 48px 0 20px;">Payment Contact</p>
-  <div class="payment-contacts">
+  <div class="payment-contacts reveal">
     <div class="contact-card" style="cursor:default;">
       <div class="contact-avatar">☠</div>
       <div class="contact-info">
@@ -599,8 +863,8 @@
       </div>
     </div>
   </div>
-  <p style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--dim);margin-top:16px;line-height:1.8;">
-    To place a contract, use the <a href="#contact" style="color:var(--gold);">anonymous contact form</a> below or send an in-game Torn message to <span style="color:var(--gold);">The Handler</span>. Payment instructions will be sent back to you privately. Your identity is never disclosed.
+  <p style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--dim);margin-top:16px;line-height:1.8;" class="reveal">
+    Fill out the <a href="#contact" style="color:var(--gold);">contact form</a> below. Payment instructions will be sent back to you privately. Your identity stays between you, The Handler, and Listers. Always.
   </p>
 </section>
 </div>
@@ -610,14 +874,15 @@
 <div id="recruitment">
 <div class="wrap">
 <section>
-  <p class="section-eyebrow">Join the Faction</p>
-  <h2 class="section-title">Become a Reaper</h2>
-  <div class="section-divider"></div>
-  <p class="recruit-intro">
-    Blacklist Recon is recruiting active, combat-ready players to join Blacklist Recon. We offer coordinated war operations, faction support, and a tight-knit crew. If you hit hard and show up when it counts, apply below.
-  </p>
-
-  <div class="typeform-wrapper" style="padding: 40px 32px; text-align: center;">
+  <div class="reveal">
+    <p class="section-eyebrow">Join the Network</p>
+    <h2 class="section-title">Become a Hunter</h2>
+    <div class="section-divider"></div>
+    <p class="recruit-intro">
+      Blacklist Recon is recruiting active, combat-ready players. We offer coordinated war operations, faction support, and a tight-knit crew. If you hit hard and show up when it counts, apply below.
+    </p>
+  </div>
+  <div class="typeform-wrapper reveal" style="padding: 40px 32px; text-align: center;">
     <p style="font-family: Share Tech Mono, monospace; font-size: 13px; color: #6a7f94; letter-spacing: 1px; margin-bottom: 28px; line-height: 1.8;">
       Ready to join Blacklist Recon? Fill out your application below.<br>
       <span style="color: #8b1a1a; font-size: 11px;">Takes less than 2 minutes.</span>
@@ -641,16 +906,18 @@
 <div id="rules">
 <div class="wrap">
 <section>
-  <p class="section-eyebrow">The Code</p>
-  <h2 class="section-title">Terms of Contract</h2>
-  <div class="section-divider"></div>
+  <div class="reveal">
+    <p class="section-eyebrow">The Code</p>
+    <h2 class="section-title">Terms of Contract</h2>
+    <div class="section-divider"></div>
+  </div>
   <ul class="rules-list">
-    <li><span><strong>Payment is non-refundable</strong> once a contract has been activated and the target has been engaged.</span></li>
-    <li><span><strong>Identity of the client is never disclosed</strong> to the operator, the target, or any third party — before, during, or after the contract.</span></li>
-    <li><span><strong>Contracts are fulfilled in order of priority tier</strong> and payment confirmation. High-Value contracts jump the queue.</span></li>
-    <li><span><strong>We do not guarantee hospital time</strong> on targets who are already hospitalized, traveling, or in federal jail at time of contract activation.</span></li>
-    <li><span><strong>We operate within Torn City's rules.</strong> This is an in-game service for the browser game Torn (torn.com). All transactions are in-game items and currency only.</span></li>
-    <li><span><strong>Disputes are handled by Blacklist Recon leadership.</strong> Contact The Handler in-game for any contract concerns.</span></li>
+    <li class="reveal" style="transition-delay:0.05s"><span><strong>Payment is non-refundable</strong> once a contract has been activated and the target has been engaged.</span></li>
+    <li class="reveal" style="transition-delay:0.1s"><span><strong>Identity of the client is never disclosed</strong> to the operator, the target, or any third party — before, during, or after the contract.</span></li>
+    <li class="reveal" style="transition-delay:0.15s"><span><strong>Contracts are fulfilled in order of priority tier</strong> and payment confirmation. High-Value contracts jump the queue.</span></li>
+    <li class="reveal" style="transition-delay:0.2s"><span><strong>We do not guarantee hospital time</strong> on targets who are already hospitalized, traveling, or in federal jail at time of contract activation.</span></li>
+    <li class="reveal" style="transition-delay:0.25s"><span><strong>We operate within Torn City's rules.</strong> This is an in-game service for the browser game Torn (torn.com). All transactions are in-game items and currency only.</span></li>
+    <li class="reveal" style="transition-delay:0.3s"><span><strong>Disputes are handled by Blacklist Recon leadership.</strong> Contact The Handler in-game for any contract concerns.</span></li>
   </ul>
 </section>
 </div>
@@ -660,15 +927,17 @@
 <div id="contact">
 <div class="wrap">
 <section>
-  <p class="section-eyebrow">Anonymous Contact</p>
-  <h2 class="section-title">Message The Handler</h2>
-  <div class="section-divider"></div>
-  <p style="font-size:15px;color:var(--dim);max-width:520px;line-height:1.8;margin-bottom:32px;">
-    Send an anonymous message directly to Blacklist Recon command. No account required. No identity collected. Messages are received privately.
-  </p>
+  <div class="reveal">
+    <p class="section-eyebrow">Anonymous Contact</p>
+    <h2 class="section-title">Message The Handler</h2>
+    <div class="section-divider"></div>
+    <p style="font-size:15px;color:var(--dim);max-width:520px;line-height:1.8;margin-bottom:32px;">
+      Send a message directly to Blacklist Recon command. Your identity stays between you, The Handler, and Listers. Always.
+    </p>
+  </div>
 
   <div id="contact-msg"></div>
-  <div style="max-width:520px;">
+  <div style="max-width:520px;" class="reveal">
     <div style="display:flex;gap:12px;flex-wrap:wrap;">
       <div style="flex:1;min-width:200px;">
         <label style="display:block;font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:6px;">Torn Username <span style="color:var(--ember);">*</span></label>
@@ -677,78 +946,27 @@
       </div>
       <div style="flex:1;min-width:160px;">
         <label style="display:block;font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:6px;">Torn ID <span style="color:var(--ember);">*</span></label>
-        <input id="contact-tornid" type="number" placeholder="e.g. 1234567" maxlength="20"
+        <input id="contact-tornid" type="number" placeholder="e.g. 1234567"
           style="width:100%;background:var(--ash);border:1px solid var(--border);color:var(--bright);font-family:Share Tech Mono,monospace;font-size:13px;padding:10px 14px;margin-bottom:16px;outline:none;box-sizing:border-box;" />
       </div>
     </div>
-
     <label style="display:block;font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:6px;">Subject</label>
     <input id="contact-subject" type="text" placeholder="e.g. Contract Inquiry, War Support, Payment" maxlength="100"
       style="width:100%;background:var(--ash);border:1px solid var(--border);color:var(--bright);font-family:Share Tech Mono,monospace;font-size:13px;padding:10px 14px;margin-bottom:16px;outline:none;box-sizing:border-box;" />
-
     <label style="display:block;font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:6px;">Message <span style="color:var(--ember);">*</span></label>
     <textarea id="contact-message" rows="5" placeholder="Describe your contract request, target, payment confirmation, or inquiry..." maxlength="1000"
       style="width:100%;background:var(--ash);border:1px solid var(--border);color:var(--bright);font-family:Share Tech Mono,monospace;font-size:13px;padding:10px 14px;margin-bottom:20px;outline:none;box-sizing:border-box;resize:vertical;"></textarea>
-
     <p style="font-family:Share Tech Mono,monospace;font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:16px;">
-      * Required fields. Your Torn ID is used so we can look up and contact you in-game. It is never shared publicly.
+      * Required. Your Torn ID is used to contact you in-game only. Never shared publicly.
     </p>
-
     <button id="contact-submit" onclick="sendContactMessage()"
-      style="width:100%;padding:14px;background:var(--blood);border:1px solid var(--crimson);color:var(--bright);font-family:Share Tech Mono,monospace;font-size:12px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;">
+      style="width:100%;padding:14px;background:var(--blood);border:1px solid var(--crimson);color:var(--bright);font-family:Share Tech Mono,monospace;font-size:12px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;">
       Send Message →
     </button>
   </div>
 </section>
 </div>
 </div>
-
-<script>
-async function sendContactMessage() {
-  const username = document.getElementById('contact-username').value.trim();
-  const tornId   = document.getElementById('contact-tornid').value.trim();
-  const subject  = document.getElementById('contact-subject').value.trim();
-  const message  = document.getElementById('contact-message').value.trim();
-  const msgEl    = document.getElementById('contact-msg');
-  const btn      = document.getElementById('contact-submit');
-
-  if (!username || !tornId || !message) {
-    msgEl.innerHTML = '<p style="color:#e04f4f;font-family:Share Tech Mono,monospace;font-size:12px;margin-bottom:16px;">Please fill in your Torn Username, Torn ID, and Message.</p>';
-    return;
-  }
-  if (isNaN(tornId)) {
-    msgEl.innerHTML = '<p style="color:#e04f4f;font-family:Share Tech Mono,monospace;font-size:12px;margin-bottom:16px;">Torn ID must be a number.</p>';
-    return;
-  }
-
-  btn.disabled    = true;
-  btn.textContent = 'Sending...';
-  msgEl.innerHTML = '';
-
-  try {
-    const res = await fetch('https://torn-bounty-board.pearcej29.workers.dev/messages/send', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ subject, message, tornUsername: username, tornId }),
-    });
-    const data = await res.json();
-    if (data.ok) {
-      msgEl.innerHTML = '<p style="color:#5fe04f;font-family:Share Tech Mono,monospace;font-size:12px;margin-bottom:16px;">Message sent. The Handler will be in touch shortly.</p>';
-      document.getElementById('contact-username').value = '';
-      document.getElementById('contact-tornid').value   = '';
-      document.getElementById('contact-subject').value  = '';
-      document.getElementById('contact-message').value  = '';
-    } else {
-      msgEl.innerHTML = `<p style="color:#e04f4f;font-family:Share Tech Mono,monospace;font-size:12px;margin-bottom:16px;">${data.error}</p>`;
-    }
-  } catch(e) {
-    msgEl.innerHTML = '<p style="color:#e04f4f;font-family:Share Tech Mono,monospace;font-size:12px;margin-bottom:16px;">Failed to send. Please try again.</p>';
-  }
-
-  btn.disabled    = false;
-  btn.textContent = 'Send Message →';
-}
-</script>
 
 <!-- FOOTER -->
 <footer>
@@ -760,42 +978,276 @@ async function sendContactMessage() {
   </p>
 </footer>
 
-<!-- LIVE BOUNTY COUNTER SCRIPT -->
 <script>
-  const WORKER_URL = 'https://torn-bounty-board.pearcej29.workers.dev';
-  const el = document.getElementById('bountyCount');
-  const status = document.getElementById('counterStatus');
+// ── CURSOR ──────────────────────────────────────────────────────────────
+const cursor      = document.getElementById('cursor');
+const cursorTrail = document.getElementById('cursor-trail');
+let mx=0, my=0, cx=0, cy=0;
 
-  const activeEl = document.getElementById('activeCount');
-  const memberEl = document.getElementById('memberCount');
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursorTrail.style.left = mx + 'px';
+  cursorTrail.style.top  = my + 'px';
+});
+(function animCursor() {
+  cx += (mx - cx) * 0.1;
+  cy += (my - cy) * 0.1;
+  cursor.style.left = cx + 'px';
+  cursor.style.top  = cy + 'px';
+  requestAnimationFrame(animCursor);
+})();
 
-  async function fetchBountyCount() {
-    try {
-      const res = await fetch(`${WORKER_URL}/stats`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
+// ── INTRO TERMINAL ──────────────────────────────────────────────────────
+[300, 800, 1400, 2100].forEach((t, i) => {
+  setTimeout(() => {
+    document.getElementById('it' + (i+1)).classList.add('show');
+  }, t);
+});
 
-      el.classList.remove('loading');
-      activeEl.classList.remove('loading');
-      memberEl.classList.remove('loading');
+// ── BACKGROUND CANVAS — PARTICLES + GRID ────────────────────────────────
+const bgCanvas = document.getElementById('bg-canvas');
+const bgCtx    = bgCanvas.getContext('2d');
 
-      el.textContent      = (data.completedBounties ?? 0).toString().padStart(3, '0');
-      activeEl.textContent = (data.activeBounties    ?? 0).toString().padStart(3, '0');
-      memberEl.textContent = (data.memberCount        ?? 0).toString().padStart(3, '0');
-      status.textContent  = 'Live · updates every 30s';
-    } catch (err) {
-      el.classList.add('loading');
-      activeEl.classList.add('loading');
-      memberEl.classList.add('loading');
-      el.textContent = activeEl.textContent = memberEl.textContent = '—';
-      status.textContent = 'Worker offline';
+function resizeBg() {
+  bgCanvas.width  = window.innerWidth;
+  bgCanvas.height = window.innerHeight;
+}
+resizeBg();
+window.addEventListener('resize', resizeBg);
+
+const bgParticles = Array.from({ length: 80 }, () => ({
+  x: Math.random() * window.innerWidth,
+  y: Math.random() * window.innerHeight,
+  vx: (Math.random() - 0.5) * 0.2,
+  vy: -Math.random() * 0.3 - 0.05,
+  size: Math.random() * 1.5 + 0.3,
+  opacity: Math.random() * 0.3 + 0.05,
+  life: Math.random(),
+}));
+
+let bgAngle = 0;
+function drawBg() {
+  bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+  bgAngle += 0.001;
+
+  // Rotating crosshair lines in background
+  const cx2 = bgCanvas.width / 2, cy2 = bgCanvas.height * 0.4;
+  bgCtx.save();
+  bgCtx.translate(cx2, cy2);
+  bgCtx.rotate(bgAngle);
+  [200, 350, 500, 650].forEach((r, i) => {
+    bgCtx.beginPath();
+    bgCtx.arc(0, 0, r, 0, Math.PI * 2);
+    bgCtx.strokeStyle = `rgba(139,26,26,${0.04 - i * 0.007})`;
+    bgCtx.lineWidth = 1;
+    bgCtx.stroke();
+  });
+  bgCtx.restore();
+
+  // Floating embers
+  bgParticles.forEach(p => {
+    p.x += p.vx; p.y += p.vy; p.life -= 0.002;
+    if (p.life <= 0 || p.y < -10) {
+      p.x = Math.random() * bgCanvas.width;
+      p.y = bgCanvas.height + 10;
+      p.life = Math.random() * 0.5 + 0.5;
+    }
+    bgCtx.save();
+    bgCtx.globalAlpha = p.opacity * p.life;
+    bgCtx.fillStyle = '#e74c3c';
+    bgCtx.beginPath();
+    bgCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    bgCtx.fill();
+    bgCtx.restore();
+  });
+
+  requestAnimationFrame(drawBg);
+}
+drawBg();
+
+// ── BULLET HOLE CANVAS ───────────────────────────────────────────────────
+const bCanvas = document.getElementById('bullet-canvas');
+const bCtx    = bCanvas.getContext('2d');
+const holes   = [];
+
+function resizeBc() {
+  bCanvas.width  = window.innerWidth;
+  bCanvas.height = window.innerHeight;
+}
+resizeBc();
+window.addEventListener('resize', resizeBc);
+
+function spawnBulletHole(x, y) {
+  holes.push({ x, y, opacity: 1, age: 0, r: Math.random() * 6 + 4, cracks: Math.floor(Math.random() * 4) + 4 });
+}
+
+function drawBulletHoles() {
+  bCtx.clearRect(0, 0, bCanvas.width, bCanvas.height);
+  for (let i = holes.length - 1; i >= 0; i--) {
+    const h = holes[i];
+    h.age  += 0.005;
+    h.opacity = Math.max(0, 1 - h.age);
+    if (h.opacity <= 0) { holes.splice(i, 1); continue; }
+
+    bCtx.save();
+    bCtx.globalAlpha = h.opacity * 0.8;
+    bCtx.translate(h.x, h.y);
+
+    // Outer shatter ring
+    bCtx.beginPath();
+    bCtx.arc(0, 0, h.r * 2.5, 0, Math.PI * 2);
+    bCtx.strokeStyle = 'rgba(139,26,26,0.3)';
+    bCtx.lineWidth = 1;
+    bCtx.stroke();
+
+    // Hole
+    bCtx.beginPath();
+    bCtx.arc(0, 0, h.r, 0, Math.PI * 2);
+    bCtx.fillStyle = 'rgba(0,0,0,0.9)';
+    bCtx.fill();
+    bCtx.strokeStyle = 'rgba(231,76,60,0.6)';
+    bCtx.lineWidth = 1.5;
+    bCtx.stroke();
+
+    // Crack lines
+    for (let c = 0; c < h.cracks; c++) {
+      const angle  = (c / h.cracks) * Math.PI * 2 + h.age;
+      const length = h.r * (2 + Math.random() * 3);
+      bCtx.beginPath();
+      bCtx.moveTo(Math.cos(angle) * h.r, Math.sin(angle) * h.r);
+      bCtx.lineTo(Math.cos(angle) * length, Math.sin(angle) * length);
+      bCtx.strokeStyle = 'rgba(139,26,26,0.4)';
+      bCtx.lineWidth = 0.5;
+      bCtx.stroke();
+    }
+
+    // Impact flash on fresh holes
+    if (h.age < 0.05) {
+      bCtx.globalAlpha = (0.05 - h.age) / 0.05;
+      bCtx.beginPath();
+      bCtx.arc(0, 0, h.r * 8, 0, Math.PI * 2);
+      const grad = bCtx.createRadialGradient(0,0,0, 0,0,h.r*8);
+      grad.addColorStop(0, 'rgba(231,76,60,0.3)');
+      grad.addColorStop(1, 'transparent');
+      bCtx.fillStyle = grad;
+      bCtx.fill();
+    }
+
+    bCtx.restore();
+  }
+  requestAnimationFrame(drawBulletHoles);
+}
+drawBulletHoles();
+
+// Spawn bullet holes on scroll
+let lastScrollY = 0;
+let scrollAccum = 0;
+window.addEventListener('scroll', () => {
+  const delta = Math.abs(window.scrollY - lastScrollY);
+  scrollAccum += delta;
+  lastScrollY  = window.scrollY;
+  if (scrollAccum > 60) {
+    scrollAccum = 0;
+    // Spawn 1-2 holes at random positions visible on screen
+    const count = Math.random() > 0.6 ? 2 : 1;
+    for (let i = 0; i < count; i++) {
+      spawnBulletHole(
+        Math.random() * window.innerWidth,
+        Math.random() * window.innerHeight
+      );
     }
   }
+});
 
-  // Initial load + poll every 30s
-  fetchBountyCount();
-  setInterval(fetchBountyCount, 30000);
+// Also spawn on click
+document.addEventListener('click', e => {
+  spawnBulletHole(e.clientX, e.clientY);
+  // Spawn 2-3 surrounding shards
+  for (let i = 0; i < 2; i++) {
+    const angle  = Math.random() * Math.PI * 2;
+    const dist   = Math.random() * 40 + 10;
+    spawnBulletHole(e.clientX + Math.cos(angle)*dist, e.clientY + Math.sin(angle)*dist);
+  }
+});
+
+// ── NAV SCROLL ──────────────────────────────────────────────────────────
+window.addEventListener('scroll', () => {
+  document.getElementById('main-nav').classList.toggle('scrolled', window.scrollY > 50);
+});
+
+// ── SCROLL REVEAL ───────────────────────────────────────────────────────
+const revealObserver = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.12 });
+
+document.querySelectorAll('.reveal, .reveal-left').forEach(el => revealObserver.observe(el));
+
+// ── LIVE STATS ──────────────────────────────────────────────────────────
+const WORKER_URL = 'https://torn-bounty-board.pearcej29.workers.dev';
+const el         = document.getElementById('bountyCount');
+const status     = document.getElementById('counterStatus');
+const activeEl   = document.getElementById('activeCount');
+const memberEl   = document.getElementById('memberCount');
+
+async function fetchStats() {
+  try {
+    const res  = await fetch(`${WORKER_URL}/stats`);
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    [el, activeEl, memberEl].forEach(e => e.classList.remove('loading'));
+    el.textContent       = (data.completedBounties ?? 0).toString().padStart(3, '0');
+    activeEl.textContent = (data.activeBounties    ?? 0).toString().padStart(3, '0');
+    memberEl.textContent = (data.memberCount        ?? 0).toString().padStart(3, '0');
+    status.textContent   = 'Live · updates every 30s';
+  } catch {
+    [el, activeEl, memberEl].forEach(e => e.classList.add('loading'));
+    el.textContent = activeEl.textContent = memberEl.textContent = '—';
+    status.textContent = 'Worker offline';
+  }
+}
+fetchStats();
+setInterval(fetchStats, 30000);
+
+// ── CONTACT FORM ─────────────────────────────────────────────────────────
+async function sendContactMessage() {
+  const username = document.getElementById('contact-username').value.trim();
+  const tornId   = document.getElementById('contact-tornid').value.trim();
+  const subject  = document.getElementById('contact-subject').value.trim();
+  const message  = document.getElementById('contact-message').value.trim();
+  const msgEl    = document.getElementById('contact-msg');
+  const btn      = document.getElementById('contact-submit');
+
+  if (!username || !tornId || !message) {
+    msgEl.innerHTML = '<p style="color:#e74c3c;font-family:Share Tech Mono,monospace;font-size:12px;margin-bottom:16px;">Please fill in your Torn Username, Torn ID, and Message.</p>';
+    return;
+  }
+  if (isNaN(tornId)) {
+    msgEl.innerHTML = '<p style="color:#e74c3c;font-family:Share Tech Mono,monospace;font-size:12px;margin-bottom:16px;">Torn ID must be a number.</p>';
+    return;
+  }
+  btn.disabled = true; btn.textContent = 'Sending...'; msgEl.innerHTML = '';
+  try {
+    const res  = await fetch(`${WORKER_URL}/messages/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subject, message, tornUsername: username, tornId }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      msgEl.innerHTML = '<p style="color:#5fe04f;font-family:Share Tech Mono,monospace;font-size:12px;margin-bottom:16px;">Message sent. The Handler will be in touch shortly.</p>';
+      ['contact-username','contact-tornid','contact-subject','contact-message'].forEach(id => { document.getElementById(id).value = ''; });
+    } else {
+      msgEl.innerHTML = `<p style="color:#e74c3c;font-family:Share Tech Mono,monospace;font-size:12px;margin-bottom:16px;">${data.error}</p>`;
+    }
+  } catch {
+    msgEl.innerHTML = '<p style="color:#e74c3c;font-family:Share Tech Mono,monospace;font-size:12px;margin-bottom:16px;">Failed to send. Please try again.</p>';
+  }
+  btn.disabled = false; btn.textContent = 'Send Message →';
+}
 </script>
-
 </body>
 </html>
