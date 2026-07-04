@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blacklist Recon — Hunter Leaderboard</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☠</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&family=Cinzel:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --void: #080a0c; --ash: #0d1117; --obsidian: #111820;
+    --border: #1f2d3d; --muted: #3a4a5c; --dim: #6a7f94;
+    --text: #c8d8e8; --bright: #e8f4ff; --blood: #8b1a1a;
+    --crimson: #c0392b; --ember: #e74c3c; --gold: #c9a84c;
+    --gold-dim: #7a5f28; --green: #5fe04f; --amber: #e0a14f;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--void); color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px; line-height: 1.6; overflow-x: hidden; cursor: none;
+  }
+  #cursor {
+    position: fixed; pointer-events: none; z-index: 99999;
+    transform: translate(-50%,-50%);
+  }
+  #cursor svg { width: 36px; height: 36px; }
+  @media(max-width:640px){ body{cursor:auto} #cursor{display:none} }
+
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);
+    pointer-events: none; z-index: 9999;
+  }
+
+  /* Animated BG */
+  .bg-glow {
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 50% 0%, rgba(139,26,26,0.1) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 30% at 80% 80%, rgba(139,26,26,0.06) 0%, transparent 50%);
+    pointer-events: none; z-index: 0;
+  }
+  .bg-grid {
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(224,79,79,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(224,79,79,0.02) 1px, transparent 1px);
+    background-size: 48px 48px;
+    animation: gridMove 20s linear infinite;
+    pointer-events: none; z-index: 0;
+  }
+  @keyframes gridMove { 0%{transform:translate(0,0)} 100%{transform:translate(48px,48px)} }
+
+  nav {
+    position: fixed; top:0; left:0; right:0; z-index:100;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:14px 40px; background:rgba(8,10,12,0.95);
+    backdrop-filter:blur(12px); border-bottom:1px solid var(--border);
+  }
+  .nav-brand { font-family:'Cinzel',serif; font-size:15px; font-weight:700; letter-spacing:3px; color:var(--gold); text-decoration:none; text-transform:uppercase; }
+  .nav-back { font-family:'Share Tech Mono',monospace; font-size:11px; letter-spacing:2px; color:var(--dim); text-decoration:none; text-transform:uppercase; transition:color 0.2s; }
+  .nav-back:hover { color:var(--gold); }
+
+  .container { position:relative; z-index:2; max-width:900px; margin:0 auto; padding:120px 24px 80px; }
+
+  .header { text-align:center; margin-bottom:52px; }
+  .eyebrow { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:6px; color:var(--blood); text-transform:uppercase; margin-bottom:16px; }
+  .title { font-family:'Cinzel',serif; font-size:clamp(32px,6vw,52px); font-weight:900; color:var(--bright); text-shadow:0 0 60px rgba(139,26,26,0.3); margin-bottom:8px; }
+  .subtitle { font-family:'Share Tech Mono',monospace; font-size:11px; letter-spacing:3px; color:var(--dim); text-transform:uppercase; }
+
+  /* Rank legend */
+  .rank-legend {
+    display:flex; gap:8px; flex-wrap:wrap; justify-content:center;
+    margin-bottom:40px;
+  }
+  .rank-pill {
+    display:inline-flex; align-items:center; gap:5px;
+    padding:3px 12px 3px 8px; border-radius:12px;
+    font-family:'Share Tech Mono',monospace;
+    font-size:10px; letter-spacing:2px; text-transform:uppercase; font-weight:700;
+  }
+  .rank-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+  .rp-ghost       { background:#1a2332; color:#6a7f94; border:1px solid #2a3a4a; }
+  .rp-blade       { background:#1a2030; color:#4f9ce0; border:1px solid #2a3050; }
+  .rp-phantom     { background:#2c1f38; color:#c084fc; border:1px solid #3c2f48; }
+  .rp-reaper      { background:#2e1010; color:#e74c3c; border:1px solid #4e2020; }
+  .rp-wraith      { background:#1a1a2a; color:#c8d8e8; border:1px solid #2a2a3a; }
+  .rp-shadow_hand { background:#2a1e08; color:#c9a84c; border:1px solid #4a3018; }
+  .rp-probation   { background:#3a3010; color:#e0c84f; border:1px solid #5a4010; }
+
+  /* Top 3 podium */
+  .podium { display:flex; gap:12px; align-items:flex-end; justify-content:center; margin-bottom:40px; }
+  .podium-card {
+    flex:1; max-width:240px; text-align:center; padding:20px 16px;
+    background:var(--ash); border:1px solid var(--border); position:relative; overflow:hidden;
+  }
+  .podium-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  }
+  .podium-1::before { background:linear-gradient(to right,transparent,var(--gold),transparent); }
+  .podium-2::before { background:linear-gradient(to right,transparent,#9ca3af,transparent); }
+  .podium-3::before { background:linear-gradient(to right,transparent,#cd7f32,transparent); }
+  .podium-1 { border-color:var(--gold-dim); }
+  .podium-position {
+    font-family:'Cinzel',serif; font-size:32px; font-weight:900;
+    margin-bottom:8px;
+  }
+  .podium-1 .podium-position { color:var(--gold); }
+  .podium-2 .podium-position { color:#9ca3af; }
+  .podium-3 .podium-position { color:#cd7f32; }
+  .podium-skull { font-size:28px; margin-bottom:8px; display:block; }
+  .podium-alias { font-family:'Share Tech Mono',monospace; font-size:13px; color:var(--bright); letter-spacing:1px; margin-bottom:8px; }
+  .podium-contracts { font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--dim); letter-spacing:2px; text-transform:uppercase; margin-bottom:10px; }
+
+  /* Main table */
+  .lb-table { width:100%; border-collapse:collapse; }
+  .lb-table th {
+    font-family:'Share Tech Mono',monospace; font-size:9px;
+    letter-spacing:3px; color:var(--dim); text-transform:uppercase;
+    padding:10px 16px; text-align:left; border-bottom:1px solid var(--border);
+    background:var(--ash);
+  }
+  .lb-table td {
+    padding:14px 16px; border-bottom:1px solid rgba(31,45,61,0.4);
+    font-family:'Share Tech Mono',monospace; font-size:12px; color:var(--text);
+    transition:background 0.15s;
+  }
+  .lb-table tr:hover td { background:rgba(139,26,26,0.04); }
+  .lb-table tr.top-row td { background:rgba(201,168,76,0.04); }
+  .lb-table tr.reveal-row {
+    opacity:0; transform:translateX(-8px);
+    animation:rowIn 0.4s ease forwards;
+  }
+  @keyframes rowIn { to { opacity:1; transform:none; } }
+
+  .position-num { color:var(--dim); font-size:11px; }
+  .position-num.top { color:var(--gold); font-weight:700; font-size:13px; }
+
+  /* Progress bar in table */
+  .progress-wrap { background:rgba(31,45,61,0.5); height:3px; border-radius:2px; margin-top:4px; width:100px; }
+  .progress-fill { height:100%; border-radius:2px; }
+
+  .empty { text-align:center; padding:60px 20px; font-family:'Share Tech Mono',monospace; font-size:12px; letter-spacing:3px; color:var(--muted); text-transform:uppercase; }
+  .empty-skull { font-size:48px; display:block; margin-bottom:16px; opacity:0.2; }
+
+  footer { text-align:center; padding:40px; border-top:1px solid var(--border); font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--muted); }
+  footer a { color:var(--dim); text-decoration:none; }
+  footer a:hover { color:var(--gold); }
+
+  @media(max-width:640px){
+    nav{padding:12px 20px;}
+    .podium{flex-direction:column;align-items:center;}
+    .podium-card{max-width:100%;width:100%;}
+    .lb-table th:nth-child(4),.lb-table td:nth-child(4){display:none;}
+  }
+</style>
+</head>
+<body>
+
+<div id="cursor">
+  <svg viewBox="0 0 36 36" fill="none">
+    <circle cx="18" cy="18" r="16" stroke="rgba(139,26,26,0.5)" stroke-width="0.5"/>
+    <circle cx="18" cy="18" r="8" stroke="rgba(231,76,60,0.4)" stroke-width="0.5"/>
+    <circle cx="18" cy="18" r="2" fill="#e74c3c" opacity="0.6"/>
+    <line x1="18" y1="2" x2="18" y2="10" stroke="#e74c3c" stroke-width="0.5" opacity="0.6"/>
+    <line x1="18" y1="26" x2="18" y2="34" stroke="#e74c3c" stroke-width="0.5" opacity="0.6"/>
+    <line x1="2" y1="18" x2="10" y2="18" stroke="#e74c3c" stroke-width="0.5" opacity="0.6"/>
+    <line x1="26" y1="18" x2="34" y2="18" stroke="#e74c3c" stroke-width="0.5" opacity="0.6"/>
+  </svg>
+</div>
+<div class="bg-glow"></div>
+<div class="bg-grid"></div>
+
+<nav>
+  <a class="nav-brand" href="index.html">Blacklist Recon</a>
+  <a class="nav-back" href="index.html">← Back to Home</a>
+</nav>
+
+<div class="container">
+  <div class="header">
+    <div class="eyebrow">Blacklist Recon · Hunter Network</div>
+    <h1 class="title">Hunter Leaderboard</h1>
+    <div class="subtitle">Ranked by confirmed completed contracts · Live data</div>
+  </div>
+
+  <!-- Rank legend -->
+  <div class="rank-legend" id="rank-legend">
+    <span class="rank-pill rp-ghost"><span class="rank-dot" style="background:#6a7f94"></span>Ghost · 0+</span>
+    <span class="rank-pill rp-blade"><span class="rank-dot" style="background:#4f9ce0"></span>Blade · 3+</span>
+    <span class="rank-pill rp-phantom"><span class="rank-dot" style="background:#c084fc"></span>Phantom · 10+</span>
+    <span class="rank-pill rp-reaper"><span class="rank-dot" style="background:#e74c3c"></span>Reaper · 25+</span>
+    <span class="rank-pill rp-wraith"><span class="rank-dot" style="background:#c8d8e8"></span>Wraith · 50+</span>
+    <span class="rank-pill rp-shadow_hand"><span class="rank-dot" style="background:#c9a84c"></span>Shadow Hand · 100+</span>
+  </div>
+
+  <!-- Podium top 3 -->
+  <div class="podium" id="podium"></div>
+
+  <!-- Full table -->
+  <table class="lb-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Agent</th>
+        <th>Rank</th>
+        <th>Progress</th>
+        <th>Contracts</th>
+      </tr>
+    </thead>
+    <tbody id="lb-tbody">
+      <tr><td colspan="5"><div class="empty"><span class="empty-skull">☠</span>Loading leaderboard...</div></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<footer>
+  <a href="index.html">Blacklist Recon</a> &nbsp;·&nbsp;
+  Agent identities are protected &nbsp;·&nbsp;
+  Rankings update in real time
+</footer>
+
+<script>
+const cursor = document.getElementById('cursor');
+let mx=0,my=0,cx=0,cy=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;});
+(function anim(){cx+=(mx-cx)*0.1;cy+=(my-cy)*0.1;cursor.style.left=cx+'px';cursor.style.top=cy+'px';requestAnimationFrame(anim);})();
+
+const WORKER_URL = 'https://torn-bounty-board.pearcej29.workers.dev';
+
+const RANK_STYLES = {
+  ghost:       { cls:'rp-ghost',       dot:'#6a7f94', label:'Ghost'       },
+  blade:       { cls:'rp-blade',       dot:'#4f9ce0', label:'Blade'       },
+  phantom:     { cls:'rp-phantom',     dot:'#c084fc', label:'Phantom'     },
+  reaper:      { cls:'rp-reaper',      dot:'#e74c3c', label:'Reaper'      },
+  wraith:      { cls:'rp-wraith',      dot:'#c8d8e8', label:'Wraith'      },
+  shadow_hand: { cls:'rp-shadow_hand', dot:'#c9a84c', label:'Shadow Hand' },
+};
+
+function rankPill(rankId, onProbation) {
+  const r   = RANK_STYLES[rankId] || RANK_STYLES.ghost;
+  const prob = onProbation
+    ? ` <span class="rank-pill rp-probation" style="margin-left:4px;"><span class="rank-dot" style="background:#e0c84f"></span>Probation</span>`
+    : '';
+  return `<span class="rank-pill ${r.cls}"><span class="rank-dot" style="background:${r.dot}"></span>${r.label}</span>${prob}`;
+}
+
+const PODIUM_MEDALS = ['🥇','🥈','🥉'];
+
+async function loadLeaderboard() {
+  try {
+    const res  = await fetch(`${WORKER_URL}/rank/leaderboard`);
+    const data = await res.json();
+    const list = data.leaderboard || [];
+    const ranks = data.ranks || [];
+
+    if (list.length === 0) {
+      document.getElementById('podium').innerHTML = '';
+      document.getElementById('lb-tbody').innerHTML =
+        `<tr><td colspan="5"><div class="empty"><span class="empty-skull">☠</span>No hunters ranked yet. Be the first.</div></td></tr>`;
+      return;
+    }
+
+    // Podium top 3
+    const podium = document.getElementById('podium');
+    const top3   = list.slice(0, 3);
+    // Reorder for podium: 2nd, 1st, 3rd
+    const order  = top3.length >= 3 ? [top3[1], top3[0], top3[2]] : top3.length === 2 ? [top3[1], top3[0]] : [top3[0]];
+    const posMap = top3.length >= 3 ? [2,1,3] : top3.length === 2 ? [2,1] : [1];
+
+    podium.innerHTML = order.map((h, i) => {
+      const pos    = posMap[i];
+      const medal  = PODIUM_MEDALS[pos - 1];
+      const r      = RANK_STYLES[h.rank.id] || RANK_STYLES.ghost;
+      return `
+        <div class="podium-card podium-${pos}">
+          <div class="podium-position">${medal}</div>
+          <span class="podium-skull">☠</span>
+          <div class="podium-alias">${h.alias}</div>
+          <div class="podium-contracts">${h.completed} Contract${h.completed !== 1 ? 's' : ''}</div>
+          ${rankPill(h.rank.id, h.onProbation)}
+        </div>`;
+    }).join('');
+
+    // Full table
+    const tbody = document.getElementById('lb-tbody');
+    tbody.innerHTML = list.map((h, i) => {
+      const pos       = i + 1;
+      const isTop     = pos <= 3;
+      const r         = RANK_STYLES[h.rank.id] || RANK_STYLES.ghost;
+      const nextRank  = ranks.find(rk => rk.minContracts > h.completed);
+      const progress  = nextRank
+        ? Math.round((h.completed / nextRank.minContracts) * 100)
+        : 100;
+      const progressBar = `
+        <div class="progress-wrap">
+          <div class="progress-fill" style="width:${progress}%;background:${r.dot};"></div>
+        </div>
+        <div style="font-size:10px;color:var(--dim);margin-top:2px;">
+          ${nextRank ? `${nextRank.minContracts - h.completed} to ${nextRank.name}` : '★ Max Rank'}
+        </div>`;
+
+      return `
+        <tr class="reveal-row ${isTop ? 'top-row' : ''}" style="animation-delay:${i * 0.04}s">
+          <td><span class="position-num ${isTop ? 'top' : ''}">${isTop ? PODIUM_MEDALS[pos-1] : '#' + pos}</span></td>
+          <td style="color:var(--bright);letter-spacing:1px;">${h.alias}</td>
+          <td>${rankPill(h.rank.id, h.onProbation)}</td>
+          <td>${progressBar}</td>
+          <td style="color:var(--ember);font-size:14px;">${h.completed}</td>
+        </tr>`;
+    }).join('');
+
+  } catch(e) {
+    document.getElementById('lb-tbody').innerHTML =
+      `<tr><td colspan="5"><div class="empty"><span class="empty-skull">☠</span>Leaderboard unavailable right now.</div></td></tr>`;
+  }
+}
+
+loadLeaderboard();
+setInterval(loadLeaderboard, 60000);
+</script>
+</body>
+</html>
