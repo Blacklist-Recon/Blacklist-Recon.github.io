@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Cinzel:wght@700;900&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☠</text></svg>">
 <style>
   :root {
     --void: #080a0c;
@@ -26,6 +27,109 @@
     --cyan: #1a8fa0;
     --cyan-bright: #22b8cc;
   }
+
+  /* ── LIGHT MODE ── */
+  body.light-mode {
+    --void: #f0f0f0;
+    --ash: #e8e8e8;
+    --obsidian: #dcdcdc;
+    --slate: #d0d0d0;
+    --border: #c0c0c8;
+    --muted: #909090;
+    --dim: #555570;
+    --text: #1a1a2e;
+    --bright: #0a0a1a;
+    --blood: #8b1a1a;
+    --crimson: #c0392b;
+    --ember: #e74c3c;
+    --gold: #7a5f00;
+    --gold-dim: #9a7f20;
+  }
+  body.light-mode nav {
+    background: rgba(240,240,240,0.97);
+    border-bottom-color: #c0c0c8;
+  }
+  body.light-mode .service-card { background: #e8e8e8; }
+  body.light-mode .service-card:hover { background: #dcdcdc; }
+  body.light-mode .bounty-counter-hero { background: rgba(220,220,220,0.9); }
+  body.light-mode footer { background: #f0f0f0; }
+  body.light-mode #contact input,
+  body.light-mode #contact textarea {
+    background: #e8e8e8 !important;
+    border-color: #c0c0c8 !important;
+    color: #1a1a2e !important;
+  }
+
+  /* ── THEME TOGGLE ── */
+  #theme-toggle {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 500;
+    width: 44px; height: 44px;
+    background: var(--ash);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  #theme-toggle:hover { border-color: var(--ember); transform: scale(1.1); }
+
+  /* ── MOBILE NAV ── */
+  #mobile-menu-btn {
+    display: none;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--dim);
+    font-size: 18px;
+    padding: 4px 10px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s;
+  }
+  #mobile-menu-btn:hover { border-color: var(--ember); color: var(--ember); }
+
+  #mobile-nav {
+    display: none;
+    position: fixed;
+    top: 53px; left: 0; right: 0;
+    background: rgba(8,10,12,0.99);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    z-index: 99;
+    flex-direction: column;
+    padding: 16px 0;
+    transform: translateY(-10px);
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  #mobile-nav.open {
+    display: flex;
+    transform: translateY(0);
+    opacity: 1;
+  }
+  #mobile-nav a {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: var(--dim);
+    text-decoration: none;
+    text-transform: uppercase;
+    padding: 14px 32px;
+    border-bottom: 1px solid rgba(31,45,61,0.4);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  #mobile-nav a:last-child { border-bottom: none; }
+  #mobile-nav a:hover { color: var(--bright); background: rgba(139,26,26,0.08); padding-left: 40px; }
+  #mobile-nav a.gold { color: var(--gold); }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
@@ -710,11 +814,12 @@
   .faq-a.open { max-height: 300px; padding: 0 24px 20px; }
   .faq-a a { color: var(--gold); }
 
-  @media (max-width: 640px) {
+  @media (max-width: 768px) {
     body { cursor: auto; }
     #cursor, #cursor-trail { display: none; }
     nav { padding: 12px 20px; }
     .nav-links { display: none; }
+    #mobile-menu-btn { display: flex; align-items: center; }
     .wrap { padding: 0 20px; }
     section { padding: 70px 0; }
     .hero-ctas { flex-direction: column; align-items: center; }
@@ -760,6 +865,7 @@
 <!-- NAV -->
 <nav id="main-nav">
   <a class="nav-brand" href="#hero">Blacklist Recon</a>
+  <button id="mobile-menu-btn" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
   <ul class="nav-links">
     <li><a href="#services">Services</a></li>
     <li><a href="#how-it-works">Process</a></li>
@@ -772,6 +878,22 @@
     <li><a href="app.html" style="color:var(--gold);border:1px solid var(--gold-dim);padding:4px 12px;">HQ Login</a></li>
   </ul>
 </nav>
+
+<!-- MOBILE NAV -->
+<div id="mobile-nav">
+  <a href="#services" onclick="closeMobileNav()">⬡ Services</a>
+  <a href="#how-it-works" onclick="closeMobileNav()">⬡ Process</a>
+  <a href="#recruitment" onclick="closeMobileNav()">⬡ Join</a>
+  <a href="#rules" onclick="closeMobileNav()">⬡ Terms</a>
+  <a href="#testimonials" onclick="closeMobileNav()">⬡ Reviews</a>
+  <a href="#faq" onclick="closeMobileNav()">⬡ FAQ</a>
+  <a href="#contact" onclick="closeMobileNav()">⬡ Contact</a>
+  <a href="history.html">⬡ History</a>
+  <a href="app.html" class="gold">☠ Agent Login</a>
+</div>
+
+<!-- THEME TOGGLE -->
+<button id="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">🌙</button>
 
 <!-- HERO -->
 <div id="hero">
@@ -1417,6 +1539,34 @@ async function fetchStats() {
 }
 fetchStats();
 setInterval(fetchStats, 30000);
+
+// ── THEME TOGGLE ────────────────────────────────────────────────────────
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light-mode');
+  document.getElementById('theme-toggle').textContent = isLight ? '🌑' : '🌙';
+  localStorage.setItem('blr_theme', isLight ? 'light' : 'dark');
+}
+// Apply saved theme
+if (localStorage.getItem('blr_theme') === 'light') {
+  document.body.classList.add('light-mode');
+  document.getElementById('theme-toggle').textContent = '🌑';
+}
+
+// ── MOBILE NAV ───────────────────────────────────────────────────────────
+function toggleMobileNav() {
+  const nav = document.getElementById('mobile-nav');
+  const btn = document.getElementById('mobile-menu-btn');
+  const isOpen = nav.classList.toggle('open');
+  btn.textContent = isOpen ? '✕' : '☰';
+}
+function closeMobileNav() {
+  document.getElementById('mobile-nav').classList.remove('open');
+  document.getElementById('mobile-menu-btn').textContent = '☰';
+}
+// Close mobile nav on scroll
+window.addEventListener('scroll', () => {
+  if (document.getElementById('mobile-nav').classList.contains('open')) closeMobileNav();
+});
 
 // ── CONTACT FORM ─────────────────────────────────────────────────────────
 // ── FAQ TOGGLE ──────────────────────────────────────────────────────────
