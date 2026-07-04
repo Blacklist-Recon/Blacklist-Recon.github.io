@@ -572,6 +572,50 @@
     .card-value { text-align: left; }
   }
 
+  /* ── RANK BADGES ── */
+  .rank-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 10px 2px 6px;
+    border-radius: 12px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .rank-badge .badge-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .badge-ghost       { background: #1a2332; color: #6a7f94; border: 1px solid #2a3a4a; }
+  .badge-blade       { background: #1a2030; color: #4f9ce0; border: 1px solid #2a3050; }
+  .badge-phantom     { background: #2c1f38; color: #c084fc; border: 1px solid #3c2f48; }
+  .badge-reaper      { background: #2e1010; color: #e74c3c; border: 1px solid #4e2020; }
+  .badge-wraith      { background: #1a1a2a; color: #c8d8e8; border: 1px solid #2a2a3a; }
+  .badge-shadow_hand { background: #2a1e08; color: #c9a84c; border: 1px solid #4a3018; }
+  .badge-admin       { background: linear-gradient(90deg,#2a1008,#1a1808); color: #c9a84c; border: 1px solid #8b1a1a; }
+  .badge-lister      { background: #2a1e08; color: #e0a14f; border: 1px solid #4a3010; }
+  .badge-verifier    { background: #0a2028; color: #22b8cc; border: 1px solid #0a4050; }
+  .badge-probation   { background: #3a3010; color: #e0c84f; border: 1px solid #5a4010; }
+
+  .rank-progress {
+    margin-top: 8px;
+    background: var(--void);
+    border: 1px solid var(--border);
+    height: 4px;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .rank-progress-bar {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.6s ease;
+  }
+
   /* ── MESSAGES ── */
   .msg-badge {
     display: inline-block;
@@ -774,6 +818,31 @@ let currentPage = 'board';
 let filterStatus = 'all';
 
 function fmt(n)  { return '$' + Math.round(n).toLocaleString(); }
+
+// Badge helpers
+function rankBadge(rankId, rankName, onProbation) {
+  const probTag = onProbation
+    ? '<span class="rank-badge badge-probation" style="margin-left:4px;"><span class="badge-dot" style="background:#e0c84f"></span>Probation</span>'
+    : '';
+  const cls = 'badge-' + (rankId || 'ghost');
+  const dotColors = {
+    ghost:'#6a7f94', blade:'#4f9ce0', phantom:'#c084fc',
+    reaper:'#e74c3c', wraith:'#c8d8e8', shadow_hand:'#c9a84c'
+  };
+  const dot = dotColors[rankId] || '#6a7f94';
+  return `<span class="rank-badge ${cls}"><span class="badge-dot" style="background:${dot}"></span>${rankName}</span>${probTag}`;
+}
+
+function roleBadge(role) {
+  const map = {
+    admin:    {cls:'badge-admin',    name:'The Handler', dot:'#c9a84c'},
+    lister:   {cls:'badge-lister',   name:'Lister',      dot:'#e0a14f'},
+    verifier: {cls:'badge-verifier', name:'Verifier',    dot:'#22b8cc'},
+  };
+  const b = map[role];
+  if (!b) return '';
+  return `<span class="rank-badge ${b.cls}"><span class="badge-dot" style="background:${b.dot}"></span>${b.name}</span>`;
+}
 function formatDeadline(ts) {
   const diff = ts - Date.now();
   if (diff <= 0) return 'EXPIRED';
@@ -845,17 +914,28 @@ async function showApp() {
   document.getElementById('app').classList.add('visible');
 
   const badge = document.getElementById('agent-badge');
-  if (identity.role === 'admin') {
-    badge.innerHTML = `<span>${esc(identity.name)}</span> · Admin`;
-  } else {
-    badge.innerHTML = `Role: <span>${esc(identity.role)}</span>`;
-  }
   try {
     const aliasRes = await api('/alias/get');
-    if (aliasRes.alias) {
-      badge.innerHTML = `<span>${esc(aliasRes.alias)}</span> · ${esc(identity.role)}`;
+    const displayName = aliasRes.alias || identity.name;
+    if (identity.role === 'hunter') {
+      // Get rank info
+      try {
+        const balRes = await api('/balance/get');
+        const ri = balRes.rankInfo;
+        if (ri) {
+          badge.innerHTML = `<span style="color:var(--text);margin-right:8px;">${esc(displayName)}</span>${rankBadge(ri.rank.id, ri.rank.name, ri.onProbation)}`;
+        } else {
+          badge.innerHTML = `<span>${esc(displayName)}</span>`;
+        }
+      } catch(e) {
+        badge.innerHTML = `<span>${esc(displayName)}</span>`;
+      }
+    } else {
+      badge.innerHTML = `<span style="color:var(--text);margin-right:8px;">${esc(displayName)}</span>${roleBadge(identity.role)}`;
     }
-  } catch(e) {}
+  } catch(e) {
+    badge.innerHTML = `<span>${esc(identity.name)}</span>`;
+  }
 
   buildNav();
   navigate('board');
@@ -1451,15 +1531,29 @@ async function renderRoster(main) {
   try {
     const res  = await api('/agent-map');
     const roster = res.roster || {};
+    // Load rank data
+    let memberRanks = {};
+    try {
+      const allBal = await api('/balance/all');
+      memberRanks = allBal.memberRanks || {};
+    } catch(e) {}
+
     const rows = Object.entries(roster).length === 0
-      ? `<tr><td colspan="4" style="text-align:center;color:var(--dim);padding:20px;">No agents yet</td></tr>`
-      : Object.entries(roster).sort((a,b) => a[1].agentNumber - b[1].agentNumber).map(([tornId, r]) => `
-          <tr>
+      ? `<tr><td colspan="5" style="text-align:center;color:var(--dim);padding:20px;">No agents yet</td></tr>`
+      : Object.entries(roster).sort((a,b) => a[1].agentNumber - b[1].agentNumber).map(([tornId, r]) => {
+          const ri = memberRanks[tornId];
+          const badge = ri
+            ? rankBadge(ri.rank.id, ri.rank.name, ri.onProbation)
+            : rankBadge('ghost', 'Ghost', false);
+          const contracts = ri ? ri.completed : 0;
+          return `<tr>
             <td style="color:var(--ember);">Agent #${r.agentNumber}</td>
             <td style="color:var(--gold);">${esc(r.alias)}</td>
-            <td>${esc(r.name)}</td>
+            <td>${badge}</td>
+            <td style="color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:11px;">${contracts}</td>
             <td><a href="https://www.torn.com/profiles.php?XID=${tornId}" target="_blank" style="color:var(--dim);font-size:10px;">${tornId} ↗</a></td>
-          </tr>`).join('');
+          </tr>`;
+        }).join('');
 
     main.innerHTML = `
       <div class="page-header">
@@ -1468,7 +1562,7 @@ async function renderRoster(main) {
       </div>
       <div class="section-head">Active Agents</div>
       <table class="roster-table">
-        <thead><tr><th>Agent</th><th>Alias</th><th>Real Name</th><th>Torn ID</th></tr></thead>
+        <thead><tr><th>Agent</th><th>Alias</th><th>Rank</th><th>Contracts</th><th>Torn ID</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     `;
@@ -1573,6 +1667,18 @@ async function renderAdmin(main) {
       <div class="section-head">Current Roles</div>
       ${roleCards}
     `;
+
+    main.querySelectorAll('[data-action="lift-probation"]').forEach(btn =>
+      btn.addEventListener('click', async () => {
+        const id    = btn.dataset.id;
+        const msgEl = main.querySelector(`.pay-msg[data-id="${id}"]`);
+        btn.disabled = true;
+        try {
+          await api('/rank/override-probation', { targetTornId: id });
+          msgEl.innerHTML = `<div class="msg-success">Probation lifted.</div>`;
+          await renderAdmin(main);
+        } catch(e) { msgEl.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; btn.disabled = false; }
+      }));
 
     main.querySelectorAll('[data-action="pay"]').forEach(btn =>
       btn.addEventListener('click', async () => {
