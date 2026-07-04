@@ -919,6 +919,7 @@ function navItems() {
     items.push({ id: 'messages', icon: '📨', label: 'Messages' });
   }
   if (identity.role === 'admin') {
+    items.push({ id: 'reviews', icon: '⭐', label: 'Reviews' });
     items.push({ id: 'roster',  icon: '👥', label: 'Roster'  });
     items.push({ id: 'admin',   icon: '⚙️', label: 'Admin'   });
   }
@@ -964,6 +965,7 @@ function renderPage() {
   if (currentPage === 'balance') renderBalance(main);
   if (currentPage === 'chat')    renderChat(main);
   if (currentPage === 'messages') renderMessages(main);
+  if (currentPage === 'reviews') renderReviews(main);
   if (currentPage === 'roster')  renderRoster(main);
   if (currentPage === 'admin')   renderAdmin(main);
 }
@@ -1327,6 +1329,118 @@ async function renderBalance(main) {
     });
 
   } catch (e) {
+    main.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`;
+  }
+}
+
+// ── REVIEWS (admin only) ──────────────────────────────────────────────────
+async function renderReviews(main) {
+  main.innerHTML = `<div class="loading">Loading reviews...</div>`;
+  try {
+    const res  = await api('/testimonials/admin');
+    const all  = res.testimonials || [];
+    const pending  = all.filter(t => !t.approved);
+    const approved = all.filter(t => t.approved);
+
+    const tierLabels = {
+      standard:    'Tier I · Standard Hit',
+      war_support: 'Tier II · War Support',
+      high_value:  'Tier III · High-Value',
+    };
+
+    function reviewCard(t, showActions) {
+      return `
+        <div class="card" id="rev-${t.id}">
+          <div class="card-row">
+            <span class="card-label">From</span>
+            <span class="card-value" style="color:var(--gold)">${esc(t.tornUsername)}</span>
+          </div>
+          <div class="card-row">
+            <span class="card-label">Torn ID</span>
+            <span class="card-value">
+              <a href="https://www.torn.com/profiles.php?XID=${esc(t.tornId)}" target="_blank"
+                style="color:var(--dim);font-size:11px;">${esc(t.tornId)} ↗</a>
+            </span>
+          </div>
+          <div class="card-row">
+            <span class="card-label">Tier</span>
+            <span class="card-value">${tierLabels[t.tier] || t.tier}</span>
+          </div>
+          <div class="card-row">
+            <span class="card-label">Date</span>
+            <span class="card-value" style="color:var(--dim)">${new Date(t.submittedAt).toLocaleDateString()}</span>
+          </div>
+          <div style="margin:10px 0;padding:12px;background:var(--void);border:1px solid var(--border);
+                      font-size:14px;color:var(--text);line-height:1.7;font-style:italic;">
+            "${esc(t.quote)}"
+          </div>
+          ${showActions ? `
+            <div class="btn-row">
+              <button class="btn btn-green" data-action="approve-review" data-id="${t.id}">✓ Approve</button>
+              <button class="btn btn-red" data-action="reject-review" data-id="${t.id}">✕ Reject</button>
+            </div>
+            <div class="rev-msg" data-id="${t.id}"></div>
+          ` : `
+            <div class="btn-row">
+              <button class="btn" style="color:var(--dim);font-size:10px;" data-action="reject-review" data-id="${t.id}">🗑 Remove</button>
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    main.innerHTML = `
+      <div class="page-header">
+        <div class="page-eyebrow">Admin · Blacklist Recon</div>
+        <div class="page-title">⭐ Reviews</div>
+      </div>
+
+      <div class="stats-grid" style="grid-template-columns:repeat(2,1fr);">
+        <div class="stat-card">
+          <div class="stat-value" style="font-size:36px;">${pending.length}</div>
+          <div class="stat-label">Awaiting Approval</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="font-size:36px;">${approved.length}</div>
+          <div class="stat-label">Live on Site</div>
+        </div>
+      </div>
+
+      ${pending.length > 0 ? `
+        <div class="section-head">Pending Approval</div>
+        ${pending.map(t => reviewCard(t, true)).join('')}
+      ` : `<div class="section-head">Pending Approval</div><div class="empty">No pending reviews</div>`}
+
+      ${approved.length > 0 ? `
+        <div class="section-head">Approved & Live</div>
+        ${approved.map(t => reviewCard(t, false)).join('')}
+      ` : ''}
+    `;
+
+    main.querySelectorAll('[data-action="approve-review"]').forEach(btn =>
+      btn.addEventListener('click', async () => {
+        const id    = btn.dataset.id;
+        const msgEl = main.querySelector(`.rev-msg[data-id="${id}"]`);
+        btn.disabled = true;
+        try {
+          await api('/testimonials/moderate', { testimonialId: id, action: 'approve' });
+          msgEl.innerHTML = `<div class="msg-success">Approved — now live on the site.</div>`;
+          setTimeout(() => renderReviews(main), 1200);
+        } catch(e) { msgEl.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; btn.disabled = false; }
+      }));
+
+    main.querySelectorAll('[data-action="reject-review"]').forEach(btn =>
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        if (!confirm('Remove this review permanently?')) return;
+        btn.disabled = true;
+        try {
+          await api('/testimonials/moderate', { testimonialId: id, action: 'reject' });
+          document.getElementById(`rev-${id}`)?.remove();
+        } catch(e) { alert(e.message); btn.disabled = false; }
+      }));
+
+  } catch(e) {
     main.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`;
   }
 }
