@@ -6,331 +6,640 @@
 <title>Blacklist Recon — Now Recruiting</title>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&family=Cinzel:wght@700;900&display=swap" rel="stylesheet">
 <style>
+  :root {
+    --blood: #8b1a1a;
+    --crimson: #c0392b;
+    --ember: #e04f4f;
+    --gold: #c9a84c;
+    --void: #080a0a;
+    --ash: #0c0a0a;
+    --border: #2e1f1f;
+    --dim: #7d5252;
+    --text: #e6c8c8;
+    --bright: #f5dada;
+  }
+
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
+  html { scroll-behavior: smooth; }
+
   body {
-    background: #080a0a;
-    color: #e6c8c8;
+    background: var(--void);
+    color: var(--text);
     font-family: 'Rajdhani', sans-serif;
     min-height: 100vh;
     overflow-x: hidden;
+    cursor: none;
   }
 
-  /* Animated grid background */
-  body::before {
-    content: '';
+  /* ── CUSTOM CURSOR ── */
+  #cursor {
+    position: fixed;
+    width: 40px; height: 40px;
+    pointer-events: none;
+    z-index: 99999;
+    transform: translate(-50%, -50%);
+    transition: transform 0.1s;
+  }
+  #cursor svg { width: 40px; height: 40px; }
+  #cursor-dot {
+    position: fixed;
+    width: 4px; height: 4px;
+    background: var(--ember);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 99999;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 8px var(--ember);
+  }
+
+  /* ── PARTICLE CANVAS ── */
+  #particle-canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── ANIMATED BG ── */
+  .bg-grid {
     position: fixed;
     inset: 0;
     background-image:
       linear-gradient(rgba(224,79,79,0.03) 1px, transparent 1px),
       linear-gradient(90deg, rgba(224,79,79,0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
+    background-size: 48px 48px;
     animation: gridMove 20s linear infinite;
     pointer-events: none;
     z-index: 0;
   }
+  @keyframes gridMove {
+    0% { transform: translate(0,0); }
+    100% { transform: translate(48px,48px); }
+  }
 
-  /* Radial glow */
-  body::after {
-    content: '';
+  .bg-glow {
     position: fixed;
     inset: 0;
     background:
-      radial-gradient(ellipse 60% 50% at 50% 0%, rgba(139,26,26,0.25) 0%, transparent 70%),
-      radial-gradient(ellipse 40% 30% at 80% 80%, rgba(139,26,26,0.1) 0%, transparent 60%);
+      radial-gradient(ellipse 60% 40% at 50% 0%, rgba(139,26,26,0.2) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 30% at 80% 80%, rgba(139,26,26,0.08) 0%, transparent 50%);
     pointer-events: none;
     z-index: 0;
+    animation: glowPulse 6s ease-in-out infinite;
+  }
+  @keyframes glowPulse { 0%,100%{opacity:.7} 50%{opacity:1} }
+
+  /* ── SCANLINES ── */
+  .scanlines {
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 3px);
+    pointer-events: none;
+    z-index: 1;
   }
 
-  @keyframes gridMove {
-    0% { transform: translate(0, 0); }
-    100% { transform: translate(40px, 40px); }
+  /* ── INTRO OVERLAY ── */
+  #intro {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 9998;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    animation: introOut 0.6s ease-in 2.8s forwards;
+  }
+  @keyframes introOut {
+    to { opacity: 0; pointer-events: none; }
+  }
+  .intro-skull {
+    font-size: 80px;
+    animation: introSkull 2.8s ease-in-out forwards;
+  }
+  @keyframes introSkull {
+    0% { opacity: 0; transform: scale(0.5); filter: blur(20px); }
+    40% { opacity: 1; transform: scale(1.1); filter: blur(0); }
+    70% { transform: scale(1); }
+    90% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  .intro-text {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 8px;
+    color: var(--blood);
+    text-transform: uppercase;
+    margin-top: 20px;
+    animation: introText 2.8s ease-in-out forwards;
+  }
+  @keyframes introText {
+    0%,30% { opacity: 0; letter-spacing: 20px; }
+    60% { opacity: 1; letter-spacing: 8px; }
+    90% { opacity: 1; }
+    100% { opacity: 0; }
   }
 
+  /* ── CONTAINER ── */
   .container {
     position: relative;
-    z-index: 1;
-    max-width: 680px;
+    z-index: 2;
+    max-width: 700px;
     margin: 0 auto;
-    padding: 40px 24px 60px;
+    padding: 60px 24px 80px;
   }
 
-  /* Header */
+  /* ── HEADER ── */
   .header {
     text-align: center;
-    margin-bottom: 48px;
+    margin-bottom: 60px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 3.2s forwards;
   }
-  .skull {
-    font-size: 52px;
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .skull-wrap {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 20px;
+  }
+  .skull-main-icon {
+    font-size: 72px;
     display: block;
-    margin-bottom: 16px;
-    animation: float 3s ease-in-out infinite;
+    animation: skullBreathe 3s ease-in-out infinite 3.2s;
+    position: relative;
+    z-index: 1;
   }
-  @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-8px); }
+  @keyframes skullBreathe {
+    0%,100% { text-shadow: 0 0 20px rgba(224,79,79,0.3); transform: scale(1); }
+    50% { text-shadow: 0 0 60px rgba(224,79,79,0.9), 0 0 120px rgba(139,26,26,0.4); transform: scale(1.05); }
   }
-  .tag {
+  .skull-ring {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 100px; height: 100px;
+    border: 1px solid rgba(224,79,79,0.2);
+    border-radius: 50%;
+    transform: translate(-50%,-50%);
+    animation: ringExpand 3s ease-in-out infinite 3.2s;
+  }
+  .skull-ring2 {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 140px; height: 140px;
+    border: 1px solid rgba(224,79,79,0.08);
+    border-radius: 50%;
+    transform: translate(-50%,-50%);
+    animation: ringExpand 3s ease-in-out infinite 3.7s;
+  }
+  @keyframes ringExpand {
+    0%,100% { transform: translate(-50%,-50%) scale(1); opacity: 0.5; }
+    50% { transform: translate(-50%,-50%) scale(1.15); opacity: 1; }
+  }
+
+  .eyebrow {
     font-family: 'Share Tech Mono', monospace;
     font-size: 10px;
     letter-spacing: 6px;
-    color: #8b1a1a;
+    color: var(--blood);
     text-transform: uppercase;
     margin-bottom: 16px;
   }
+
   .title {
     font-family: 'Cinzel', serif;
-    font-size: clamp(32px, 7vw, 56px);
     font-weight: 900;
-    color: #f5dada;
-    line-height: 1;
-    text-shadow: 0 0 60px rgba(224,79,79,0.4);
+    font-size: clamp(36px, 8vw, 64px);
+    line-height: 0.95;
+    color: var(--bright);
+    text-shadow: 0 0 80px rgba(224,79,79,0.3);
     margin-bottom: 8px;
+    letter-spacing: -1px;
   }
-  .title span {
-    color: #e04f4f;
-    display: block;
-    font-size: 0.5em;
-    letter-spacing: 10px;
-    text-shadow: 0 0 30px rgba(224,79,79,0.6);
+  .title-sub {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(14px,3vw,22px);
+    font-weight: 700;
+    color: var(--ember);
+    letter-spacing: 12px;
+    text-shadow: 0 0 30px rgba(224,79,79,0.7);
+    margin-bottom: 24px;
   }
-  .divider {
-    width: 1px;
-    height: 48px;
-    background: linear-gradient(to bottom, #8b1a1a, transparent);
-    margin: 24px auto;
+
+  .divider-line {
+    width: 1px; height: 60px;
+    background: linear-gradient(to bottom, var(--blood), transparent);
+    margin: 0 auto 24px;
   }
+
   .tagline {
     font-family: 'Share Tech Mono', monospace;
     font-size: 13px;
     letter-spacing: 2px;
-    color: #7d5252;
+    color: var(--dim);
     text-transform: uppercase;
   }
-  .tagline span { color: #e04f4f; }
+  .tagline strong { color: var(--ember); }
 
-  /* Sections */
-  .section {
-    margin-bottom: 32px;
-    border: 1px solid #2e1f1f;
-    background: rgba(12,10,10,0.8);
-    backdrop-filter: blur(4px);
+  /* ── PAYOUT COUNTER ── */
+  .payout-hero {
+    text-align: center;
+    padding: 36px;
+    border: 1px solid var(--border);
+    background: rgba(12,10,10,0.85);
+    margin-bottom: 40px;
     position: relative;
     overflow: hidden;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 3.6s forwards;
   }
-  .section::before {
+  .payout-hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(224,79,79,0.05), transparent);
+    animation: sweep 4s ease-in-out infinite 4s;
+  }
+  @keyframes sweep {
+    0% { left: -100%; }
+    100% { left: 200%; }
+  }
+  .payout-hero::after {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(to right, transparent, #e04f4f, transparent);
+    height: 2px;
+    background: linear-gradient(to right, transparent, var(--ember), transparent);
+    animation: borderGlow 3s ease-in-out infinite;
   }
-  .section-head {
-    padding: 14px 20px;
-    background: rgba(139,26,26,0.15);
-    border-bottom: 1px solid #2e1f1f;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 4px;
-    color: #e04f4f;
-    text-transform: uppercase;
-  }
-  .section-body { padding: 20px; }
+  @keyframes borderGlow { 0%,100%{opacity:.5} 50%{opacity:1} }
 
-  /* Items */
-  .item {
-    display: flex;
-    gap: 14px;
-    align-items: flex-start;
-    padding: 12px 0;
-    border-bottom: 1px solid rgba(46,31,31,0.5);
-  }
-  .item:last-child { border-bottom: none; padding-bottom: 0; }
-  .item-icon {
-    font-size: 16px;
-    min-width: 24px;
-    padding-top: 1px;
-  }
-  .item-text { flex: 1; line-height: 1.6; }
-  .item-text strong {
-    display: block;
-    font-size: 15px;
-    font-weight: 700;
-    color: #f5dada;
-    margin-bottom: 2px;
-  }
-  .item-text span {
-    font-size: 13px;
-    color: #7d5252;
-    line-height: 1.6;
-  }
-
-  /* Highlight box */
-  .highlight {
-    background: rgba(139,26,26,0.12);
-    border: 1px solid #8b1a1a;
-    padding: 20px;
-    margin-bottom: 32px;
-    text-align: center;
-    position: relative;
-  }
-  .highlight::before, .highlight::after {
-    content: '';
-    position: absolute;
-    width: 10px; height: 10px;
-    border-color: #e04f4f;
-    border-style: solid;
-  }
-  .highlight::before { top: -1px; left: -1px; border-width: 1px 0 0 1px; }
-  .highlight::after  { bottom: -1px; right: -1px; border-width: 0 1px 1px 0; }
-  .highlight p {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 13px;
-    color: #e6c8c8;
-    letter-spacing: 1px;
-    line-height: 1.8;
-  }
-  .highlight p strong { color: #e04f4f; }
-
-  /* Steps */
-  .step {
-    display: flex;
-    gap: 16px;
-    padding: 14px 0;
-    border-bottom: 1px solid rgba(46,31,31,0.5);
-    align-items: flex-start;
-  }
-  .step:last-child { border-bottom: none; }
-  .step-num {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 11px;
-    color: #8b1a1a;
-    letter-spacing: 1px;
-    min-width: 28px;
-    padding-top: 1px;
-  }
-  .step-text { font-size: 14px; color: #c8a8a8; line-height: 1.6; }
-  .step-text strong { color: #f5dada; }
-
-  /* CTA */
-  .cta {
-    text-align: center;
-    margin-top: 40px;
-  }
-  .cta-skull {
-    font-size: 28px;
-    display: block;
-    margin-bottom: 12px;
-  }
-  .cta-main {
-    font-family: 'Cinzel', serif;
-    font-size: 22px;
-    font-weight: 700;
-    color: #f5dada;
-    margin-bottom: 8px;
-  }
-  .cta-sub {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 2px;
-    color: #7d5252;
-    text-transform: uppercase;
-    margin-bottom: 24px;
-  }
-  .cta-btn {
-    display: inline-block;
-    padding: 14px 40px;
-    background: #8b1a1a;
-    border: 1px solid #c0392b;
-    color: #f5dada;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 12px;
-    letter-spacing: 3px;
-    text-decoration: none;
-    text-transform: uppercase;
-    transition: all 0.2s;
-  }
-  .cta-btn:hover { background: #c0392b; border-color: #e04f4f; }
-  .cta-fine {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 1px;
-    color: #4a2020;
-    margin-top: 16px;
-    text-transform: uppercase;
-  }
-
-  /* Payout badge */
-  .payout-badge {
-    text-align: center;
-    padding: 24px;
-    background: rgba(12,10,10,0.9);
-    border: 1px solid #2e1f1f;
-    margin-bottom: 32px;
-    position: relative;
-  }
   .payout-num {
     font-family: 'Share Tech Mono', monospace;
-    font-size: 64px;
-    color: #e04f4f;
-    text-shadow: 0 0 40px rgba(224,79,79,0.5);
+    font-size: 96px;
+    color: var(--ember);
+    text-shadow: 0 0 60px rgba(224,79,79,0.6);
     line-height: 1;
     margin-bottom: 4px;
   }
   .payout-label {
     font-family: 'Share Tech Mono', monospace;
     font-size: 10px;
-    letter-spacing: 4px;
-    color: #7d5252;
+    letter-spacing: 6px;
+    color: var(--dim);
     text-transform: uppercase;
+    margin-bottom: 8px;
   }
   .payout-sub {
-    font-size: 13px;
+    font-size: 14px;
     color: #5a3030;
-    margin-top: 8px;
     font-family: 'Share Tech Mono', monospace;
     letter-spacing: 1px;
   }
 
-  /* Footer line */
-  .footer-line {
+  /* ── GLITCH TEXT ── */
+  .glitch {
+    position: relative;
+    display: inline-block;
+  }
+  .glitch::before, .glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+  }
+  .glitch::before {
+    color: #f00;
+    animation: glitch1 4s infinite;
+    clip-path: polygon(0 0, 100% 0, 100% 33%, 0 33%);
+  }
+  .glitch::after {
+    color: #0ff;
+    animation: glitch2 4s infinite;
+    clip-path: polygon(0 66%, 100% 66%, 100% 100%, 0 100%);
+  }
+  @keyframes glitch1 {
+    0%,90%,100% { transform: none; opacity: 0; }
+    92% { transform: translate(-2px,1px); opacity: 0.6; }
+    94% { transform: translate(2px,-1px); opacity: 0.6; }
+    96% { transform: none; opacity: 0; }
+  }
+  @keyframes glitch2 {
+    0%,88%,100% { transform: none; opacity: 0; }
+    90% { transform: translate(2px,2px); opacity: 0.6; }
+    93% { transform: translate(-2px,-1px); opacity: 0.6; }
+    95% { transform: none; opacity: 0; }
+  }
+
+  /* ── SECTIONS ── */
+  .section {
+    margin-bottom: 32px;
+    border: 1px solid var(--border);
+    background: rgba(12,10,10,0.85);
+    position: relative;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.7s ease, transform 0.7s ease, border-color 0.3s;
+  }
+  .section.visible { opacity: 1; transform: translateY(0); }
+  .section:hover { border-color: var(--blood); }
+  .section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--ember), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .section:hover::before { opacity: 1; }
+
+  .section-head {
+    padding: 14px 20px;
+    background: rgba(139,26,26,0.12);
+    border-bottom: 1px solid var(--border);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: var(--ember);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-head::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--ember);
+    border-radius: 50%;
+    animation: blink 2s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+  .section-body { padding: 20px; }
+
+  /* ── ITEMS ── */
+  .item {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(46,31,31,0.5);
+    transition: background 0.2s;
+  }
+  .item:last-child { border-bottom: none; padding-bottom: 0; }
+  .item:hover { background: rgba(139,26,26,0.05); margin: 0 -20px; padding: 14px 20px; }
+  .item-icon { font-size: 20px; min-width: 28px; padding-top: 1px; }
+  .item-text { flex: 1; }
+  .item-text strong { display: block; font-size: 15px; font-weight: 700; color: var(--bright); margin-bottom: 3px; }
+  .item-text span { font-size: 13px; color: var(--dim); line-height: 1.7; }
+
+  /* ── STEPS ── */
+  .step {
+    display: flex;
+    gap: 20px;
+    padding: 16px 0;
+    border-bottom: 1px solid rgba(46,31,31,0.5);
+    align-items: flex-start;
+    position: relative;
+  }
+  .step:last-child { border-bottom: none; }
+  .step-num {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 28px;
+    color: rgba(139,26,26,0.3);
+    min-width: 40px;
+    line-height: 1.2;
+    font-weight: 700;
+    transition: color 0.3s;
+  }
+  .step:hover .step-num { color: var(--ember); }
+  .step-text { font-size: 14px; color: var(--dim); line-height: 1.7; padding-top: 4px; }
+  .step-text strong { color: var(--bright); }
+
+  /* ── HIGHLIGHT ── */
+  .highlight {
+    background: rgba(139,26,26,0.08);
+    border: 1px solid var(--blood);
+    padding: 28px;
+    margin-bottom: 40px;
     text-align: center;
-    margin-top: 48px;
+    position: relative;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 4s forwards;
+  }
+  .highlight::before, .highlight::after {
+    content: '';
+    position: absolute;
+    width: 12px; height: 12px;
+    border-color: var(--ember);
+    border-style: solid;
+  }
+  .highlight::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+  .highlight::after  { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+  .highlight p {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    color: var(--text);
+    letter-spacing: 1px;
+    line-height: 2;
+  }
+  .highlight p strong { color: var(--ember); }
+
+  /* ── TARGETS TICKER ── */
+  .ticker-wrap {
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: rgba(12,10,10,0.9);
+    padding: 10px 0;
+    margin-bottom: 40px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 4.2s forwards;
+    position: relative;
+  }
+  .ticker-wrap::before, .ticker-wrap::after {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 60px;
+    z-index: 2;
+  }
+  .ticker-wrap::before { left: 0; background: linear-gradient(to right, rgba(12,10,10,1), transparent); }
+  .ticker-wrap::after  { right: 0; background: linear-gradient(to left, rgba(12,10,10,1), transparent); }
+  .ticker {
+    display: flex;
+    gap: 48px;
+    animation: tickerScroll 20s linear infinite;
+    white-space: nowrap;
+  }
+  @keyframes tickerScroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  .ticker-item {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--dim);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .ticker-item .t-skull { color: var(--blood); font-size: 14px; }
+  .ticker-item.completed { color: #5a3030; text-decoration: line-through; }
+  .ticker-item.completed .t-skull { color: #3a1a1a; }
+
+  /* ── CTA ── */
+  .cta {
+    text-align: center;
+    padding: 48px 0 0;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 4.4s forwards;
+  }
+  .cta-skull { font-size: 36px; display: block; margin-bottom: 14px; animation: skullBreathe 3s ease-in-out infinite; }
+  .cta-title {
+    font-family: 'Cinzel', serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--bright);
+    margin-bottom: 8px;
+  }
+  .cta-sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+  .cta-btn {
+    display: inline-block;
+    padding: 16px 48px;
+    background: var(--blood);
+    border: 1px solid var(--crimson);
+    color: var(--bright);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-decoration: none;
+    text-transform: uppercase;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s;
+  }
+  .cta-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+    transition: left 0.4s;
+  }
+  .cta-btn:hover::before { left: 100%; }
+  .cta-btn:hover { background: var(--crimson); border-color: var(--ember); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(139,26,26,0.4); }
+  .cta-fine {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: #3a1a1a;
+    letter-spacing: 1px;
+    margin-top: 20px;
+    text-transform: uppercase;
+    line-height: 2;
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    text-align: center;
+    margin-top: 60px;
     padding-top: 24px;
     border-top: 1px solid #1a0a0a;
-  }
-  .footer-brand {
     font-family: 'Cinzel', serif;
-    font-size: 14px;
+    font-size: 13px;
     letter-spacing: 4px;
-    color: #4a2020;
+    color: #3a1a1a;
     text-transform: uppercase;
+  }
+
+  /* ── TARGET ELIMINATION EFFECT ── */
+  .target-hit {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9997;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--ember);
+    text-transform: uppercase;
+    animation: hitFade 1.2s ease forwards;
+  }
+  @keyframes hitFade {
+    0% { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%,-120%) scale(0.8); }
   }
 </style>
 </head>
 <body>
+
+<!-- CURSOR -->
+<div id="cursor">
+  <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="20" cy="20" r="18" stroke="#8b1a1a" stroke-width="0.5" opacity="0.6"/>
+    <circle cx="20" cy="20" r="10" stroke="#e04f4f" stroke-width="0.5" opacity="0.4"/>
+    <circle cx="20" cy="20" r="3" stroke="#e04f4f" stroke-width="1" opacity="0.8"/>
+    <line x1="20" y1="2" x2="20" y2="12" stroke="#e04f4f" stroke-width="0.5" opacity="0.6"/>
+    <line x1="20" y1="28" x2="20" y2="38" stroke="#e04f4f" stroke-width="0.5" opacity="0.6"/>
+    <line x1="2" y1="20" x2="12" y2="20" stroke="#e04f4f" stroke-width="0.5" opacity="0.6"/>
+    <line x1="28" y1="20" x2="38" y2="20" stroke="#e04f4f" stroke-width="0.5" opacity="0.6"/>
+  </svg>
+</div>
+<div id="cursor-dot"></div>
+
+<!-- PARTICLES -->
+<canvas id="particle-canvas"></canvas>
+
+<!-- BG -->
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+<div class="scanlines"></div>
+
+<!-- INTRO -->
+<div id="intro">
+  <div class="intro-skull">☠</div>
+  <div class="intro-text">Blacklist Recon · Initializing</div>
+</div>
+
 <div class="container">
 
   <!-- HEADER -->
   <div class="header">
-    <span class="skull">☠</span>
-    <div class="tag">Blacklist Recon · Torn City · Now Recruiting</div>
-    <h1 class="title">
-      We're Building
-      <span>The Network</span>
-    </h1>
-    <div class="divider"></div>
-    <p class="tagline">Hunters Wanted · <span>No Questions Asked</span> · Get Paid</p>
+    <div class="skull-wrap">
+      <span class="skull-main-icon">☠</span>
+      <div class="skull-ring"></div>
+      <div class="skull-ring2"></div>
+    </div>
+    <div class="eyebrow">Blacklist Recon · Torn City · Now Recruiting</div>
+    <h1 class="title"><span class="glitch" data-text="We're Building">We're Building</span></h1>
+    <div class="title-sub">The Network</div>
+    <div class="divider-line"></div>
+    <p class="tagline">Hunters Wanted · <strong>No Questions Asked</strong> · Get Paid</p>
   </div>
 
   <!-- PAYOUT -->
-  <div class="payout-badge">
-    <div class="payout-num">75%</div>
+  <div class="payout-hero">
+    <div class="payout-num" id="payout-counter">0%</div>
     <div class="payout-label">Your Cut — Every Contract</div>
     <div class="payout-sub">Tracked automatically. Request withdrawal anytime.</div>
   </div>
 
-  <!-- WHAT WE ARE -->
+  <!-- HIGHLIGHT -->
   <div class="highlight">
     <p>
       Blacklist Recon is not a faction.<br>
@@ -339,43 +648,61 @@
     </p>
   </div>
 
-  <!-- WHAT WE OFFER -->
+  <!-- TICKER -->
+  <div class="ticker-wrap">
+    <div class="ticker" id="ticker">
+      <div class="ticker-item"><span class="t-skull">☠</span> CONTRACT ACTIVE · TARGET: UNKNOWN</div>
+      <div class="ticker-item completed"><span class="t-skull">☠</span> CONTRACT CLOSED · PAYOUT DELIVERED</div>
+      <div class="ticker-item"><span class="t-skull">☠</span> NEW CONTRACT · AWAITING HUNTER</div>
+      <div class="ticker-item completed"><span class="t-skull">☠</span> TARGET ELIMINATED · BALANCE UPDATED</div>
+      <div class="ticker-item"><span class="t-skull">☠</span> ANONYMOUS CLIENT · PAYMENT CONFIRMED</div>
+      <div class="ticker-item completed"><span class="t-skull">☠</span> CONTRACT CLOSED · 75% PAID OUT</div>
+      <div class="ticker-item"><span class="t-skull">☠</span> CONTRACT ACTIVE · TARGET: UNKNOWN</div>
+      <div class="ticker-item completed"><span class="t-skull">☠</span> CONTRACT CLOSED · PAYOUT DELIVERED</div>
+      <div class="ticker-item"><span class="t-skull">☠</span> NEW CONTRACT · AWAITING HUNTER</div>
+      <div class="ticker-item completed"><span class="t-skull">☠</span> TARGET ELIMINATED · BALANCE UPDATED</div>
+      <div class="ticker-item"><span class="t-skull">☠</span> ANONYMOUS CLIENT · PAYMENT CONFIRMED</div>
+      <div class="ticker-item completed"><span class="t-skull">☠</span> CONTRACT CLOSED · 75% PAID OUT</div>
+    </div>
+  </div>
+
+  <!-- WHAT YOU GET -->
   <div class="section">
-    <div class="section-head">// What You Get</div>
+    <div class="section-head">What You Get</div>
     <div class="section-body">
       <div class="item">
         <div class="item-icon">💰</div>
         <div class="item-text">
           <strong>75% of every contract — automatically tracked</strong>
-          <span>No chasing payments. Your balance updates the moment a contract is verified complete. Request a withdrawal and it's processed by admin directly.</span>
+          <span>No chasing payments. Your balance updates the moment a contract is verified complete. Request a withdrawal whenever you want.</span>
         </div>
       </div>
       <div class="item">
         <div class="item-icon">🎯</div>
         <div class="item-text">
           <strong>Private contract board — claim on your schedule</strong>
-          <span>Access a live board of active contracts. Pick your targets when you're ready. No pressure, no quotas.</span>
+          <span>Access a live board of active contracts. Pick your targets. No pressure, no quotas, no politics.</span>
         </div>
       </div>
       <div class="item">
         <div class="item-icon">🔒</div>
         <div class="item-text">
           <strong>You never know who posted — and they never know you</strong>
-          <span>Client identities are sealed. Only The Handler and trusted Listers ever see who placed a contract. Hunters receive a target and a payout. Nothing else.</span>
+          <span>Client identities are sealed. Only The Handler and trusted Listers ever see who placed a contract. Hunters receive a target and a payout. Nothing else. No questions are asked — as long as the money is there, you move.</span>
         </div>
       </div>
       <div class="item">
         <div class="item-icon">⚔️</div>
         <div class="item-text">
           <strong>No faction switch required</strong>
-          <span>Stay exactly where you are. Blacklist Recon is a network, not a faction. Your faction life is untouched.</span>
+          <span>Stay exactly where you are. Blacklist Recon is a network, not a faction.</span>
         </div>
       </div>
       <div class="item">
         <div class="item-icon">👁️</div>
         <div class="item-text">
           <strong>Your identity is protected within the network</strong>
-          <span>Other hunters never know who you are. Clients never know who came for their target. The only record is between you and the contract board — and the target's attack log. That's the nature of the job. Own your hits.</span>
+          <span>Other hunters never know who you are. Clients never know who came for their target. The only record is between you and the board. The target's attack log will show who came for them — that's the nature of the job. Own your hits.</span>
         </div>
       </div>
     </div>
@@ -383,11 +710,11 @@
 
   <!-- HOW IT WORKS -->
   <div class="section">
-    <div class="section-head">// How It Works</div>
+    <div class="section-head">How It Works</div>
     <div class="section-body">
       <div class="step">
         <div class="step-num">01</div>
-        <div class="step-text"><strong>Get access.</strong> Message The Handler in-game. Once vetted you receive access to the private contract board.</div>
+        <div class="step-text"><strong>Get access.</strong> Apply using the link below. Once vetted you receive access to the private contract board.</div>
       </div>
       <div class="step">
         <div class="step-num">02</div>
@@ -395,18 +722,18 @@
       </div>
       <div class="step">
         <div class="step-num">03</div>
-        <div class="step-text"><strong>Execute.</strong> Hit the target. Mark it done on the board. A verifier confirms completion.</div>
+        <div class="step-text"><strong>Execute.</strong> Hit the target. Mark it done on the board. A trusted verifier confirms completion.</div>
       </div>
       <div class="step">
         <div class="step-num">04</div>
-        <div class="step-text"><strong>Get paid.</strong> 75% of the contract value hits your balance automatically. Request withdrawal whenever you want.</div>
+        <div class="step-text"><strong>Get paid.</strong> 75% of the contract hits your balance automatically. Request withdrawal whenever you want.</div>
       </div>
     </div>
   </div>
 
   <!-- WHO WE WANT -->
   <div class="section">
-    <div class="section-head">// Who We Want</div>
+    <div class="section-head">Who We Want</div>
     <div class="section-body">
       <div class="item">
         <div class="item-icon">✦</div>
@@ -418,7 +745,11 @@
       </div>
       <div class="item">
         <div class="item-icon">✦</div>
-        <div class="item-text"><strong>People who don't ask questions</strong><span>Money is there. Target is there. That's all you need.</span></div>
+        <div class="item-text"><strong>People who don't ask questions</strong><span>Money is there. Target is there. That's all you need to know.</span></div>
+      </div>
+      <div class="item">
+        <div class="item-icon">✦</div>
+        <div class="item-text"><strong>Players who own their hits</strong><span>The target will see your name in their attack log. That's the job. We don't hide from it.</span></div>
       </div>
     </div>
   </div>
@@ -426,8 +757,8 @@
   <!-- CTA -->
   <div class="cta">
     <span class="cta-skull">☠</span>
-    <div class="cta-main">Ready to Work?</div>
-    <div class="cta-sub">Message The Handler in-game to apply</div>
+    <div class="cta-title">Ready to Work?</div>
+    <div class="cta-sub">Apply through the link below — vetted by The Handler personally</div>
     <a href="https://blacklist-recon.github.io/#recruitment" class="cta-btn">Apply Now →</a>
     <div class="cta-fine">
       Blacklist Recon · We find them. You finish them.<br>
@@ -435,10 +766,102 @@
     </div>
   </div>
 
-  <div class="footer-line">
-    <div class="footer-brand">Blacklist Recon · Torn City</div>
-  </div>
-
+  <div class="footer">Blacklist Recon · Torn City</div>
 </div>
+
+<script>
+// ── CURSOR ──
+const cursor    = document.getElementById('cursor');
+const cursorDot = document.getElementById('cursor-dot');
+let mx = 0, my = 0, cx = 0, cy = 0;
+
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursorDot.style.left = mx + 'px';
+  cursorDot.style.top  = my + 'px';
+});
+
+function animCursor() {
+  cx += (mx - cx) * 0.12;
+  cy += (my - cy) * 0.12;
+  cursor.style.left = cx + 'px';
+  cursor.style.top  = cy + 'px';
+  requestAnimationFrame(animCursor);
+}
+animCursor();
+
+// Click effect
+document.addEventListener('click', e => {
+  const hit = document.createElement('div');
+  hit.className = 'target-hit';
+  hit.textContent = ['TARGET', 'LOCKED', 'ACQUIRED', '☠'][Math.floor(Math.random()*4)];
+  hit.style.left = e.clientX + 'px';
+  hit.style.top  = e.clientY + 'px';
+  document.body.appendChild(hit);
+  setTimeout(() => hit.remove(), 1200);
+});
+
+// ── PARTICLES ──
+const canvas = document.getElementById('particle-canvas');
+const ctx    = canvas.getContext('2d');
+canvas.width  = window.innerWidth;
+canvas.height = window.innerHeight;
+window.addEventListener('resize', () => {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+
+const particles = Array.from({ length: 60 }, () => ({
+  x: Math.random() * canvas.width,
+  y: Math.random() * canvas.height,
+  vx: (Math.random() - 0.5) * 0.3,
+  vy: -Math.random() * 0.4 - 0.1,
+  size: Math.random() * 2 + 0.5,
+  opacity: Math.random() * 0.4 + 0.05,
+  life: Math.random(),
+}));
+
+function drawParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles.forEach(p => {
+    p.x  += p.vx;
+    p.y  += p.vy;
+    p.life -= 0.003;
+    if (p.life <= 0 || p.y < 0) {
+      p.x    = Math.random() * canvas.width;
+      p.y    = canvas.height + 10;
+      p.life = 1;
+    }
+    ctx.save();
+    ctx.globalAlpha = p.opacity * p.life;
+    ctx.fillStyle   = '#e04f4f';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+  requestAnimationFrame(drawParticles);
+}
+drawParticles();
+
+// ── PAYOUT COUNTER ANIMATION ──
+function animatePayout() {
+  const el  = document.getElementById('payout-counter');
+  let count = 0;
+  const target = 75;
+  const interval = setInterval(() => {
+    count += 2;
+    if (count >= target) { count = target; clearInterval(interval); }
+    el.textContent = count + '%';
+  }, 40);
+}
+setTimeout(animatePayout, 3800);
+
+// ── SCROLL REVEAL ──
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.15 });
+document.querySelectorAll('.section').forEach(el => observer.observe(el));
+</script>
 </body>
 </html>
