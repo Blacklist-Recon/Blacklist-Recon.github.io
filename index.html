@@ -688,6 +688,28 @@
   }
 
   /* ── RESPONSIVE ── */
+  /* ── FAQ ── */
+  .faq-item { background: var(--ash); margin-bottom: 1px; }
+  .faq-q {
+    width: 100%; display: flex; justify-content: space-between; align-items: center;
+    padding: 20px 24px; background: none; border: none; cursor: pointer;
+    font-family: 'Cinzel', serif; font-size: 16px; color: var(--bright);
+    text-align: left; transition: color 0.2s; gap: 16px;
+  }
+  .faq-q:hover { color: var(--gold); }
+  .faq-icon {
+    font-family: 'Share Tech Mono', monospace; font-size: 20px;
+    color: var(--blood); flex-shrink: 0; transition: transform 0.3s;
+  }
+  .faq-q.open .faq-icon { transform: rotate(45deg); color: var(--ember); }
+  .faq-a {
+    max-height: 0; overflow: hidden; padding: 0 24px;
+    font-size: 15px; color: var(--dim); line-height: 1.8;
+    transition: max-height 0.4s ease, padding 0.3s ease;
+  }
+  .faq-a.open { max-height: 300px; padding: 0 24px 20px; }
+  .faq-a a { color: var(--gold); }
+
   @media (max-width: 640px) {
     body { cursor: auto; }
     #cursor, #cursor-trail { display: none; }
@@ -743,7 +765,10 @@
     <li><a href="#how-it-works">Process</a></li>
     <li><a href="#recruitment">Join</a></li>
     <li><a href="#rules">Terms</a></li>
+    <li><a href="#testimonials">Reviews</a></li>
+    <li><a href="#faq">FAQ</a></li>
     <li><a href="#contact">Contact</a></li>
+    <li><a href="history.html">History</a></li>
     <li><a href="app.html" style="color:var(--gold);border:1px solid var(--gold-dim);padding:4px 12px;">HQ Login</a></li>
   </ul>
 </nav>
@@ -919,6 +944,187 @@
     <li class="reveal" style="transition-delay:0.25s"><span><strong>We operate within Torn City's rules.</strong> This is an in-game service for the browser game Torn (torn.com). All transactions are in-game items and currency only.</span></li>
     <li class="reveal" style="transition-delay:0.3s"><span><strong>Disputes are handled by Blacklist Recon leadership.</strong> Contact The Handler in-game for any contract concerns.</span></li>
   </ul>
+</section>
+</div>
+</div>
+
+<!-- TESTIMONIALS -->
+<div id="testimonials">
+<div class="wrap">
+<section>
+  <div class="reveal">
+    <p class="section-eyebrow">Client Voices</p>
+    <h2 class="section-title">What They Say</h2>
+    <div class="section-divider"></div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1px;background:var(--border);">
+
+    <div class="reveal" style="transition-delay:0.1s;background:var(--ash);padding:32px;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(to right,transparent,var(--ember),transparent);opacity:0.4;"></div>
+      <div style="font-family:Share Tech Mono,monospace;font-size:32px;color:var(--blood);opacity:0.4;line-height:1;margin-bottom:16px;">"</div>
+      <p style="font-size:15px;color:var(--dim);line-height:1.8;margin-bottom:20px;font-style:italic;">Target was down within 12 hours. No questions, no delays, no trace back to me. Exactly what I needed during a war. Will use again.</p>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="font-size:24px;">☠</div>
+        <div>
+          <div style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--gold);letter-spacing:2px;">Anonymous Client</div>
+          <div style="font-family:Share Tech Mono,monospace;font-size:10px;color:var(--muted);letter-spacing:1px;">Tier I · Standard Hit</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal" style="transition-delay:0.2s;background:var(--ash);padding:32px;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(to right,transparent,var(--ember),transparent);opacity:0.4;"></div>
+      <div style="font-family:Share Tech Mono,monospace;font-size:32px;color:var(--blood);opacity:0.4;line-height:1;margin-bottom:16px;">"</div>
+      <p style="font-size:15px;color:var(--dim);line-height:1.8;margin-bottom:20px;font-style:italic;">We were losing our faction war badly. Brought in Blacklist Recon for War Support and the tide turned fast. Their hunters kept our main problem players hospitalized for days.</p>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="font-size:24px;">☠</div>
+        <div>
+          <div style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--gold);letter-spacing:2px;">Anonymous Client</div>
+          <div style="font-family:Share Tech Mono,monospace;font-size:10px;color:var(--muted);letter-spacing:1px;">Tier II · War Support</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal" style="transition-delay:0.3s;background:var(--ash);padding:32px;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(to right,transparent,var(--ember),transparent);opacity:0.4;"></div>
+      <div style="font-family:Share Tech Mono,monospace;font-size:32px;color:var(--blood);opacity:0.4;line-height:1;margin-bottom:16px;">"</div>
+      <p style="font-size:15px;color:var(--dim);line-height:1.8;margin-bottom:20px;font-style:italic;">The target never knew who came for them or who paid for it. That's the whole point. Blacklist Recon delivered and my hands stayed clean the entire time.</p>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="font-size:24px;">☠</div>
+        <div>
+          <div style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--gold);letter-spacing:2px;">Anonymous Client</div>
+          <div style="font-family:Share Tech Mono,monospace;font-size:10px;color:var(--muted);letter-spacing:1px;">Tier III · High-Value</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal" style="transition-delay:0.35s;background:var(--ash);padding:32px;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(to right,transparent,var(--ember),transparent);opacity:0.4;"></div>
+      <div style="font-family:Share Tech Mono,monospace;font-size:32px;color:var(--blood);opacity:0.4;line-height:1;margin-bottom:16px;">"</div>
+      <p style="font-size:15px;color:var(--dim);line-height:1.8;margin-bottom:20px;font-style:italic;">Fast, professional, and discreet. Submitted the form, got payment instructions quickly, and received confirmation the same day. This is how it should be done.</p>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="font-size:24px;">☠</div>
+        <div>
+          <div style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--gold);letter-spacing:2px;">Anonymous Client</div>
+          <div style="font-family:Share Tech Mono,monospace;font-size:10px;color:var(--muted);letter-spacing:1px;">Tier I · Standard Hit</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal" style="transition-delay:0.4s;background:var(--ash);padding:32px;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(to right,transparent,var(--ember),transparent);opacity:0.4;"></div>
+      <div style="font-family:Share Tech Mono,monospace;font-size:32px;color:var(--blood);opacity:0.4;line-height:1;margin-bottom:16px;">"</div>
+      <p style="font-size:15px;color:var(--dim);line-height:1.8;margin-bottom:20px;font-style:italic;">I was skeptical at first but the results speak for themselves. High-value target, multiple hits needed, all handled without a single leak back to me. Absolute silence from start to finish.</p>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="font-size:24px;">☠</div>
+        <div>
+          <div style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--gold);letter-spacing:2px;">Anonymous Client</div>
+          <div style="font-family:Share Tech Mono,monospace;font-size:10px;color:var(--muted);letter-spacing:1px;">Tier III · High-Value</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal" style="transition-delay:0.45s;background:var(--ash);padding:32px;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(to right,transparent,var(--ember),transparent);opacity:0.4;"></div>
+      <div style="font-family:Share Tech Mono,monospace;font-size:32px;color:var(--blood);opacity:0.4;line-height:1;margin-bottom:16px;">"</div>
+      <p style="font-size:15px;color:var(--dim);line-height:1.8;margin-bottom:20px;font-style:italic;">Worth every dollar. Had a player who kept attacking our members. One contract later and they got the message. Blacklist Recon is the real deal.</p>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="font-size:24px;">☠</div>
+        <div>
+          <div style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--gold);letter-spacing:2px;">Anonymous Client</div>
+          <div style="font-family:Share Tech Mono,monospace;font-size:10px;color:var(--muted);letter-spacing:1px;">Tier II · War Support</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+</div>
+</div>
+
+<!-- FAQ -->
+<div id="faq">
+<div class="wrap">
+<section>
+  <div class="reveal">
+    <p class="section-eyebrow">Common Questions</p>
+    <h2 class="section-title">FAQ</h2>
+    <div class="section-divider"></div>
+  </div>
+
+  <div id="faq-list">
+
+    <div class="faq-item reveal" style="border-bottom:1px solid var(--border);padding:0;">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        <span>Will anyone know I placed a contract?</span>
+        <span class="faq-icon">+</span>
+      </button>
+      <div class="faq-a">
+        No. Your identity is known only to The Handler and trusted Listers — hand-picked members bound by silence. Hunters receive only a target name and payout. Your name is never attached to the contract at any stage. We will not speak — for we hold true to silence and trust.
+      </div>
+    </div>
+
+    <div class="faq-item reveal" style="border-bottom:1px solid var(--border);padding:0;transition-delay:0.05s;">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        <span>How long does a contract take?</span>
+        <span class="faq-icon">+</span>
+      </button>
+      <div class="faq-a">
+        Standard Hit contracts are typically fulfilled within 24 hours of payment confirmation. War Support and High-Value contracts begin immediately and run until the agreed scope is complete. Timing depends on target availability — if the target is in hospital, traveling, or in federal jail at activation, the contract begins once they are accessible.
+      </div>
+    </div>
+
+    <div class="faq-item reveal" style="border-bottom:1px solid var(--border);padding:0;transition-delay:0.1s;">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        <span>What if the hunter fails or the contract isn't completed?</span>
+        <span class="faq-icon">+</span>
+      </button>
+      <div class="faq-a">
+        High-Value contracts are guaranteed — if results are not achieved within the agreed scope, the contract is extended at no additional cost. Standard and War Support contracts are fulfilled on a best-effort basis within the agreed parameters. Contact The Handler if you have any concerns.
+      </div>
+    </div>
+
+    <div class="faq-item reveal" style="border-bottom:1px solid var(--border);padding:0;transition-delay:0.15s;">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        <span>Can I pay anonymously?</span>
+        <span class="faq-icon">+</span>
+      </button>
+      <div class="faq-a">
+        Payment is handled in-game through Torn City's trade system. Payment instructions are sent to you privately by The Handler after your contract is reviewed. Your Torn identity is required for payment but is protected under the same code of silence — it is never shared with hunters or disclosed publicly.
+      </div>
+    </div>
+
+    <div class="faq-item reveal" style="border-bottom:1px solid var(--border);padding:0;transition-delay:0.2s;">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        <span>Is this against Torn's rules?</span>
+        <span class="faq-icon">+</span>
+      </button>
+      <div class="faq-a">
+        No. Blacklist Recon operates entirely within Torn City's rules. All transactions are in-game currency and items only. Attacking other players is a core part of Torn gameplay. We simply coordinate that activity professionally and anonymously.
+      </div>
+    </div>
+
+    <div class="faq-item reveal" style="border-bottom:1px solid var(--border);padding:0;transition-delay:0.25s;">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        <span>Can I place a contract on someone in my own faction?</span>
+        <span class="faq-icon">+</span>
+      </button>
+      <div class="faq-a">
+        We do not ask questions about motivation — that is by design. If the contract is submitted and payment is confirmed, it goes live. No target is off limits. No explanation is required. Money confirms the contract.
+      </div>
+    </div>
+
+    <div class="faq-item reveal" style="padding:0;transition-delay:0.3s;">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        <span>How do I know the contract was completed?</span>
+        <span class="faq-icon">+</span>
+      </button>
+      <div class="faq-a">
+        Once a hunter marks the contract complete and a trusted verifier confirms it, you receive notification via the method you provided in your contact form. Completed contracts also appear in our public <a href="history.html" style="color:var(--gold);">contract history</a> with target names redacted.
+      </div>
+    </div>
+
+  </div>
 </section>
 </div>
 </div>
@@ -1213,6 +1419,20 @@ fetchStats();
 setInterval(fetchStats, 30000);
 
 // ── CONTACT FORM ─────────────────────────────────────────────────────────
+// ── FAQ TOGGLE ──────────────────────────────────────────────────────────
+function toggleFaq(btn) {
+  const answer = btn.nextElementSibling;
+  const isOpen = answer.classList.contains('open');
+  // Close all
+  document.querySelectorAll('.faq-a').forEach(a => a.classList.remove('open'));
+  document.querySelectorAll('.faq-q').forEach(b => b.classList.remove('open'));
+  // Open clicked if it was closed
+  if (!isOpen) {
+    answer.classList.add('open');
+    btn.classList.add('open');
+  }
+}
+
 async function sendContactMessage() {
   const username = document.getElementById('contact-username').value.trim();
   const tornId   = document.getElementById('contact-tornid').value.trim();
