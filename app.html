@@ -332,7 +332,8 @@
   .badge-listed         { background: #1a2030; color: #4f9ce0; }
   .badge-approved       { background: #1a2030; color: #4f9ce0; }
   .badge-claimed        { background: #2c2038; color: #c14fe0; }
-  .badge-completed      { background: #1f2e1f; color: #5fe04f; }
+  .badge-completed           { background: #1f2e1f; color: #5fe04f; }
+  .badge-pending_verification { background: #2c1f38; color: #c084fc; border: 1px solid #6b21a8; }
 
   /* ── BUTTONS ── */
   .btn {
@@ -772,6 +773,13 @@ let currentPage = 'board';
 let filterStatus = 'all';
 
 function fmt(n)  { return '$' + Math.round(n).toLocaleString(); }
+function formatDeadline(ts) {
+  const diff = ts - Date.now();
+  if (diff <= 0) return 'EXPIRED';
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  return h > 0 ? `${h}h ${m}m remaining` : `${m}m remaining`;
+}
 function hunterPay(p) { return Math.round(p * PRICE_UNIT * HUNTER_CUT); }
 function adminPay(p)  { return Math.round(p * PRICE_UNIT * ADMIN_CUT);  }
 function esc(s)  { const d = document.createElement('div'); d.textContent = String(s||''); return d.innerHTML; }
@@ -1000,7 +1008,10 @@ function renderBoard(main) {
             </div>
             <div class="card-row">
               <span class="card-label">Tier</span>
-              <span class="card-value">${esc(b.tierLabel)}</span>
+              <span class="card-value">
+                ${esc(b.tierLabel)}
+                ${b.tier === 'high_value' ? '<span style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--ember);letter-spacing:1px;margin-left:6px;">★ PRIORITY</span>' : ''}
+              </span>
             </div>
             <div class="card-row">
               <span class="card-label">${priceLabel}</span>
@@ -1033,7 +1044,7 @@ function renderBoard(main) {
         <div class="stat-label">Open</div>
       </div>
       <div class="stat-card">
-        <div class="stat-value">${bounties.filter(b=>b.status==='claimed').length}</div>
+        <div class="stat-value">${bounties.filter(b=>b.status==='claimed'||b.status==='pending_verification').length}</div>
         <div class="stat-label">Active</div>
       </div>
       <div class="stat-card">
@@ -1070,6 +1081,12 @@ function renderBoard(main) {
         if (action === 'claim')    await api('/bounties/claim',    { bountyId: id });
         if (action === 'complete') await api('/bounties/complete', { bountyId: id });
         if (action === 'delete')   await api('/bounties/delete',   { bountyId: id });
+        if (action === 'submit-proof') {
+          const input = main.querySelector(`.proof-link-input[data-id="${id}"]`);
+          const proof = input ? input.value.trim() : '';
+          if (!proof) { alert('Please paste your attack log URL first.'); btn.disabled = false; return; }
+          await api('/bounties/complete', { bountyId: id, proofLink: proof });
+        }
         await loadBounties();
         renderBoard(main);
       } catch (e) {
