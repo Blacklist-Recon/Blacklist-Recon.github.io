@@ -1079,86 +1079,48 @@
     <h2 class="section-title">What They Say</h2>
     <div class="section-divider"></div>
   </div>
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1px;background:var(--border);">
 
-    <div class="reveal" style="transition-delay:0.1s;background:var(--ash);padding:32px;position:relative;overflow:hidden;">
-      <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(to right,transparent,var(--ember),transparent);opacity:0.4;"></div>
-      <div style="font-family:Share Tech Mono,monospace;font-size:32px;color:var(--blood);opacity:0.4;line-height:1;margin-bottom:16px;">"</div>
-      <p style="font-size:15px;color:var(--dim);line-height:1.8;margin-bottom:20px;font-style:italic;">Target was down within 12 hours. No questions, no delays, no trace back to me. Exactly what I needed during a war. Will use again.</p>
-      <div style="display:flex;align-items:center;gap:12px;">
-        <div style="font-size:24px;">☠</div>
-        <div>
-          <div style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--gold);letter-spacing:2px;">Anonymous Client</div>
-          <div style="font-family:Share Tech Mono,monospace;font-size:10px;color:var(--muted);letter-spacing:1px;">Tier I · Standard Hit</div>
-        </div>
+  <!-- Live testimonials grid -->
+  <div id="testimonials-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1px;background:var(--border);min-height:100px;">
+    <div style="background:var(--ash);padding:40px;text-align:center;font-family:Share Tech Mono,monospace;font-size:11px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;">
+      Loading reviews...
+    </div>
+  </div>
+
+  <!-- Leave a review -->
+  <div style="margin-top:40px;border:1px solid var(--border);background:var(--ash);padding:32px;position:relative;" class="reveal">
+    <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(to right,transparent,var(--gold),transparent);opacity:0.4;"></div>
+    <p style="font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:4px;color:var(--blood);text-transform:uppercase;margin-bottom:16px;">Leave a Review</p>
+    <p style="font-size:14px;color:var(--dim);line-height:1.7;margin-bottom:24px;">Used our services? Share your experience. Reviews are anonymous and appear after approval by The Handler.</p>
+    <div id="review-msg"></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+      <div style="flex:1;min-width:180px;">
+        <label style="display:block;font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:6px;">Torn Username <span style="color:var(--ember);">*</span></label>
+        <input id="review-username" type="text" placeholder="Your Torn username" maxlength="100"
+          style="width:100%;background:var(--void);border:1px solid var(--border);color:var(--bright);font-family:Share Tech Mono,monospace;font-size:12px;padding:9px 12px;outline:none;box-sizing:border-box;" />
+      </div>
+      <div style="flex:1;min-width:140px;">
+        <label style="display:block;font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:6px;">Torn ID <span style="color:var(--ember);">*</span></label>
+        <input id="review-tornid" type="number" placeholder="e.g. 1234567"
+          style="width:100%;background:var(--void);border:1px solid var(--border);color:var(--bright);font-family:Share Tech Mono,monospace;font-size:12px;padding:9px 12px;outline:none;box-sizing:border-box;" />
+      </div>
+      <div style="flex:1;min-width:160px;">
+        <label style="display:block;font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:6px;">Contract Tier</label>
+        <select id="review-tier"
+          style="width:100%;background:var(--void);border:1px solid var(--border);color:var(--bright);font-family:Share Tech Mono,monospace;font-size:12px;padding:9px 12px;outline:none;box-sizing:border-box;">
+          <option value="standard">Tier I — Standard Hit</option>
+          <option value="war_support">Tier II — War Support</option>
+          <option value="high_value">Tier III — High Value</option>
+        </select>
       </div>
     </div>
-
-    <div class="reveal" style="transition-delay:0.2s;background:var(--ash);padding:32px;position:relative;overflow:hidden;">
-      <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(to right,transparent,var(--ember),transparent);opacity:0.4;"></div>
-      <div style="font-family:Share Tech Mono,monospace;font-size:32px;color:var(--blood);opacity:0.4;line-height:1;margin-bottom:16px;">"</div>
-      <p style="font-size:15px;color:var(--dim);line-height:1.8;margin-bottom:20px;font-style:italic;">We were losing our faction war badly. Brought in Blacklist Recon for War Support and the tide turned fast. Their hunters kept our main problem players hospitalized for days.</p>
-      <div style="display:flex;align-items:center;gap:12px;">
-        <div style="font-size:24px;">☠</div>
-        <div>
-          <div style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--gold);letter-spacing:2px;">Anonymous Client</div>
-          <div style="font-family:Share Tech Mono,monospace;font-size:10px;color:var(--muted);letter-spacing:1px;">Tier II · War Support</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="reveal" style="transition-delay:0.3s;background:var(--ash);padding:32px;position:relative;overflow:hidden;">
-      <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(to right,transparent,var(--ember),transparent);opacity:0.4;"></div>
-      <div style="font-family:Share Tech Mono,monospace;font-size:32px;color:var(--blood);opacity:0.4;line-height:1;margin-bottom:16px;">"</div>
-      <p style="font-size:15px;color:var(--dim);line-height:1.8;margin-bottom:20px;font-style:italic;">The target never knew who came for them or who paid for it. That's the whole point. Blacklist Recon delivered and my hands stayed clean the entire time.</p>
-      <div style="display:flex;align-items:center;gap:12px;">
-        <div style="font-size:24px;">☠</div>
-        <div>
-          <div style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--gold);letter-spacing:2px;">Anonymous Client</div>
-          <div style="font-family:Share Tech Mono,monospace;font-size:10px;color:var(--muted);letter-spacing:1px;">Tier III · High-Value</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="reveal" style="transition-delay:0.35s;background:var(--ash);padding:32px;position:relative;overflow:hidden;">
-      <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(to right,transparent,var(--ember),transparent);opacity:0.4;"></div>
-      <div style="font-family:Share Tech Mono,monospace;font-size:32px;color:var(--blood);opacity:0.4;line-height:1;margin-bottom:16px;">"</div>
-      <p style="font-size:15px;color:var(--dim);line-height:1.8;margin-bottom:20px;font-style:italic;">Fast, professional, and discreet. Submitted the form, got payment instructions quickly, and received confirmation the same day. This is how it should be done.</p>
-      <div style="display:flex;align-items:center;gap:12px;">
-        <div style="font-size:24px;">☠</div>
-        <div>
-          <div style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--gold);letter-spacing:2px;">Anonymous Client</div>
-          <div style="font-family:Share Tech Mono,monospace;font-size:10px;color:var(--muted);letter-spacing:1px;">Tier I · Standard Hit</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="reveal" style="transition-delay:0.4s;background:var(--ash);padding:32px;position:relative;overflow:hidden;">
-      <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(to right,transparent,var(--ember),transparent);opacity:0.4;"></div>
-      <div style="font-family:Share Tech Mono,monospace;font-size:32px;color:var(--blood);opacity:0.4;line-height:1;margin-bottom:16px;">"</div>
-      <p style="font-size:15px;color:var(--dim);line-height:1.8;margin-bottom:20px;font-style:italic;">I was skeptical at first but the results speak for themselves. High-value target, multiple hits needed, all handled without a single leak back to me. Absolute silence from start to finish.</p>
-      <div style="display:flex;align-items:center;gap:12px;">
-        <div style="font-size:24px;">☠</div>
-        <div>
-          <div style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--gold);letter-spacing:2px;">Anonymous Client</div>
-          <div style="font-family:Share Tech Mono,monospace;font-size:10px;color:var(--muted);letter-spacing:1px;">Tier III · High-Value</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="reveal" style="transition-delay:0.45s;background:var(--ash);padding:32px;position:relative;overflow:hidden;">
-      <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(to right,transparent,var(--ember),transparent);opacity:0.4;"></div>
-      <div style="font-family:Share Tech Mono,monospace;font-size:32px;color:var(--blood);opacity:0.4;line-height:1;margin-bottom:16px;">"</div>
-      <p style="font-size:15px;color:var(--dim);line-height:1.8;margin-bottom:20px;font-style:italic;">Worth every dollar. Had a player who kept attacking our members. One contract later and they got the message. Blacklist Recon is the real deal.</p>
-      <div style="display:flex;align-items:center;gap:12px;">
-        <div style="font-size:24px;">☠</div>
-        <div>
-          <div style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--gold);letter-spacing:2px;">Anonymous Client</div>
-          <div style="font-family:Share Tech Mono,monospace;font-size:10px;color:var(--muted);letter-spacing:1px;">Tier II · War Support</div>
-        </div>
-      </div>
-    </div>
-
+    <label style="display:block;font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:6px;">Your Review <span style="color:var(--ember);">*</span></label>
+    <textarea id="review-quote" rows="3" maxlength="500" placeholder="Share your experience with Blacklist Recon..."
+      style="width:100%;background:var(--void);border:1px solid var(--border);color:var(--bright);font-family:Share Tech Mono,monospace;font-size:12px;padding:9px 12px;outline:none;box-sizing:border-box;resize:vertical;margin-bottom:16px;"></textarea>
+    <button onclick="submitReview()"
+      style="padding:12px 32px;background:var(--blood);border:1px solid var(--crimson);color:var(--bright);font-family:Share Tech Mono,monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;"
+      id="review-btn">Submit Review →</button>
+    <p style="font-family:Share Tech Mono,monospace;font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:12px;">Your Torn ID is used to verify you are a real client. It is never shown publicly.</p>
   </div>
 </section>
 </div>
@@ -1569,6 +1531,111 @@ window.addEventListener('scroll', () => {
 });
 
 // ── CONTACT FORM ─────────────────────────────────────────────────────────
+// ── TESTIMONIALS ────────────────────────────────────────────────────────
+const TIER_LABELS = {
+  standard:    'Tier I · Standard Hit',
+  war_support: 'Tier II · War Support',
+  high_value:  'Tier III · High-Value',
+};
+
+async function loadTestimonials() {
+  const grid = document.getElementById('testimonials-grid');
+  try {
+    const res  = await fetch(`${WORKER_URL}/testimonials/list`);
+    const data = await res.json();
+    const list = data.testimonials || [];
+
+    if (list.length === 0) {
+      grid.innerHTML = `
+        <div style="background:var(--ash);padding:40px;text-align:center;
+             font-family:Share Tech Mono,monospace;font-size:11px;letter-spacing:3px;
+             color:var(--muted);text-transform:uppercase;grid-column:1/-1;">
+          Be the first to leave a review below.
+        </div>`;
+      return;
+    }
+
+    grid.style.background = 'var(--border)';
+    grid.innerHTML = list.map((t, i) => `
+      <div style="background:var(--ash);padding:32px;position:relative;overflow:hidden;
+                  opacity:0;transform:translateY(20px);animation:fadeUp 0.6s ease ${i*0.08}s forwards;">
+        <div style="position:absolute;top:0;left:0;right:0;height:1px;
+                    background:linear-gradient(to right,transparent,var(--ember),transparent);opacity:0.4;"></div>
+        <div style="font-family:Share Tech Mono,monospace;font-size:32px;color:var(--blood);
+                    opacity:0.4;line-height:1;margin-bottom:16px;">"</div>
+        <p style="font-size:15px;color:var(--dim);line-height:1.8;margin-bottom:20px;font-style:italic;">
+          ${escHtml(t.quote)}
+        </p>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="font-size:24px;">☠</div>
+          <div>
+            <div style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--gold);letter-spacing:2px;">
+              ${escHtml(t.tornUsername)}
+            </div>
+            <div style="font-family:Share Tech Mono,monospace;font-size:10px;color:var(--muted);letter-spacing:1px;">
+              ${TIER_LABELS[t.tier] || t.tier}
+            </div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    grid.innerHTML = `
+      <div style="background:var(--ash);padding:40px;text-align:center;
+           font-family:Share Tech Mono,monospace;font-size:11px;letter-spacing:2px;
+           color:var(--muted);grid-column:1/-1;">
+        Reviews unavailable right now.
+      </div>`;
+  }
+}
+
+function escHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = String(str || '');
+  return d.innerHTML;
+}
+
+async function submitReview() {
+  const username = document.getElementById('review-username').value.trim();
+  const tornId   = document.getElementById('review-tornid').value.trim();
+  const tier     = document.getElementById('review-tier').value;
+  const quote    = document.getElementById('review-quote').value.trim();
+  const msgEl    = document.getElementById('review-msg');
+  const btn      = document.getElementById('review-btn');
+
+  if (!username || !tornId || !quote) {
+    msgEl.innerHTML = '<p style="color:var(--ember);font-family:Share Tech Mono,monospace;font-size:12px;margin-bottom:12px;">Please fill in all required fields.</p>';
+    return;
+  }
+  if (isNaN(tornId)) {
+    msgEl.innerHTML = '<p style="color:var(--ember);font-family:Share Tech Mono,monospace;font-size:12px;margin-bottom:12px;">Torn ID must be a number.</p>';
+    return;
+  }
+
+  btn.disabled = true; btn.textContent = 'Submitting...'; msgEl.innerHTML = '';
+  try {
+    const res  = await fetch(`${WORKER_URL}/testimonials/submit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ quote, tier, tornUsername: username, tornId }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      msgEl.innerHTML = '<p style="color:#5fe04f;font-family:Share Tech Mono,monospace;font-size:12px;margin-bottom:12px;">Thank you. Your review will appear after approval by The Handler.</p>';
+      document.getElementById('review-username').value = '';
+      document.getElementById('review-tornid').value   = '';
+      document.getElementById('review-quote').value    = '';
+    } else {
+      msgEl.innerHTML = `<p style="color:var(--ember);font-family:Share Tech Mono,monospace;font-size:12px;margin-bottom:12px;">${data.error}</p>`;
+    }
+  } catch(e) {
+    msgEl.innerHTML = '<p style="color:var(--ember);font-family:Share Tech Mono,monospace;font-size:12px;margin-bottom:12px;">Failed to submit. Please try again.</p>';
+  }
+  btn.disabled = false; btn.textContent = 'Submit Review →';
+}
+
+loadTestimonials();
+
 // ── FAQ TOGGLE ──────────────────────────────────────────────────────────
 function toggleFaq(btn) {
   const answer = btn.nextElementSibling;
