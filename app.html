@@ -1538,14 +1538,38 @@ async function renderRoster(main) {
       memberRanks = allBal.memberRanks || {};
     } catch(e) {}
 
+    // Get role assignments for each member
+    let allRoles = {};
+    try {
+      const rolesRes = await api('/roles/list');
+      allRoles = rolesRes.roles || {};
+    } catch(e) {}
+
+    function getMemberRole(tornId) {
+      for (const r of ['admin','lister','verifier','hunter']) {
+        if ((allRoles[r]||[]).includes(String(tornId))) return r;
+      }
+      return null;
+    }
+
     const rows = Object.entries(roster).length === 0
       ? `<tr><td colspan="5" style="text-align:center;color:var(--dim);padding:20px;">No agents yet</td></tr>`
       : Object.entries(roster).sort((a,b) => a[1].agentNumber - b[1].agentNumber).map(([tornId, r]) => {
-          const ri = memberRanks[tornId];
-          const badge = ri
-            ? rankBadge(ri.rank.id, ri.rank.name, ri.onProbation)
-            : rankBadge('ghost', 'Ghost', false);
-          const contracts = ri ? ri.completed : 0;
+          const memberRole = getMemberRole(tornId);
+          const isHunter   = memberRole === 'hunter';
+          const ri         = memberRanks[tornId];
+
+          // Hunters show rank badge + contract count
+          // Staff show role badge + dash for contracts
+          let badge, contracts;
+          if (isHunter) {
+            badge     = ri ? rankBadge(ri.rank.id, ri.rank.name, ri.onProbation) : rankBadge('ghost', 'Ghost', false);
+            contracts = ri ? ri.completed : 0;
+          } else {
+            badge     = roleBadge(memberRole || 'lister');
+            contracts = ri ? ri.completed : 0;
+          }
+
           return `<tr>
             <td style="color:var(--ember);">Agent #${r.agentNumber}</td>
             <td style="color:var(--gold);">${esc(r.alias)}</td>
