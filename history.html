@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blacklist Recon — Contract History</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&family=Cinzel:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --void: #080a0c; --ash: #0d1117; --obsidian: #111820;
+    --border: #1f2d3d; --muted: #3a4a5c; --dim: #6a7f94;
+    --text: #c8d8e8; --bright: #e8f4ff; --blood: #8b1a1a;
+    --crimson: #c0392b; --ember: #e74c3c; --gold: #c9a84c;
+    --gold-dim: #7a5f28; --green: #5fe04f; --amber: #e0a14f;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--void);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* CURSOR */
+  #cursor {
+    position: fixed; pointer-events: none; z-index: 99999;
+    transform: translate(-50%,-50%);
+  }
+  #cursor svg { width: 36px; height: 36px; }
+  @media(max-width:640px){ body{cursor:auto} #cursor{display:none} }
+
+  /* BG */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);
+    pointer-events: none; z-index: 9999;
+  }
+  .bg-glow {
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(139,26,26,0.12) 0%, transparent 60%);
+    pointer-events: none; z-index: 0;
+    animation: glowPulse 6s ease-in-out infinite;
+  }
+  @keyframes glowPulse { 0%,100%{opacity:.6} 50%{opacity:1} }
+
+  /* NAV */
+  nav {
+    position: fixed; top:0; left:0; right:0; z-index:100;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:14px 40px;
+    background:rgba(8,10,12,0.95); backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--border);
+  }
+  .nav-brand {
+    font-family:'Cinzel',serif; font-size:15px; font-weight:700;
+    letter-spacing:3px; color:var(--gold); text-decoration:none; text-transform:uppercase;
+  }
+  .nav-back {
+    font-family:'Share Tech Mono',monospace; font-size:11px;
+    letter-spacing:2px; color:var(--dim); text-decoration:none;
+    text-transform:uppercase; transition:color 0.2s;
+  }
+  .nav-back:hover { color:var(--gold); }
+
+  /* CONTAINER */
+  .container {
+    position:relative; z-index:2;
+    max-width:900px; margin:0 auto;
+    padding:120px 24px 80px;
+  }
+
+  /* HEADER */
+  .header { text-align:center; margin-bottom:60px; }
+  .eyebrow {
+    font-family:'Share Tech Mono',monospace; font-size:10px;
+    letter-spacing:6px; color:var(--blood); text-transform:uppercase; margin-bottom:16px;
+  }
+  .title {
+    font-family:'Cinzel',serif; font-size:clamp(32px,6vw,56px);
+    font-weight:900; color:var(--bright);
+    text-shadow:0 0 60px rgba(139,26,26,0.3); margin-bottom:8px;
+  }
+  .subtitle {
+    font-family:'Share Tech Mono',monospace; font-size:11px;
+    letter-spacing:3px; color:var(--dim); text-transform:uppercase; margin-bottom:32px;
+  }
+
+  /* STATS ROW */
+  .stats-row {
+    display:flex; gap:1px; background:var(--border);
+    margin-bottom:48px;
+  }
+  .stat {
+    flex:1; background:var(--ash); padding:20px;
+    text-align:center; position:relative; overflow:hidden;
+  }
+  .stat::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:1px;
+    background:linear-gradient(to right,transparent,var(--ember),transparent);
+    animation:statGlow 3s ease-in-out infinite;
+  }
+  @keyframes statGlow { 0%,100%{opacity:.4} 50%{opacity:1} }
+  .stat-num {
+    font-family:'Share Tech Mono',monospace; font-size:40px;
+    color:var(--ember); text-shadow:0 0 20px rgba(231,76,60,0.4);
+    line-height:1; margin-bottom:6px;
+  }
+  .stat-label {
+    font-family:'Share Tech Mono',monospace; font-size:9px;
+    letter-spacing:3px; color:var(--dim); text-transform:uppercase;
+  }
+
+  /* FILTERS */
+  .filter-bar {
+    display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px;
+  }
+  .filter-btn {
+    background:none; border:1px solid var(--border);
+    color:var(--dim); font-family:'Share Tech Mono',monospace;
+    font-size:10px; letter-spacing:2px; padding:6px 16px;
+    cursor:pointer; text-transform:uppercase; transition:all 0.15s;
+  }
+  .filter-btn.active { border-color:var(--ember); color:var(--ember); background:rgba(139,26,26,0.1); }
+  .filter-btn:hover:not(.active) { border-color:var(--dim); color:var(--text); }
+
+  /* CONTRACT TABLE */
+  .contract-table {
+    width:100%; border-collapse:collapse;
+    margin-bottom:40px;
+  }
+  .contract-table th {
+    font-family:'Share Tech Mono',monospace; font-size:9px;
+    letter-spacing:3px; color:var(--dim); text-transform:uppercase;
+    padding:10px 16px; text-align:left;
+    border-bottom:1px solid var(--border);
+    background:var(--ash);
+  }
+  .contract-table td {
+    padding:14px 16px; border-bottom:1px solid rgba(31,45,61,0.5);
+    font-family:'Share Tech Mono',monospace; font-size:12px;
+    color:var(--text); transition:background 0.15s;
+  }
+  .contract-table tr:hover td { background:rgba(139,26,26,0.04); }
+  .contract-table tr.reveal-row {
+    opacity:0; transform:translateX(-10px);
+    animation:rowIn 0.4s ease forwards;
+  }
+  @keyframes rowIn { to { opacity:1; transform:none; } }
+
+  .tier-badge {
+    display:inline-block; padding:2px 8px;
+    font-size:9px; letter-spacing:1px; text-transform:uppercase;
+    border-radius:2px;
+  }
+  .tier-1 { background:rgba(31,45,61,0.8); color:#4f9ce0; border:1px solid #1a2030; }
+  .tier-2 { background:rgba(58,50,32,0.8); color:#e0c84f; border:1px solid #3a3320; }
+  .tier-3 { background:rgba(139,26,26,0.2); color:var(--ember); border:1px solid var(--blood); }
+
+  .status-complete {
+    color:var(--green); font-size:10px; letter-spacing:1px;
+  }
+
+  .redacted {
+    background:var(--muted); color:var(--muted);
+    border-radius:2px; padding:0 4px;
+    font-size:11px; letter-spacing:1px;
+    user-select:none;
+  }
+
+  /* EMPTY */
+  .empty {
+    text-align:center; padding:60px 20px;
+    font-family:'Share Tech Mono',monospace;
+    font-size:12px; letter-spacing:3px; color:var(--muted);
+    text-transform:uppercase;
+  }
+  .empty .empty-skull { font-size:48px; display:block; margin-bottom:16px; opacity:0.2; }
+
+  /* PAGINATION */
+  .pagination {
+    display:flex; justify-content:center; gap:8px; margin-top:24px;
+  }
+  .page-btn {
+    background:none; border:1px solid var(--border);
+    color:var(--dim); font-family:'Share Tech Mono',monospace;
+    font-size:10px; letter-spacing:1px; padding:6px 14px;
+    cursor:pointer; transition:all 0.15s;
+  }
+  .page-btn.active { border-color:var(--ember); color:var(--ember); }
+  .page-btn:hover:not(.active) { border-color:var(--dim); color:var(--text); }
+
+  /* FOOTER */
+  footer {
+    text-align:center; padding:40px;
+    border-top:1px solid var(--border);
+    font-family:'Share Tech Mono',monospace;
+    font-size:10px; letter-spacing:2px; color:var(--muted);
+  }
+  footer a { color:var(--dim); text-decoration:none; }
+  footer a:hover { color:var(--gold); }
+
+  @media(max-width:640px){
+    nav{padding:12px 20px;}
+    .stats-row{flex-direction:column;}
+    .contract-table th:nth-child(3),
+    .contract-table td:nth-child(3){ display:none; }
+  }
+</style>
+</head>
+<body>
+
+<div id="cursor">
+  <svg viewBox="0 0 36 36" fill="none">
+    <circle cx="18" cy="18" r="16" stroke="rgba(139,26,26,0.5)" stroke-width="0.5"/>
+    <circle cx="18" cy="18" r="8" stroke="rgba(231,76,60,0.4)" stroke-width="0.5"/>
+    <circle cx="18" cy="18" r="2" fill="#e74c3c" opacity="0.6"/>
+    <line x1="18" y1="2" x2="18" y2="10" stroke="#e74c3c" stroke-width="0.5" opacity="0.6"/>
+    <line x1="18" y1="26" x2="18" y2="34" stroke="#e74c3c" stroke-width="0.5" opacity="0.6"/>
+    <line x1="2" y1="18" x2="10" y2="18" stroke="#e74c3c" stroke-width="0.5" opacity="0.6"/>
+    <line x1="26" y1="18" x2="34" y2="18" stroke="#e74c3c" stroke-width="0.5" opacity="0.6"/>
+  </svg>
+</div>
+<div class="bg-glow"></div>
+
+<nav>
+  <a class="nav-brand" href="index.html">Blacklist Recon</a>
+  <a class="nav-back" href="index.html">← Back to Home</a>
+</nav>
+
+<div class="container">
+  <div class="header">
+    <div class="eyebrow">Blacklist Recon · Verified Activity</div>
+    <h1 class="title">Contract History</h1>
+    <div class="subtitle">All contracts verified complete · Target identities redacted</div>
+  </div>
+
+  <!-- LIVE STATS -->
+  <div class="stats-row">
+    <div class="stat">
+      <div class="stat-num" id="h-completed">—</div>
+      <div class="stat-label">Total Completed</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num" id="h-active">—</div>
+      <div class="stat-label">Active Now</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num" id="h-agents">—</div>
+      <div class="stat-label">Active Agents</div>
+    </div>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filter-bar">
+    <button class="filter-btn active" data-tier="all">All Tiers</button>
+    <button class="filter-btn" data-tier="standard">Tier I — Standard</button>
+    <button class="filter-btn" data-tier="war_support">Tier II — War Support</button>
+    <button class="filter-btn" data-tier="high_value">Tier III — High Value</button>
+  </div>
+
+  <!-- TABLE -->
+  <table class="contract-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Target</th>
+        <th>Tier</th>
+        <th>Date</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="contract-tbody">
+      <tr><td colspan="5"><div class="empty"><span class="empty-skull">☠</span>Loading contract history...</div></td></tr>
+    </tbody>
+  </table>
+
+  <div class="pagination" id="pagination"></div>
+</div>
+
+<footer>
+  <a href="index.html">Blacklist Recon</a> &nbsp;·&nbsp; Contract history is public · Target identities are always protected &nbsp;·&nbsp; <a href="index.html#contact">Place a Contract</a>
+</footer>
+
+<script>
+// CURSOR
+const cursor = document.getElementById('cursor');
+let mx=0,my=0,cx=0,cy=0;
+document.addEventListener('mousemove', e=>{ mx=e.clientX; my=e.clientY; });
+(function anim(){ cx+=(mx-cx)*0.1; cy+=(my-cy)*0.1; cursor.style.left=cx+'px'; cursor.style.top=cy+'px'; requestAnimationFrame(anim); })();
+
+const WORKER_URL = 'https://torn-bounty-board.pearcej29.workers.dev';
+const PER_PAGE   = 20;
+let allContracts = [];
+let filtered     = [];
+let currentPage  = 1;
+let currentTier  = 'all';
+
+// Tier display helpers
+const tierMap = {
+  standard:    { label: 'Standard Hit',        cls: 'tier-1' },
+  war_support: { label: 'War Support',         cls: 'tier-2' },
+  high_value:  { label: 'High-Value Contract', cls: 'tier-3' },
+};
+
+function tierBadge(tier) {
+  const t = tierMap[tier] || { label: tier, cls: 'tier-1' };
+  return `<span class="tier-badge ${t.cls}">${t.label}</span>`;
+}
+
+function formatDate(ts) {
+  return new Date(ts).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
+}
+
+async function loadStats() {
+  try {
+    const res  = await fetch(`${WORKER_URL}/stats`);
+    const data = await res.json();
+    document.getElementById('h-completed').textContent = String(data.completedBounties??0).padStart(3,'0');
+    document.getElementById('h-active').textContent    = String(data.activeBounties??0).padStart(3,'0');
+    document.getElementById('h-agents').textContent    = String(data.memberCount??0).padStart(3,'0');
+  } catch(e) {}
+}
+
+async function loadHistory() {
+  try {
+    const res  = await fetch(`${WORKER_URL}/history/public`);
+    const data = await res.json();
+    allContracts = data.contracts || [];
+    applyFilter();
+  } catch(e) {
+    document.getElementById('contract-tbody').innerHTML =
+      `<tr><td colspan="5"><div class="empty"><span class="empty-skull">☠</span>No contract history available yet.</div></td></tr>`;
+  }
+}
+
+function applyFilter() {
+  filtered = currentTier === 'all'
+    ? allContracts
+    : allContracts.filter(c => c.tier === currentTier);
+  currentPage = 1;
+  renderTable();
+  renderPagination();
+}
+
+function renderTable() {
+  const tbody  = document.getElementById('contract-tbody');
+  const start  = (currentPage - 1) * PER_PAGE;
+  const page   = filtered.slice(start, start + PER_PAGE);
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty"><span class="empty-skull">☠</span>No contracts match this filter.</div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = page.map((c, i) => `
+    <tr class="reveal-row" style="animation-delay:${i * 0.03}s">
+      <td style="color:var(--dim);font-size:10px;">#${String(allContracts.indexOf(c)+1).padStart(3,'0')}</td>
+      <td><span class="redacted">████████████</span></td>
+      <td>${tierBadge(c.tier)}</td>
+      <td style="color:var(--dim)">${formatDate(c.completedAt)}</td>
+      <td><span class="status-complete">✓ COMPLETE</span></td>
+    </tr>
+  `).join('');
+}
+
+function renderPagination() {
+  const total   = Math.ceil(filtered.length / PER_PAGE);
+  const pagDiv  = document.getElementById('pagination');
+  if (total <= 1) { pagDiv.innerHTML = ''; return; }
+  pagDiv.innerHTML = Array.from({length:total},(_,i) => `
+    <button class="page-btn ${currentPage===i+1?'active':''}" data-page="${i+1}">${i+1}</button>
+  `).join('');
+  pagDiv.querySelectorAll('.page-btn').forEach(btn =>
+    btn.addEventListener('click', () => {
+      currentPage = Number(btn.dataset.page);
+      renderTable();
+      renderPagination();
+      window.scrollTo({top:0,behavior:'smooth'});
+    }));
+}
+
+// Filters
+document.querySelectorAll('.filter-btn').forEach(btn =>
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentTier = btn.dataset.tier;
+    applyFilter();
+  }));
+
+loadStats();
+loadHistory();
+setInterval(loadStats, 30000);
+</script>
+</body>
+</html>
