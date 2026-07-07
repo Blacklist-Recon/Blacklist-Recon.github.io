@@ -1816,13 +1816,13 @@ async function renderCampaigns(main) {
           <div class="form-hint">Price is divided evenly across all targets</div>
         </div>
         <div class="form-group">
-          <label class="form-label">Targets — one per line (Name,XID optional)</label>
-          <textarea id="camp-targets" rows="6" placeholder="PlayerName1,1234567&#10;PlayerName2,2345678&#10;PlayerName3"></textarea>
-          <div class="form-hint">Format: Name,TornID — TornID is optional but recommended</div>
+          <label class="form-label">Members to Protect — one per line (Name,XID optional)</label>
+          <textarea id="camp-targets" rows="6" placeholder="InactiveMember1,1234567&#10;LowLevelMember2,2345678&#10;InactiveMember3"></textarea>
+          <div class="form-hint">Your own faction members to keep hospitalized. Format: Name,TornID — TornID optional but recommended</div>
         </div>
         <div class="form-group">
           <label class="form-label">Campaign Notes</label>
-          <input id="camp-notes" type="text" placeholder="e.g. War against Faction X — keep all hospitalized" />
+          <input id="camp-notes" type="text" placeholder="e.g. Ranked war vs Faction X — protect our inactives and low levels" />
         </div>
         <button class="btn btn-red" id="camp-submit" style="width:100%;padding:12px;">
           ⚔️ Launch Campaign →
@@ -1885,7 +1885,7 @@ async function renderCampaigns(main) {
       try {
         const res = await api('/campaigns/create', { targets, totalPrice: price, notes });
         msgEl.innerHTML = `<div class="msg-success">
-          ⚔️ Campaign launched! ${res.bountyCount} bounties created at ${fmt(res.pricePerBounty * 1000000)} each.
+          ⚔️ Protection campaign launched! ${res.bountyCount} members queued for protection at ${fmt(res.pricePerBounty * 1000000)} each.
         </div>`;
         main.querySelector('#camp-price').value   = '';
         main.querySelector('#camp-targets').value = '';
