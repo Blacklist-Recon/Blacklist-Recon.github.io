@@ -996,7 +996,8 @@ function navItems() {
   }
   items.push({ id: 'chat', icon: '💬', label: 'Chat' });
   if (identity.role === 'admin' || identity.role === 'lister') {
-    items.push({ id: 'messages', icon: '📨', label: 'Messages' });
+    items.push({ id: 'messages',  icon: '📨', label: 'Messages'  });
+    items.push({ id: 'campaigns', icon: '⚔️', label: 'Campaigns' });
   }
   if (identity.role === 'admin') {
     items.push({ id: 'reviews', icon: '⭐', label: 'Reviews' });
@@ -1044,7 +1045,8 @@ function renderPage() {
   if (currentPage === 'review')  renderReview(main);
   if (currentPage === 'balance') renderBalance(main);
   if (currentPage === 'chat')    renderChat(main);
-  if (currentPage === 'messages') renderMessages(main);
+  if (currentPage === 'messages')  renderMessages(main);
+  if (currentPage === 'campaigns') renderCampaigns(main);
   if (currentPage === 'reviews') renderReviews(main);
   if (currentPage === 'roster')  renderRoster(main);
   if (currentPage === 'admin')   renderAdmin(main);
@@ -1170,6 +1172,12 @@ function renderBoard(main) {
           if (!proof) { alert('Please paste your attack log URL first.'); btn.disabled = false; return; }
           await api('/bounties/complete', { bountyId: id, proofLink: proof });
         }
+        if (action === 'submit-hit') {
+          const input = main.querySelector(`.proof-link-input[data-id="${id}"]`);
+          const proof = input ? input.value.trim() : '';
+          if (!proof) { alert('Please paste your attack log URL first.'); btn.disabled = false; return; }
+          await api('/bounties/add-hit', { bountyId: id, proofLink: proof });
+        }
         await loadBounties();
         renderBoard(main);
       } catch (e) {
@@ -1244,7 +1252,14 @@ function renderNew(main) {
       priceHint.textContent = 'Enter a number (millions)';
     }
   }
-  tierSel.addEventListener('change', updateTier);
+  tierSel.addEventListener('change', () => {
+    updateTier();
+    const key = tierSel.value;
+    const hitsGroup = main.querySelector('#n-hits-group');
+    if (hitsGroup) {
+      hitsGroup.style.display = (key === 'war_support' || key === 'high_value') ? 'block' : 'none';
+    }
+  });
   updateTier();
 
   main.querySelector('#n-submit').addEventListener('click', async () => {
@@ -1775,6 +1790,113 @@ async function renderAdmin(main) {
     });
 
   } catch (e) {
+    main.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`;
+  }
+}
+
+// ── CAMPAIGNS ────────────────────────────────────────────────────────────
+async function renderCampaigns(main) {
+  main.innerHTML = `<div class="loading">Loading campaigns...</div>`;
+  try {
+    const res       = await api('/campaigns/list');
+    const campaigns = res.campaigns || [];
+
+    main.innerHTML = `
+      <div class="page-header">
+        <div class="page-eyebrow">Blacklist Recon</div>
+        <div class="page-title">⚔️ Ranked War Support</div>
+      </div>
+
+      <div class="section-head">Launch New Campaign</div>
+      <div id="campaign-msg"></div>
+      <div class="card">
+        <div class="form-group">
+          <label class="form-label">Total Campaign Price ($ millions)</label>
+          <input id="camp-price" type="number" min="1" step="0.5" placeholder="e.g. 10 for $10M total" />
+          <div class="form-hint">Price is divided evenly across all targets</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Targets — one per line (Name,XID optional)</label>
+          <textarea id="camp-targets" rows="6" placeholder="PlayerName1,1234567&#10;PlayerName2,2345678&#10;PlayerName3"></textarea>
+          <div class="form-hint">Format: Name,TornID — TornID is optional but recommended</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Campaign Notes</label>
+          <input id="camp-notes" type="text" placeholder="e.g. War against Faction X — keep all hospitalized" />
+        </div>
+        <button class="btn btn-red" id="camp-submit" style="width:100%;padding:12px;">
+          ⚔️ Launch Campaign →
+        </button>
+      </div>
+
+      <div class="section-head">Active Campaigns</div>
+      ${campaigns.length === 0
+        ? `<div class="empty">No campaigns yet</div>`
+        : campaigns.map(c => `
+          <div class="card">
+            <div class="card-row">
+              <span class="card-label">Campaign ID</span>
+              <span class="card-value" style="font-size:10px;color:var(--dim);">${c.id.slice(0,8)}...</span>
+            </div>
+            <div class="card-row">
+              <span class="card-label">Targets</span>
+              <span class="card-value" style="color:var(--ember);">${c.targetCount} targets</span>
+            </div>
+            <div class="card-row">
+              <span class="card-label">Total Price</span>
+              <span class="card-value" style="color:var(--green);">${fmt(c.totalPrice * 1000000)}</span>
+            </div>
+            <div class="card-row">
+              <span class="card-label">Per Target</span>
+              <span class="card-value">${fmt(c.pricePerBounty * 1000000)}</span>
+            </div>
+            <div class="card-row">
+              <span class="card-label">Status</span>
+              <span class="badge badge-${c.status === 'active' ? 'listed' : 'completed'}">${c.status}</span>
+            </div>
+            <div class="card-row">
+              <span class="card-label">Created</span>
+              <span class="card-value" style="color:var(--dim);">${new Date(c.createdAt).toLocaleDateString()}</span>
+            </div>
+            ${c.notes ? `<div class="card-row"><span class="card-label">Notes</span><span class="card-value">${esc(c.notes)}</span></div>` : ''}
+          </div>
+        `).join('')}
+    `;
+
+    main.querySelector('#camp-submit').addEventListener('click', async () => {
+      const price   = parseFloat(main.querySelector('#camp-price').value);
+      const rawText = main.querySelector('#camp-targets').value.trim();
+      const notes   = main.querySelector('#camp-notes').value.trim();
+      const msgEl   = main.querySelector('#campaign-msg');
+
+      if (!price || price <= 0) { msgEl.innerHTML = `<div class="msg-error">Enter a total price.</div>`; return; }
+      if (!rawText) { msgEl.innerHTML = `<div class="msg-error">Enter at least one target.</div>`; return; }
+
+      // Parse targets — one per line, Name,XID format
+      const targets = rawText.split('\n').map(line => {
+        const parts = line.trim().split(',');
+        return { name: parts[0]?.trim(), xid: parts[1]?.trim() || null };
+      }).filter(t => t.name);
+
+      if (targets.length === 0) { msgEl.innerHTML = `<div class="msg-error">No valid targets found.</div>`; return; }
+
+      const btn = main.querySelector('#camp-submit');
+      btn.disabled = true;
+      try {
+        const res = await api('/campaigns/create', { targets, totalPrice: price, notes });
+        msgEl.innerHTML = `<div class="msg-success">
+          ⚔️ Campaign launched! ${res.bountyCount} bounties created at ${fmt(res.pricePerBounty * 1000000)} each.
+        </div>`;
+        main.querySelector('#camp-price').value   = '';
+        main.querySelector('#camp-targets').value = '';
+        main.querySelector('#camp-notes').value   = '';
+        await loadBounties();
+        setTimeout(() => renderCampaigns(main), 1500);
+      } catch(e) { msgEl.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; }
+      btn.disabled = false;
+    });
+
+  } catch(e) {
     main.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`;
   }
 }
