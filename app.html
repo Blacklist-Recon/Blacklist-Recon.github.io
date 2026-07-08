@@ -1000,9 +1000,10 @@ function navItems() {
     items.push({ id: 'campaigns', icon: '⚔️', label: 'Campaigns' });
   }
   if (identity.role === 'admin') {
-    items.push({ id: 'reviews', icon: '⭐', label: 'Reviews' });
-    items.push({ id: 'roster',  icon: '👥', label: 'Roster'  });
-    items.push({ id: 'admin',   icon: '⚙️', label: 'Admin'   });
+    items.push({ id: 'dashboard', icon: '📊', label: 'Intel'    });
+    items.push({ id: 'reviews',   icon: '⭐', label: 'Reviews'  });
+    items.push({ id: 'roster',    icon: '👥', label: 'Roster'   });
+    items.push({ id: 'admin',     icon: '⚙️', label: 'Admin'    });
   }
   return items;
 }
@@ -1047,7 +1048,8 @@ function renderPage() {
   if (currentPage === 'chat')    renderChat(main);
   if (currentPage === 'messages')  renderMessages(main);
   if (currentPage === 'campaigns') renderCampaigns(main);
-  if (currentPage === 'reviews') renderReviews(main);
+  if (currentPage === 'dashboard') renderDashboard(main);
+  if (currentPage === 'reviews')   renderReviews(main);
   if (currentPage === 'roster')  renderRoster(main);
   if (currentPage === 'admin')   renderAdmin(main);
 }
@@ -1424,6 +1426,399 @@ async function renderBalance(main) {
     });
 
   } catch (e) {
+    main.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`;
+  }
+}
+
+// ── DASHBOARD (admin only) ────────────────────────────────────────────────
+function miniBar(values, color, maxVal) {
+  const max = maxVal || Math.max(...values, 1);
+  return values.map((v,i) => `
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
+      <div style="width:100%;background:${color};opacity:${Math.max(0.1, v/max)};
+                  height:${Math.max(2, Math.round((v/max)*40))}px;border-radius:1px;"></div>
+      <div style="font-size:8px;color:var(--dim);">${i}</div>
+    </div>`).join('');
+}
+
+async function renderDashboard(main) {
+  main.innerHTML = `<div class="loading">Loading intelligence...</div>`;
+  try {
+    const [analytics, availability, targetFreq, retaliation, blacklist] = await Promise.all([
+      api('/admin/analytics'),
+      api('/hunter/availability/get'),
+      api('/admin/target-frequency'),
+      api('/admin/retaliation'),
+      api('/admin/blacklist/get'),
+    ]);
+
+    const A   = analytics;
+    const av  = availability.availability || {};
+    const tf  = targetFreq.targets || [];
+    const ret = retaliation;
+    const bl  = blacklist.blacklist || {};
+
+    // Revenue chart data
+    const revDates   = A.revenue.map(r => r.date.slice(5));
+    const revAmounts = A.revenue.map(r => r.amount);
+    const maxRev     = Math.max(...revAmounts, 1);
+
+    // Busy hours chart
+    const hourAmounts = A.busyHours.map(h => h.count);
+    const maxHour     = Math.max(...hourAmounts, 1);
+
+    // Tier completion rates
+    const tierRows = Object.entries(A.tierStats || {}).map(([tier, t]) => {
+      const rate = t.total > 0 ? Math.round((t.completed/t.total)*100) : 0;
+      const avgTime = t.completed > 0 ? Math.round(t.totalTime/t.completed/3600000) : 0;
+      return `<div class="card-row">
+        <span class="card-label">${t.label}</span>
+        <span class="card-value" style="font-size:11px;">
+          ${t.completed}/${t.total} · ${rate}% · ${avgTime}h avg
+        </span>
+      </div>`;
+    }).join('');
+
+    // Availability status
+    const statusDot = {active:'var(--green)', busy:'var(--amber)', offline:'var(--dim)'};
+    const avRows = Object.entries(av).length === 0
+      ? '<div class="empty">No hunters online</div>'
+      : Object.entries(av).map(([tid, h]) => `
+          <div class="card-row">
+            <span style="color:var(--text);">${esc(h.alias || h.name)}</span>
+            <span style="font-family:'Share Tech Mono',monospace;font-size:10px;
+                         color:${statusDot[h.status]||'var(--dim)'};letter-spacing:1px;text-transform:uppercase;">
+              ${h.status === 'active' ? '● Active' : h.status === 'busy' ? '◉ Busy' : '○ Offline'}
+            </span>
+          </div>`).join('');
+
+    // Hunter performance table
+    const hunterRows = (A.hunterStats || [])
+      .sort((a,b) => b.totalEarned - a.totalEarned)
+      .map(h => {
+        const rate = h.claimed > 0 ? Math.round((h.completed/h.claimed)*100) : 0;
+        const rateColor = rate >= 80 ? 'var(--green)' : rate >= 60 ? 'var(--amber)' : 'var(--ember)';
+        return `<tr>
+          <td style="color:var(--gold);">${h.agentNumber ? 'Agent #'+h.agentNumber : '—'}</td>
+          <td style="color:var(--bright);">${esc(h.name)}</td>
+          <td style="color:var(--green);font-family:'Share Tech Mono',monospace;">${fmt(h.totalEarned)}</td>
+          <td style="color:${rateColor};font-family:'Share Tech Mono',monospace;">${rate}%</td>
+          <td style="color:var(--dim);font-family:'Share Tech Mono',monospace;">${h.claimed}→${h.completed}</td>
+        </tr>`;
+      }).join('');
+
+    // Retaliation warnings
+    const retHtml = (ret.clientOverlap||[]).length === 0 && (ret.hunterFlags||[]).length === 0
+      ? '<div class="empty" style="padding:16px;">No active threats detected</div>'
+      : [
+          ...(ret.clientOverlap||[]).map(r => `
+            <div style="background:rgba(139,26,26,0.15);border:1px solid var(--blood);padding:12px;margin-bottom:8px;border-radius:2px;">
+              <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--ember);letter-spacing:1px;margin-bottom:4px;">⚠ CLIENT RETALIATION RISK</div>
+              <div style="font-size:13px;color:var(--text);">Torn ID: ${esc(r.tornId)}</div>
+              <div style="font-size:12px;color:var(--dim);margin-top:4px;">${esc(r.warning)}</div>
+            </div>`),
+          ...(ret.hunterFlags||[]).map(r => `
+            <div style="background:rgba(58,50,32,0.3);border:1px solid #5a4010;padding:12px;margin-bottom:8px;border-radius:2px;">
+              <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--amber);letter-spacing:1px;margin-bottom:4px;">⚠ POSSIBLE MUGGING</div>
+              <div style="font-size:13px;color:var(--text);">${esc(r.name)}</div>
+              <div style="font-size:12px;color:var(--dim);margin-top:4px;">${esc(r.warning)}</div>
+            </div>`)
+        ].join('');
+
+    // Target frequency
+    const tfRows = tf.slice(0,10).map((t,i) => `
+      <div class="card-row">
+        <span style="color:${i===0?'var(--gold)':'var(--text)'};">${esc(t.name)}${t.xid?` [${t.xid}]`:''}</span>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--ember);">
+          ${t.count} hit${t.count!==1?'s':''}
+        </span>
+      </div>`).join('') || '<div class="empty" style="padding:16px;">No data yet</div>';
+
+    // Blacklist
+    const blRows = Object.entries(bl).length === 0
+      ? '<div class="empty" style="padding:16px;">No blacklisted clients</div>'
+      : Object.entries(bl).map(([tid, b]) => `
+          <div class="card-row">
+            <span>
+              <a href="https://www.torn.com/profiles.php?XID=${esc(tid)}" target="_blank"
+                 style="color:var(--ember);font-size:11px;">${esc(tid)} ↗</a>
+              <span style="color:var(--dim);font-size:11px;margin-left:8px;">${esc(b.reason)}</span>
+            </span>
+            <button class="btn" style="font-size:9px;padding:2px 8px;color:var(--dim);"
+              data-action="unblacklist" data-id="${esc(tid)}">Remove</button>
+          </div>`).join('');
+
+    main.innerHTML = `
+      <div class="page-header">
+        <div class="page-eyebrow">Admin · Blacklist Recon</div>
+        <div class="page-title">📊 Intelligence Dashboard</div>
+      </div>
+
+      <!-- KPI Row -->
+      <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px;">
+        <div class="stat-card">
+          <div class="stat-value" style="font-size:28px;">${fmt(A.factionPoolTotal||0)}</div>
+          <div class="stat-label">Faction Pool</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="font-size:28px;">${A.totalContracts||0}</div>
+          <div class="stat-label">Total Contracts</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="font-size:28px;">${Object.values(av).filter(h=>h.status==='active').length}</div>
+          <div class="stat-label">Hunters Active</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="font-size:28px;color:${(ret.clientOverlap||[]).length>0?'var(--ember)':(ret.hunterFlags||[]).length>0?'var(--amber)':' var(--green)'};">
+            ${(ret.clientOverlap||[]).length + (ret.hunterFlags||[]).length}
+          </div>
+          <div class="stat-label">Active Threats</div>
+        </div>
+      </div>
+
+      <!-- Revenue Chart -->
+      <div class="section-head">Revenue (Faction Cut) — Last 30 Days</div>
+      <div class="card" style="padding:16px;">
+        ${A.revenue.length === 0
+          ? '<div class="empty" style="padding:20px;">No revenue data yet</div>'
+          : `<div style="display:flex;align-items:flex-end;gap:2px;height:60px;margin-bottom:8px;">
+              ${A.revenue.map(r => `
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
+                  <div style="width:100%;background:var(--ember);opacity:${Math.max(0.15,(r.amount/maxRev))};
+                               height:${Math.max(2,Math.round((r.amount/maxRev)*55))}px;border-radius:1px;"
+                       title="${r.date}: ${fmt(r.amount)}"></div>
+                </div>`).join('')}
+            </div>
+            <div style="display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);">
+              <span>${A.revenue[0]?.date.slice(5)||''}</span>
+              <span>${A.revenue[A.revenue.length-1]?.date.slice(5)||''}</span>
+            </div>`}
+      </div>
+
+      <!-- Busy Hours -->
+      <div class="section-head">Busiest Hours (UTC) & Days</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+        <div class="card" style="padding:12px;">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:8px;">By Hour</div>
+          <div style="display:flex;align-items:flex-end;gap:1px;height:48px;">
+            ${A.busyHours.map((h,i) => `
+              <div style="flex:1;background:var(--cyan-bright);opacity:${Math.max(0.1,h.count/maxHour)};
+                           height:${Math.max(2,Math.round((h.count/maxHour)*44))}px;border-radius:1px;"
+                   title="${i}:00 — ${h.count} contracts"></div>`).join('')}
+          </div>
+          <div style="display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);margin-top:4px;">
+            <span>0h</span><span>6h</span><span>12h</span><span>18h</span><span>23h</span>
+          </div>
+        </div>
+        <div class="card" style="padding:12px;">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:8px;">By Day</div>
+          <div style="display:flex;align-items:flex-end;gap:2px;height:48px;">
+            ${A.busyDays.map(d => {
+              const maxD = Math.max(...A.busyDays.map(x=>x.count),1);
+              return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
+                <div style="width:100%;background:var(--gold);opacity:${Math.max(0.1,d.count/maxD)};
+                             height:${Math.max(2,Math.round((d.count/maxD)*44))}px;border-radius:1px;"
+                     title="${d.day}: ${d.count} contracts"></div>
+                <div style="font-size:8px;color:var(--dim);">${d.day}</div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+      </div>
+
+      <!-- Tier Stats -->
+      <div class="section-head">Contract Performance by Tier</div>
+      <div class="card">${tierRows || '<div class="empty" style="padding:16px;">No data yet</div>'}</div>
+
+      <!-- Hunter Availability -->
+      <div class="section-head">Hunter Network Status</div>
+      <div class="card">${avRows}</div>
+
+      <!-- Hunter Performance -->
+      <div class="section-head">Hunter Performance</div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr style="background:var(--ash);">
+              <th style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;padding:10px 12px;text-align:left;">Agent</th>
+              <th style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;padding:10px 12px;text-align:left;">Alias</th>
+              <th style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;padding:10px 12px;text-align:left;">Earned</th>
+              <th style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;padding:10px 12px;text-align:left;">Rate</th>
+              <th style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;padding:10px 12px;text-align:left;">C→D</th>
+            </tr>
+          </thead>
+          <tbody style="font-size:12px;">
+            ${hunterRows || '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted);font-family:Share Tech Mono,monospace;">No hunter data yet</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Retaliation Watch -->
+      <div class="section-head">⚠ Retaliation Watch</div>
+
+      <!-- Manual check tool -->
+      <div class="card" style="margin-bottom:12px;">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--ember);text-transform:uppercase;margin-bottom:12px;">Manual Retaliation Check</div>
+        <p style="font-size:13px;color:var(--dim);line-height:1.7;margin-bottom:16px;">
+          If a member of Blacklist Recon is attacked or mugged, enter the attacker's details below.
+          The system will check if they are a known client or past target and auto-post a $1M bounty if confirmed.
+        </p>
+        <div id="ret-check-msg"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+          <div style="flex:1;min-width:140px;">
+            <label style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:4px;">Attacker Torn ID *</label>
+            <input id="ret-attacker-id" type="text" placeholder="e.g. 1234567" />
+          </div>
+          <div style="flex:2;min-width:160px;">
+            <label style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:4px;">Attacker Name *</label>
+            <input id="ret-attacker-name" type="text" placeholder="Their Torn username" />
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+          <div style="flex:2;min-width:160px;">
+            <label style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:4px;">Victim (our member) *</label>
+            <input id="ret-victim-name" type="text" placeholder="Which of our members was hit" />
+          </div>
+          <div style="flex:1;min-width:120px;">
+            <label style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:4px;">Attack Type</label>
+            <select id="ret-attack-type">
+              <option value="attack">Attack</option>
+              <option value="mug">Mug</option>
+              <option value="hospitalize">Hospitalize</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-red" id="ret-check-btn" style="width:100%;padding:10px;">
+          ⚠ Check & Auto-Post Bounty if Known
+        </button>
+      </div>
+
+      <!-- Active flags -->
+      <div>${retHtml}</div>
+
+      <!-- Retaliation log -->
+      ${(ret.retaliationLog||[]).length > 0 ? `
+        <div class="section-head" style="margin-top:16px;">Retaliation Log</div>
+        <div class="card">
+          ${ret.retaliationLog.map(r => `
+            <div style="padding:10px 0;border-bottom:1px solid var(--border);">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+                <div>
+                  <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--ember);">
+                    ${esc(r.attackerName)} [${esc(String(r.attackerTornId))}]
+                  </span>
+                  <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--dim);margin-left:8px;">
+                    ${r.attackType} on ${esc(r.victimName||'unknown')}
+                  </span>
+                </div>
+                <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);white-space:nowrap;">
+                  ${new Date(r.at).toLocaleDateString()}
+                </span>
+              </div>
+              <div style="margin-top:4px;display:flex;gap:8px;">
+                ${r.wasTarget ? `<span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ember);background:rgba(139,26,26,0.2);padding:2px 6px;border-radius:2px;">WAS TARGET</span>` : ''}
+                ${r.wasClient ? `<span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--amber);background:rgba(58,40,10,0.3);padding:2px 6px;border-radius:2px;">WAS CLIENT</span>` : ''}
+                ${r.autoBountyId ? `<span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--green);background:rgba(20,40,20,0.3);padding:2px 6px;border-radius:2px;">✓ AUTO-BOUNTY POSTED</span>` : ''}
+              </div>
+            </div>`).join('')}
+        </div>` : ''}
+
+      <!-- Target Frequency -->
+      <div class="section-head">🎯 Most Targeted Players</div>
+      <div class="card">${tfRows}</div>
+
+      <!-- Client Blacklist -->
+      <div class="section-head">🚫 Client Blacklist</div>
+      <div id="bl-msg"></div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+        <input id="bl-id" type="text" placeholder="Torn ID to blacklist" style="flex:1;min-width:120px;" />
+        <input id="bl-reason" type="text" placeholder="Reason" style="flex:2;min-width:160px;" />
+        <button class="btn btn-red" id="bl-add">Blacklist</button>
+      </div>
+      <div class="card" id="bl-list">${blRows}</div>
+    `;
+
+    // Wire retaliation check
+    main.querySelector('#ret-check-btn').addEventListener('click', async () => {
+      const attackerId   = main.querySelector('#ret-attacker-id').value.trim();
+      const attackerName = main.querySelector('#ret-attacker-name').value.trim();
+      const victimName   = main.querySelector('#ret-victim-name').value.trim();
+      const attackType   = main.querySelector('#ret-attack-type').value;
+      const msgEl        = main.querySelector('#ret-check-msg');
+
+      if (!attackerId || !attackerName || !victimName) {
+        msgEl.innerHTML = '<div class="msg-error">Fill in attacker ID, attacker name, and victim name.</div>';
+        return;
+      }
+
+      const btn = main.querySelector('#ret-check-btn');
+      btn.disabled = true;
+      btn.textContent = 'Checking records...';
+      msgEl.innerHTML = '';
+
+      try {
+        const res = await api('/admin/retaliation/check', {
+          attackerTornId: attackerId,
+          attackerName,
+          victimTornId: null,
+          victimName,
+          attackType,
+        });
+
+        if (res.isKnown) {
+          msgEl.innerHTML = `
+            <div style="background:rgba(139,26,26,0.2);border:1px solid var(--blood);padding:14px;margin-bottom:12px;border-radius:2px;">
+              <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--ember);letter-spacing:2px;margin-bottom:8px;">⚠ KNOWN ENTITY CONFIRMED</div>
+              <div style="font-size:13px;color:var(--text);margin-bottom:6px;">${esc(res.message)}</div>
+              ${res.wasTarget ? '<div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--ember);margin-bottom:4px;">● Previously a contract target</div>' : ''}
+              ${res.wasClient ? '<div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--amber);margin-bottom:4px;">● Previously a client</div>' : ''}
+              ${res.autoBountyId ? '<div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--green);margin-top:8px;">✓ $1,000,000 bounty auto-posted to the board — note: Attempted Retaliation / Mug Back</div>' : ''}
+            </div>`;
+          main.querySelector('#ret-attacker-id').value   = '';
+          main.querySelector('#ret-attacker-name').value = '';
+          main.querySelector('#ret-victim-name').value   = '';
+          await loadBounties();
+          setTimeout(() => renderDashboard(main), 2000);
+        } else {
+          msgEl.innerHTML = `
+            <div style="background:rgba(20,30,40,0.6);border:1px solid var(--border);padding:14px;margin-bottom:12px;border-radius:2px;">
+              <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--dim);letter-spacing:2px;margin-bottom:4px;">NOT IN RECORDS</div>
+              <div style="font-size:13px;color:var(--dim);">${esc(attackerName)} [${esc(attackerId)}] is not a known client or past target. No auto-bounty posted.</div>
+            </div>`;
+        }
+      } catch(e) {
+        msgEl.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`;
+      }
+
+      btn.disabled = false;
+      btn.textContent = '⚠ Check & Auto-Post Bounty if Known';
+    });
+
+    // Wire blacklist add
+    main.querySelector('#bl-add').addEventListener('click', async () => {
+      const id     = main.querySelector('#bl-id').value.trim();
+      const reason = main.querySelector('#bl-reason').value.trim();
+      const msgEl  = main.querySelector('#bl-msg');
+      if (!id) { msgEl.innerHTML = '<div class="msg-error">Enter a Torn ID.</div>'; return; }
+      try {
+        await api('/admin/blacklist', { tornId: id, reason, action: 'add' });
+        msgEl.innerHTML = '<div class="msg-success">Added to blacklist.</div>';
+        main.querySelector('#bl-id').value = '';
+        main.querySelector('#bl-reason').value = '';
+        await renderDashboard(main);
+      } catch(e) { msgEl.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; }
+    });
+
+    // Wire blacklist remove
+    main.querySelectorAll('[data-action="unblacklist"]').forEach(btn =>
+      btn.addEventListener('click', async () => {
+        try {
+          await api('/admin/blacklist', { tornId: btn.dataset.id, action: 'remove' });
+          await renderDashboard(main);
+        } catch(e) {}
+      }));
+
+  } catch(e) {
     main.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`;
   }
 }
