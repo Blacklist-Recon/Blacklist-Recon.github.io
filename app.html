@@ -1444,12 +1444,13 @@ function miniBar(values, color, maxVal) {
 async function renderDashboard(main) {
   main.innerHTML = `<div class="loading">Loading intelligence...</div>`;
   try {
-    const [analytics, availability, targetFreq, retaliation, blacklist] = await Promise.all([
+    const [analytics, availability, targetFreq, retaliation, blacklist, banList] = await Promise.all([
       api('/admin/analytics'),
       api('/hunter/availability/get'),
       api('/admin/target-frequency'),
       api('/admin/retaliation'),
       api('/admin/blacklist/get'),
+      api('/admin/ban/get'),
     ]);
 
     const A   = analytics;
@@ -1457,6 +1458,7 @@ async function renderDashboard(main) {
     const tf  = targetFreq.targets || [];
     const ret = retaliation;
     const bl  = blacklist.blacklist || {};
+    const bn  = banList.banned || {};
 
     // Revenue chart data
     const revDates   = A.revenue.map(r => r.date.slice(5));
@@ -1736,6 +1738,39 @@ async function renderDashboard(main) {
         <button class="btn btn-red" id="bl-add">Blacklist</button>
       </div>
       <div class="card" id="bl-list">${blRows}</div>
+
+      <!-- Member Ban List -->
+      <div class="section-head" style="margin-top:24px;">⛔ Member Ban List</div>
+      <p style="font-size:13px;color:var(--dim);line-height:1.7;margin-bottom:16px;">
+        Banned members are permanently blocked from logging into the HQ app and Tampermonkey script.
+        Their API key will be rejected on every attempt. They are also removed from all roles immediately.
+      </p>
+      <div id="ban-msg"></div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+        <input id="ban-id"     type="text" placeholder="Torn ID"       style="flex:1;min-width:120px;" />
+        <input id="ban-name"   type="text" placeholder="Torn Name"     style="flex:1;min-width:120px;" />
+        <input id="ban-reason" type="text" placeholder="Reason for ban" style="flex:2;min-width:160px;" />
+        <button class="btn btn-red" id="ban-add">⛔ Ban Member</button>
+      </div>
+      <div class="card" id="ban-list">
+        ${Object.keys(bn).length === 0
+          ? '<div class="empty" style="padding:16px;">No banned members</div>'
+          : Object.entries(bn).map(([tid, b]) => `
+              <div class="card-row" style="flex-wrap:wrap;gap:8px;padding:12px 0;border-bottom:1px solid var(--border);">
+                <div style="flex:1;">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                    <a href="https://www.torn.com/profiles.php?XID=${esc(tid)}" target="_blank"
+                       style="color:var(--ember);font-size:12px;">${esc(b.name)} [${esc(tid)}] ↗</a>
+                  </div>
+                  <div style="font-size:11px;color:var(--dim);">Reason: ${esc(b.reason)}</div>
+                  <div style="font-size:10px;color:var(--muted);margin-top:2px;">
+                    Banned ${new Date(b.bannedAt).toLocaleDateString()} by ${esc(b.bannedBy)}
+                  </div>
+                </div>
+                <button class="btn" style="font-size:9px;padding:3px 10px;color:var(--green);border-color:var(--green);"
+                  data-action="unban" data-id="${esc(tid)}">Unban</button>
+              </div>`).join("")}
+      </div>
     `;
 
     // Wire retaliation check
@@ -1809,6 +1844,35 @@ async function renderDashboard(main) {
         await renderDashboard(main);
       } catch(e) { msgEl.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; }
     });
+
+    // Wire ban add
+    main.querySelector('#ban-add').addEventListener('click', async () => {
+      const id     = main.querySelector('#ban-id').value.trim();
+      const name   = main.querySelector('#ban-name').value.trim();
+      const reason = main.querySelector('#ban-reason').value.trim();
+      const msgEl  = main.querySelector('#ban-msg');
+      if (!id || !name) { msgEl.innerHTML = '<div class="msg-error">Torn ID and Name are required.</div>'; return; }
+      if (!reason) { msgEl.innerHTML = '<div class="msg-error">A reason is required.</div>'; return; }
+      try {
+        await api('/admin/ban', { targetTornId: id, targetName: name, reason, action: 'ban' });
+        msgEl.innerHTML = `<div class="msg-success">⛔ ${esc(name)} [${esc(id)}] has been banned and removed from all roles.</div>`;
+        main.querySelector('#ban-id').value     = '';
+        main.querySelector('#ban-name').value   = '';
+        main.querySelector('#ban-reason').value = '';
+        setTimeout(() => renderDashboard(main), 1500);
+      } catch(e) { msgEl.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; }
+    });
+
+    // Wire unban buttons
+    main.querySelectorAll('[data-action="unban"]').forEach(btn =>
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        if (!confirm(`Unban this member? They will need to be re-added to a role manually.`)) return;
+        try {
+          await api('/admin/ban', { targetTornId: id, targetName: '', reason: '', action: 'unban' });
+          await renderDashboard(main);
+        } catch(e) { alert(e.message); }
+      }));
 
     // Wire blacklist remove
     main.querySelectorAll('[data-action="unblacklist"]').forEach(btn =>
