@@ -1444,13 +1444,14 @@ function miniBar(values, color, maxVal) {
 async function renderDashboard(main) {
   main.innerHTML = `<div class="loading">Loading intelligence...</div>`;
   try {
+    // Fetch all dashboard data — each wrapped so one failure doesn't kill the whole dashboard
     const [analytics, availability, targetFreq, retaliation, blacklist, banList] = await Promise.all([
-      api('/admin/analytics'),
-      api('/hunter/availability/get'),
-      api('/admin/target-frequency'),
-      api('/admin/retaliation'),
-      api('/admin/blacklist/get'),
-      api('/admin/ban/get'),
+      api('/admin/analytics').catch(e => ({ revenue:[], tierStats:{}, topHunters:[], hunterStats:[], busyHours:Array(24).fill({count:0}), busyDays:[], factionPoolTotal:0, totalContracts:0, error: e.message })),
+      api('/hunter/availability/get').catch(() => ({ availability:{} })),
+      api('/admin/target-frequency').catch(() => ({ targets:[] })),
+      api('/admin/retaliation').catch(() => ({ clientOverlap:[], hunterFlags:[], retaliationLog:[] })),
+      api('/admin/blacklist/get').catch(() => ({ blacklist:{} })),
+      api('/admin/ban/get').catch(() => ({ banned:{} })),
     ]);
 
     const A   = analytics;
