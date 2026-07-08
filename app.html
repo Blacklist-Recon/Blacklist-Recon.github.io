@@ -1403,7 +1403,7 @@ async function renderBalance(main) {
         <div class="balance-amount">${fmt(bal.total)}</div>
         <div class="balance-label">Available Balance</div>
         ${identity.role !== 'admin' ? `<div class="balance-agent">Agent #${agentNum||'?'}</div>` : `<div class="balance-agent">${esc(identity.name)}</div>`}
-        ${bal.pendingWithdrawal > 0 ? `<div style="color:var(--amber);font-family:'Share Tech Mono',monospace;font-size:11px;margin-top:8px;">⏳ ${fmt(bal.pendingWithdrawal)} withdrawal pending</div>` : ''}
+        ${bal.pendingWithdrawal > 0 ? `<div style="color:var(--amber);font-family:Share Tech Mono,monospace;font-size:11px;margin-top:8px;">⏳ ${fmt(bal.pendingWithdrawal)} withdrawal pending</div>` : ''}
       </div>
       <div class="form-group" style="display:flex;gap:8px;">
         <input id="withdraw-amt" type="number" min="1" placeholder="Amount to withdraw" style="flex:1;margin:0;" />
@@ -1486,7 +1486,7 @@ async function renderDashboard(main) {
       : Object.entries(av).map(([tid, h]) => `
           <div class="card-row">
             <span style="color:var(--text);">${esc(h.alias || h.name)}</span>
-            <span style="font-family:'Share Tech Mono',monospace;font-size:10px;
+            <span style="font-family:Share Tech Mono,monospace;font-size:10px;
                          color:${statusDot[h.status]||'var(--dim)'};letter-spacing:1px;text-transform:uppercase;">
               ${h.status === 'active' ? '● Active' : h.status === 'busy' ? '◉ Busy' : '○ Offline'}
             </span>
@@ -1501,9 +1501,9 @@ async function renderDashboard(main) {
         return `<tr>
           <td style="color:var(--gold);">${h.agentNumber ? 'Agent #'+h.agentNumber : '—'}</td>
           <td style="color:var(--bright);">${esc(h.name)}</td>
-          <td style="color:var(--green);font-family:'Share Tech Mono',monospace;">${fmt(h.totalEarned)}</td>
-          <td style="color:${rateColor};font-family:'Share Tech Mono',monospace;">${rate}%</td>
-          <td style="color:var(--dim);font-family:'Share Tech Mono',monospace;">${h.claimed}→${h.completed}</td>
+          <td style="color:var(--green);font-family:Share Tech Mono,monospace;">${fmt(h.totalEarned)}</td>
+          <td style="color:${rateColor};font-family:Share Tech Mono,monospace;">${rate}%</td>
+          <td style="color:var(--dim);font-family:Share Tech Mono,monospace;">${h.claimed}→${h.completed}</td>
         </tr>`;
       }).join('');
 
@@ -1513,13 +1513,13 @@ async function renderDashboard(main) {
       : [
           ...(ret.clientOverlap||[]).map(r => `
             <div style="background:rgba(139,26,26,0.15);border:1px solid var(--blood);padding:12px;margin-bottom:8px;border-radius:2px;">
-              <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--ember);letter-spacing:1px;margin-bottom:4px;">⚠ CLIENT RETALIATION RISK</div>
+              <div style="font-family:Share Tech Mono,monospace;font-size:10px;color:var(--ember);letter-spacing:1px;margin-bottom:4px;">⚠ CLIENT RETALIATION RISK</div>
               <div style="font-size:13px;color:var(--text);">Torn ID: ${esc(r.tornId)}</div>
               <div style="font-size:12px;color:var(--dim);margin-top:4px;">${esc(r.warning)}</div>
             </div>`),
           ...(ret.hunterFlags||[]).map(r => `
             <div style="background:rgba(58,50,32,0.3);border:1px solid #5a4010;padding:12px;margin-bottom:8px;border-radius:2px;">
-              <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--amber);letter-spacing:1px;margin-bottom:4px;">⚠ POSSIBLE MUGGING</div>
+              <div style="font-family:Share Tech Mono,monospace;font-size:10px;color:var(--amber);letter-spacing:1px;margin-bottom:4px;">⚠ POSSIBLE MUGGING</div>
               <div style="font-size:13px;color:var(--text);">${esc(r.name)}</div>
               <div style="font-size:12px;color:var(--dim);margin-top:4px;">${esc(r.warning)}</div>
             </div>`)
@@ -1529,7 +1529,7 @@ async function renderDashboard(main) {
     const tfRows = tf.slice(0,10).map((t,i) => `
       <div class="card-row">
         <span style="color:${i===0?'var(--gold)':'var(--text)'};">${esc(t.name)}${t.xid?` [${t.xid}]`:''}</span>
-        <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--ember);">
+        <span style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--ember);">
           ${t.count} hit${t.count!==1?'s':''}
         </span>
       </div>`).join('') || '<div class="empty" style="padding:16px;">No data yet</div>';
@@ -1589,7 +1589,7 @@ async function renderDashboard(main) {
                        title="${r.date}: ${fmt(r.amount)}"></div>
                 </div>`).join('')}
             </div>
-            <div style="display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);">
+            <div style="display:flex;justify-content:space-between;font-family:Share Tech Mono,monospace;font-size:9px;color:var(--muted);">
               <span>${A.revenue[0]?.date.slice(5)||''}</span>
               <span>${A.revenue[A.revenue.length-1]?.date.slice(5)||''}</span>
             </div>`}
@@ -1599,19 +1599,19 @@ async function renderDashboard(main) {
       <div class="section-head">Busiest Hours (UTC) & Days</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
         <div class="card" style="padding:12px;">
-          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:8px;">By Hour</div>
+          <div style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:8px;">By Hour</div>
           <div style="display:flex;align-items:flex-end;gap:1px;height:48px;">
             ${A.busyHours.map((h,i) => `
               <div style="flex:1;background:var(--cyan-bright);opacity:${Math.max(0.1,h.count/maxHour)};
                            height:${Math.max(2,Math.round((h.count/maxHour)*44))}px;border-radius:1px;"
                    title="${i}:00 — ${h.count} contracts"></div>`).join('')}
           </div>
-          <div style="display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);margin-top:4px;">
+          <div style="display:flex;justify-content:space-between;font-family:Share Tech Mono,monospace;font-size:8px;color:var(--muted);margin-top:4px;">
             <span>0h</span><span>6h</span><span>12h</span><span>18h</span><span>23h</span>
           </div>
         </div>
         <div class="card" style="padding:12px;">
-          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:8px;">By Day</div>
+          <div style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:8px;">By Day</div>
           <div style="display:flex;align-items:flex-end;gap:2px;height:48px;">
             ${A.busyDays.map(d => {
               const maxD = Math.max(...A.busyDays.map(x=>x.count),1);
@@ -1640,11 +1640,11 @@ async function renderDashboard(main) {
         <table style="width:100%;border-collapse:collapse;">
           <thead>
             <tr style="background:var(--ash);">
-              <th style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;padding:10px 12px;text-align:left;">Agent</th>
-              <th style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;padding:10px 12px;text-align:left;">Alias</th>
-              <th style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;padding:10px 12px;text-align:left;">Earned</th>
-              <th style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;padding:10px 12px;text-align:left;">Rate</th>
-              <th style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;padding:10px 12px;text-align:left;">C→D</th>
+              <th style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;padding:10px 12px;text-align:left;">Agent</th>
+              <th style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;padding:10px 12px;text-align:left;">Alias</th>
+              <th style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;padding:10px 12px;text-align:left;">Earned</th>
+              <th style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;padding:10px 12px;text-align:left;">Rate</th>
+              <th style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;padding:10px 12px;text-align:left;">C→D</th>
             </tr>
           </thead>
           <tbody style="font-size:12px;">
@@ -1658,7 +1658,7 @@ async function renderDashboard(main) {
 
       <!-- Manual check tool -->
       <div class="card" style="margin-bottom:12px;">
-        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--ember);text-transform:uppercase;margin-bottom:12px;">Manual Retaliation Check</div>
+        <div style="font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:3px;color:var(--ember);text-transform:uppercase;margin-bottom:12px;">Manual Retaliation Check</div>
         <p style="font-size:13px;color:var(--dim);line-height:1.7;margin-bottom:16px;">
           If a member of Blacklist Recon is attacked or mugged, enter the attacker's details below.
           The system will check if they are a known client or past target and auto-post a $1M bounty if confirmed.
@@ -1666,21 +1666,21 @@ async function renderDashboard(main) {
         <div id="ret-check-msg"></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
           <div style="flex:1;min-width:140px;">
-            <label style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:4px;">Attacker Torn ID *</label>
+            <label style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:4px;">Attacker Torn ID *</label>
             <input id="ret-attacker-id" type="text" placeholder="e.g. 1234567" />
           </div>
           <div style="flex:2;min-width:160px;">
-            <label style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:4px;">Attacker Name *</label>
+            <label style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:4px;">Attacker Name *</label>
             <input id="ret-attacker-name" type="text" placeholder="Their Torn username" />
           </div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
           <div style="flex:2;min-width:160px;">
-            <label style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:4px;">Victim (our member) *</label>
+            <label style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:4px;">Victim (our member) *</label>
             <input id="ret-victim-name" type="text" placeholder="Which of our members was hit" />
           </div>
           <div style="flex:1;min-width:120px;">
-            <label style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:4px;">Attack Type</label>
+            <label style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:4px;">Attack Type</label>
             <select id="ret-attack-type">
               <option value="attack">Attack</option>
               <option value="mug">Mug</option>
@@ -1704,21 +1704,21 @@ async function renderDashboard(main) {
             <div style="padding:10px 0;border-bottom:1px solid var(--border);">
               <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
                 <div>
-                  <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--ember);">
+                  <span style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--ember);">
                     ${esc(r.attackerName)} [${esc(String(r.attackerTornId))}]
                   </span>
-                  <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--dim);margin-left:8px;">
+                  <span style="font-family:Share Tech Mono,monospace;font-size:10px;color:var(--dim);margin-left:8px;">
                     ${r.attackType} on ${esc(r.victimName||'unknown')}
                   </span>
                 </div>
-                <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);white-space:nowrap;">
+                <span style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--muted);white-space:nowrap;">
                   ${new Date(r.at).toLocaleDateString()}
                 </span>
               </div>
               <div style="margin-top:4px;display:flex;gap:8px;">
-                ${r.wasTarget ? `<span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--ember);background:rgba(139,26,26,0.2);padding:2px 6px;border-radius:2px;">WAS TARGET</span>` : ''}
-                ${r.wasClient ? `<span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--amber);background:rgba(58,40,10,0.3);padding:2px 6px;border-radius:2px;">WAS CLIENT</span>` : ''}
-                ${r.autoBountyId ? `<span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--green);background:rgba(20,40,20,0.3);padding:2px 6px;border-radius:2px;">✓ AUTO-BOUNTY POSTED</span>` : ''}
+                ${r.wasTarget ? `<span style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--ember);background:rgba(139,26,26,0.2);padding:2px 6px;border-radius:2px;">WAS TARGET</span>` : ''}
+                ${r.wasClient ? `<span style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--amber);background:rgba(58,40,10,0.3);padding:2px 6px;border-radius:2px;">WAS CLIENT</span>` : ''}
+                ${r.autoBountyId ? `<span style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--green);background:rgba(20,40,20,0.3);padding:2px 6px;border-radius:2px;">✓ AUTO-BOUNTY POSTED</span>` : ''}
               </div>
             </div>`).join('')}
         </div>` : ''}
@@ -1766,13 +1766,14 @@ async function renderDashboard(main) {
         });
 
         if (res.isKnown) {
+          const targetTag = res.wasTarget ? '<div style="font-size:10px;color:var(--ember);margin-bottom:4px;">● Previously a contract target</div>' : '';
+          const clientTag = res.wasClient ? '<div style="font-size:10px;color:var(--amber);margin-bottom:4px;">● Previously a client</div>' : '';
+          const bountyTag = res.autoBountyId ? '<div style="font-size:10px;color:var(--green);margin-top:8px;">✓ $1,000,000 bounty auto-posted — note: Attempted Retaliation / Mug Back</div>' : '';
           msgEl.innerHTML = `
             <div style="background:rgba(139,26,26,0.2);border:1px solid var(--blood);padding:14px;margin-bottom:12px;border-radius:2px;">
-              <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--ember);letter-spacing:2px;margin-bottom:8px;">⚠ KNOWN ENTITY CONFIRMED</div>
+              <div style="font-size:11px;color:var(--ember);letter-spacing:2px;margin-bottom:8px;">⚠ KNOWN ENTITY CONFIRMED</div>
               <div style="font-size:13px;color:var(--text);margin-bottom:6px;">${esc(res.message)}</div>
-              ${res.wasTarget ? '<div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--ember);margin-bottom:4px;">● Previously a contract target</div>' : ''}
-              ${res.wasClient ? '<div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--amber);margin-bottom:4px;">● Previously a client</div>' : ''}
-              ${res.autoBountyId ? '<div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--green);margin-top:8px;">✓ $1,000,000 bounty auto-posted to the board — note: Attempted Retaliation / Mug Back</div>' : ''}
+              ${targetTag}${clientTag}${bountyTag}
             </div>`;
           main.querySelector('#ret-attacker-id').value   = '';
           main.querySelector('#ret-attacker-name').value = '';
@@ -1782,7 +1783,7 @@ async function renderDashboard(main) {
         } else {
           msgEl.innerHTML = `
             <div style="background:rgba(20,30,40,0.6);border:1px solid var(--border);padding:14px;margin-bottom:12px;border-radius:2px;">
-              <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--dim);letter-spacing:2px;margin-bottom:4px;">NOT IN RECORDS</div>
+              <div style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--dim);letter-spacing:2px;margin-bottom:4px;">NOT IN RECORDS</div>
               <div style="font-size:13px;color:var(--dim);">${esc(attackerName)} [${esc(attackerId)}] is not a known client or past target. No auto-bounty posted.</div>
             </div>`;
         }
@@ -1984,7 +1985,7 @@ async function renderRoster(main) {
             <td style="color:var(--ember);">Agent #${r.agentNumber}</td>
             <td style="color:var(--gold);">${esc(r.alias)}</td>
             <td>${badge}</td>
-            <td style="color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:11px;">${contracts}</td>
+            <td style="color:var(--dim);font-family:Share Tech Mono,monospace;font-size:11px;">${contracts}</td>
             <td><a href="https://www.torn.com/profiles.php?XID=${tornId}" target="_blank" style="color:var(--dim);font-size:10px;">${tornId} ↗</a></td>
           </tr>`;
         }).join('');
