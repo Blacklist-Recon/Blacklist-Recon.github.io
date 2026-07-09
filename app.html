@@ -2050,19 +2050,19 @@ Always be direct, professional, and tactical. Use the code of silence tone — p
 CURRENT LIVE OPERATIONAL DATA:
 ${context}`;
 
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      // Route through Worker proxy — Anthropic key never touches the browser
+      const res = await fetch(`${WORKER_URL}/ai/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 1000,
-          system: systemPrompt,
+          apiKey,
+          system:   systemPrompt,
           messages: [{ role: "user", content: prompt }],
         }),
       });
 
       const data = await res.json();
-      if (data.error) throw new Error(data.error.message);
+      if (!data.ok) throw new Error(data.error || "AI request failed.");
 
       const text = (data.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('\n');
       textEl.textContent   = text;
