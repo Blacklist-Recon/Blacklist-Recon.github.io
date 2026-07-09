@@ -2951,9 +2951,53 @@ async function renderChat(main) {
             <div class="chat-meta">
               <span class="chat-sender">${esc(m.sender)}</span> · ${time}
               ${identity.role === 'admin' && !isMine ? `<button onclick="deleteMsg('${m.id}')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px;margin-left:6px;">✕</button>` : ''}
+              <button class="xlate-btn" data-text="${esc(m.message)}"
+                style="background:none;border:none;cursor:pointer;font-family:Share Tech Mono,monospace;
+                       font-size:9px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;
+                       padding:0 4px;margin-left:4px;transition:color 0.15s;"
+                title="Translate">⟳</button>
             </div>
             <div class="chat-bubble">${esc(m.message)}</div>
+            <div class="chat-xlate" style="display:none;font-size:11px;color:var(--dim);font-style:italic;
+                  border-top:1px solid var(--border);margin-top:4px;padding-top:4px;padding:4px 8px;"></div>
           `;
+          // Wire translate button
+          const xlateBtn = div.querySelector('.xlate-btn');
+          const xlateEl  = div.querySelector('.chat-xlate');
+          xlateBtn.addEventListener('click', async () => {
+            if (xlateEl.style.display === 'block') {
+              xlateEl.style.display = 'none';
+              xlateBtn.textContent  = '⟳';
+              xlateBtn.style.color  = 'var(--muted)';
+              return;
+            }
+            if (xlateEl.dataset.done === '1') {
+              xlateEl.style.display = 'block';
+              xlateBtn.textContent  = '✕';
+              xlateBtn.style.color  = 'var(--ember)';
+              return;
+            }
+            xlateBtn.textContent = '...';
+            xlateBtn.disabled    = true;
+            try {
+              const lang = (navigator.language || 'en').split('-')[0];
+              const res  = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(xlateBtn.dataset.text)}&langpair=auto|${lang}`);
+              const data = await res.json();
+              const tx   = data?.responseData?.translatedText;
+              xlateEl.innerHTML    = tx && tx !== xlateBtn.dataset.text
+                ? `<span style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:2px;">Translated</span>${esc(tx)}`
+                : '<span style="font-size:9px;color:var(--muted);">Already in your language</span>';
+              xlateEl.dataset.done = '1';
+              xlateEl.style.display = 'block';
+              xlateBtn.textContent  = '✕';
+              xlateBtn.style.color  = 'var(--ember)';
+            } catch(e) {
+              xlateEl.textContent   = 'Translation unavailable.';
+              xlateEl.style.display = 'block';
+              xlateBtn.textContent  = '⟳';
+            }
+            xlateBtn.disabled = false;
+          });
           msgsEl.appendChild(div);
         });
         msgsEl.scrollTop = msgsEl.scrollHeight;
