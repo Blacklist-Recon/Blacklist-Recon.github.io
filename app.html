@@ -2491,7 +2491,7 @@ async function renderRoster(main) {
       </div>
       <div class="section-head">Active Agents</div>
       <table class="roster-table">
-        <thead><tr><th>Agent</th><th>Alias</th><th>Rank</th><th>Contracts</th><th>Torn ID</th></tr></thead>
+        <thead><tr><th>Agent</th><th>Alias</th><th>Rank</th><th>Contracts</th><th>Torn ID</th>${identity.role === 'admin' ? '<th>Set Rank</th>' : ''}</tr></thead>
         <tbody>${rows}</tbody>
       </table>
     `;
