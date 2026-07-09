@@ -1000,10 +1000,18 @@ function navItems() {
     items.push({ id: 'campaigns', icon: '⚔️', label: 'Campaigns' });
   }
   if (identity.role === 'admin') {
-    items.push({ id: 'dashboard', icon: '📊', label: 'Intel'    });
-    items.push({ id: 'reviews',   icon: '⭐', label: 'Reviews'  });
-    items.push({ id: 'roster',    icon: '👥', label: 'Roster'   });
-    items.push({ id: 'admin',     icon: '⚙️', label: 'Admin'    });
+    items.push({ id: 'ai',        icon: '🤖', label: 'AI Ops'   });
+    items.push({ id: 'dashboard', icon: '📊', label: 'Intel'     });
+    items.push({ id: 'challenges',icon: '🏆', label: 'Challenges'});
+    items.push({ id: 'mentors',   icon: '🎓', label: 'Mentors'   });
+    items.push({ id: 'referrals', icon: '🔗', label: 'Referrals' });
+    items.push({ id: 'reviews',   icon: '⭐', label: 'Reviews'   });
+    items.push({ id: 'roster',    icon: '👥', label: 'Roster'    });
+    items.push({ id: 'admin',     icon: '⚙️', label: 'Admin'     });
+  }
+  // Challenges visible to all roles
+  if (identity.role === 'hunter' || identity.role === 'verifier') {
+    items.push({ id: 'challenges', icon: '🏆', label: 'Challenges' });
   }
   return items;
 }
@@ -1048,7 +1056,11 @@ function renderPage() {
   if (currentPage === 'chat')    renderChat(main);
   if (currentPage === 'messages')  renderMessages(main);
   if (currentPage === 'campaigns') renderCampaigns(main);
-  if (currentPage === 'dashboard') renderDashboard(main);
+  if (currentPage === 'ai')         renderAI(main);
+  if (currentPage === 'dashboard')  renderDashboard(main);
+  if (currentPage === 'challenges') renderChallenges(main);
+  if (currentPage === 'mentors')    renderMentors(main);
+  if (currentPage === 'referrals')  renderReferrals(main);
   if (currentPage === 'reviews')   renderReviews(main);
   if (currentPage === 'roster')  renderRoster(main);
   if (currentPage === 'admin')   renderAdmin(main);
@@ -1173,6 +1185,27 @@ function renderBoard(main) {
           const proof = input ? input.value.trim() : '';
           if (!proof) { alert('Please paste your attack log URL first.'); btn.disabled = false; return; }
           await api('/bounties/complete', { bountyId: id, proofLink: proof });
+        }
+        if (action === 'priority-front') {
+          try {
+            await api('/bounties/priority-upgrade', { bountyId: id, upgradeType: 'front' });
+            await loadBounties(); renderBoard(main);
+          } catch(e) { alert(e.message); }
+          btn.disabled = false; return;
+        }
+        if (action === 'priority-dedicated') {
+          try {
+            await api('/bounties/priority-upgrade', { bountyId: id, upgradeType: 'dedicated' });
+            await loadBounties(); renderBoard(main);
+          } catch(e) { alert(e.message); }
+          btn.disabled = false; return;
+        }
+        if (action === 'extend-deadline') {
+          try {
+            await api('/bounties/extend-deadline', { bountyId: id, reason: 'Hunter insurance — mugging reported' });
+            await loadBounties(); renderBoard(main);
+          } catch(e) { alert(e.message); }
+          btn.disabled = false; return;
         }
         if (action === 'submit-hit') {
           const input = main.querySelector(`.proof-link-input[data-id="${id}"]`);
@@ -1884,6 +1917,400 @@ async function renderDashboard(main) {
         } catch(e) {}
       }));
 
+  } catch(e) {
+    main.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`;
+  }
+}
+
+// ── AI CONTRACT ASSISTANT ────────────────────────────────────────────────
+async function renderAI(main) {
+  main.innerHTML = `
+    <div class="page-header">
+      <div class="page-eyebrow">Blacklist Recon · Command Intelligence</div>
+      <div class="page-title">🤖 AI Ops Assistant</div>
+    </div>
+    <p style="font-size:14px;color:var(--dim);line-height:1.7;margin-bottom:24px;">
+      Describe any situation in plain English. The Assistant analyzes it using your live contract data,
+      hunter availability, and Blacklist Recon's pricing structure to give you actionable recommendations.
+    </p>
+
+    <div class="card" style="margin-bottom:20px;">
+      <div style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:3px;color:var(--dim);text-transform:uppercase;margin-bottom:12px;">Quick Prompts</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        ${[
+          "Recommend a contract tier for a high-level enemy faction leader",
+          "How should I price a Ranked War Support campaign for 15 members?",
+          "Which of my hunters should I assign a Tier III contract to right now?",
+          "Draft a response to a client asking about war support pricing",
+          "Analyze my current board and suggest priority actions",
+          "What challenges are my hunters close to completing?",
+        ].map(q => `
+          <button class="btn ai-quick" style="font-size:11px;padding:4px 10px;" data-prompt="${esc(q)}">${esc(q)}</button>
+        `).join('')}
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;">
+      <textarea id="ai-input" rows="4"
+        placeholder="Describe a situation, ask for pricing advice, draft a client reply, analyze a contract..."
+        style="width:100%;resize:vertical;"></textarea>
+      <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+        <button class="btn btn-red" id="ai-submit" style="padding:8px 24px;">Ask AI Assistant →</button>
+      </div>
+    </div>
+
+    <div id="ai-response" style="display:none;">
+      <div class="section-head">Response</div>
+      <div class="card">
+        <div id="ai-response-text" style="font-size:14px;color:var(--text);line-height:1.8;white-space:pre-wrap;"></div>
+      </div>
+    </div>
+    <div id="ai-loading" style="display:none;text-align:center;padding:32px;font-family:Share Tech Mono,monospace;font-size:11px;letter-spacing:2px;color:var(--dim);">
+      ☠ PROCESSING INTELLIGENCE...
+    </div>
+    <div id="ai-error" style="display:none;"></div>
+  `;
+
+  async function buildContext() {
+    try {
+      const [board, balances, av, analytics] = await Promise.all([
+        api('/bounties/list').catch(()=>({bounties:[]})),
+        api('/balance/all').catch(()=>({memberBalances:{}, factionPool:{total:0}})),
+        api('/hunter/availability/get').catch(()=>({availability:{}})),
+        api('/admin/analytics').catch(()=>({tierStats:{}, topHunters:[]})),
+      ]);
+
+      const bounties   = board.bounties || [];
+      const listed     = bounties.filter(b=>b.status==='listed').length;
+      const claimed    = bounties.filter(b=>b.status==='claimed').length;
+      const pending    = bounties.filter(b=>b.status==='pending_verification').length;
+      const pool       = balances.factionPool?.total || 0;
+      const avMap      = av.availability || {};
+      const activeHunters = Object.values(avMap).filter(h=>h.status==='active').length;
+      const totalMembers  = Object.keys(avMap).length;
+
+      return `BLACKLIST RECON — LIVE OPERATIONAL CONTEXT
+
+BOARD STATUS:
+- Listed (open): ${listed}
+- Claimed (in progress): ${claimed}
+- Pending verification: ${pending}
+
+FACTION POOL: $${pool.toLocaleString()}
+
+HUNTER NETWORK:
+- Total tracked members: ${totalMembers}
+- Currently active: ${activeHunters}
+- Active hunters: ${Object.entries(avMap).filter(([_,h])=>h.status==='active').map(([_,h])=>h.alias||h.name).join(', ')||'None'}
+
+CONTRACT TIERS:
+- Tier I Standard Hit: $1,000,000 fixed
+- Tier II War Support: $3.5M-$5M
+- Tier III High-Value: $3M+ negotiated
+- Tier IV Ranked War Support (Protection): Custom arrangement
+
+PAYOUT SPLIT: 75% hunter / 25% board (80/20 for referred clients first contract)
+RANK SYSTEM: Ghost(0) → Blade(3) → Phantom(10) → Reaper(25) → Wraith(50) → Shadow Hand(100)`;
+    } catch(e) {
+      return "Live data unavailable — answering based on Blacklist Recon operational knowledge.";
+    }
+  }
+
+  async function askAI(prompt) {
+    const loadEl  = main.querySelector('#ai-loading');
+    const respEl  = main.querySelector('#ai-response');
+    const textEl  = main.querySelector('#ai-response-text');
+    const errEl   = main.querySelector('#ai-error');
+    const submitBtn = main.querySelector('#ai-submit');
+
+    loadEl.style.display  = 'block';
+    respEl.style.display  = 'none';
+    errEl.style.display   = 'none';
+    submitBtn.disabled    = true;
+
+    try {
+      const context = await buildContext();
+      const systemPrompt = `You are the AI Ops Assistant for Blacklist Recon, an elite bounty hunting service in the browser game Torn City. You are speaking directly to The Handler (the admin/operator).
+
+You have deep knowledge of:
+- The Blacklist Recon contract system, pricing tiers, and operational structure
+- Torn City game mechanics (attacks, hospital, jail, faction wars, ranked wars)
+- The hunter rank system, challenge rewards, and referral network
+- Client anonymity protocols and the code of silence
+
+Your role is to:
+- Recommend contract tiers and pricing strategies
+- Draft professional client communications
+- Analyze operational situations and suggest actions
+- Advise on hunter assignments and campaign planning
+- Help interpret live board data
+
+Always be direct, professional, and tactical. Use the code of silence tone — precise, no fluff, no questions asked. When recommending prices, use the established tier structure. When drafting messages, match the Blacklist Recon brand voice: silent, professional, untraceable.
+
+CURRENT LIVE OPERATIONAL DATA:
+${context}`;
+
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 1000,
+          system: systemPrompt,
+          messages: [{ role: "user", content: prompt }],
+        }),
+      });
+
+      const data = await res.json();
+      if (data.error) throw new Error(data.error.message);
+
+      const text = (data.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('\n');
+      textEl.textContent   = text;
+      respEl.style.display = 'block';
+    } catch(e) {
+      errEl.innerHTML      = `<div class="msg-error">AI error: ${esc(e.message)}</div>`;
+      errEl.style.display  = 'block';
+    }
+
+    loadEl.style.display = 'none';
+    submitBtn.disabled   = false;
+  }
+
+  main.querySelector('#ai-submit').addEventListener('click', () => {
+    const prompt = main.querySelector('#ai-input').value.trim();
+    if (!prompt) return;
+    askAI(prompt);
+  });
+
+  main.querySelector('#ai-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.ctrlKey) {
+      const prompt = main.querySelector('#ai-input').value.trim();
+      if (prompt) askAI(prompt);
+    }
+  });
+
+  main.querySelectorAll('.ai-quick').forEach(btn =>
+    btn.addEventListener('click', () => {
+      main.querySelector('#ai-input').value = btn.dataset.prompt;
+      askAI(btn.dataset.prompt);
+    }));
+}
+
+// ── CHALLENGES ────────────────────────────────────────────────────────────
+async function renderChallenges(main) {
+  main.innerHTML = `<div class="loading">Loading challenges...</div>`;
+  try {
+    const res = await api('/challenges/get');
+    const challenges = res.challenges || [];
+    const myAwards   = res.myAwards   || [];
+    const recent     = res.recentAwards || [];
+
+    main.innerHTML = `
+      <div class="page-header">
+        <div class="page-eyebrow">Blacklist Recon · Hunter Program</div>
+        <div class="page-title">🏆 Hunter Challenges</div>
+      </div>
+      <p style="font-size:14px;color:var(--dim);line-height:1.7;margin-bottom:24px;">
+        Complete challenges to earn bonus payouts from the faction pool. Tracked automatically — bonuses credit instantly.
+      </p>
+
+      <div class="section-head">Active Challenges</div>
+      ${challenges.map(c => `
+        <div class="card" style="position:relative;overflow:hidden;">
+          <div style="position:absolute;top:0;left:0;right:0;height:2px;
+                      background:linear-gradient(to right,transparent,var(--gold),transparent);opacity:0.5;"></div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+            <div>
+              <div style="font-family:Cinzel,serif;font-size:16px;color:var(--gold);margin-bottom:4px;">${esc(c.name)}</div>
+              <div style="font-size:13px;color:var(--dim);line-height:1.6;">${esc(c.description)}</div>
+              <div style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;
+                           color:var(--muted);text-transform:uppercase;margin-top:6px;">${c.type}</div>
+            </div>
+            <div style="text-align:right;">
+              ${c.reward > 0
+                ? `<div style="font-family:Share Tech Mono,monospace;font-size:20px;color:var(--green);">+${fmt(c.reward)}</div>
+                   <div style="font-size:10px;color:var(--muted);">from faction pool</div>`
+                : `<div style="font-size:13px;color:var(--gold);">Auto Rank-Up<br>Consideration</div>`}
+            </div>
+          </div>
+        </div>`).join('')}
+
+      <div class="section-head" style="margin-top:24px;">Recent Awards</div>
+      ${recent.length === 0
+        ? '<div class="empty">No awards yet — be the first!</div>'
+        : `<div class="card">${recent.map(a => `
+            <div class="card-row" style="flex-wrap:wrap;">
+              <span style="color:var(--gold);">${esc(a.name)}</span>
+              <span style="font-size:11px;color:var(--dim);">${esc(a.challenge)}</span>
+              ${a.reward > 0
+                ? `<span style="color:var(--green);font-family:Share Tech Mono,monospace;font-size:11px;margin-left:auto;">+${fmt(a.reward)}</span>`
+                : `<span style="color:var(--gold);font-size:11px;margin-left:auto;">Rank Consideration</span>`}
+            </div>`).join('')}</div>`}
+
+      ${myAwards.length > 0 ? `
+        <div class="section-head" style="margin-top:24px;">Your Awards</div>
+        <div class="card">${myAwards.map(a => `
+          <div class="card-row">
+            <span style="color:var(--bright);">${esc(a.challenge)}</span>
+            ${a.reward > 0
+              ? `<span style="color:var(--green);font-family:Share Tech Mono,monospace;font-size:12px;">+${fmt(a.reward)}</span>`
+              : `<span style="color:var(--gold);font-size:11px;">Rank Consideration</span>`}
+          </div>`).join('')}</div>` : ''}
+    `;
+  } catch(e) {
+    main.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`;
+  }
+}
+
+// ── MENTORS ────────────────────────────────────────────────────────────────
+async function renderMentors(main) {
+  main.innerHTML = `<div class="loading">Loading mentorship data...</div>`;
+  try {
+    const [mentorRes, rosterRes] = await Promise.all([
+      api('/mentor/get'),
+      api('/agent-map'),
+    ]);
+    const mentorships = mentorRes.mentorships || {};
+    const roster      = rosterRes.agentMap    || {};
+    const isAdmin     = identity.role === 'admin';
+
+    main.innerHTML = `
+      <div class="page-header">
+        <div class="page-eyebrow">Blacklist Recon · Hunter Program</div>
+        <div class="page-title">🎓 Mentorship</div>
+      </div>
+      <p style="font-size:14px;color:var(--dim);line-height:1.7;margin-bottom:24px;">
+        Ghost rank hunters are assigned a Blade+ mentor. Mentors can see their mentee's claimed contracts
+        and offer guidance. Reduces early dropout and builds loyalty.
+      </p>
+
+      ${isAdmin ? `
+        <div class="section-head">Assign Mentor</div>
+        <div id="mentor-msg"></div>
+        <div class="card" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+          <div style="flex:1;min-width:140px;">
+            <label style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:6px;">Mentee Torn ID</label>
+            <input id="mentee-id" type="text" placeholder="Ghost hunter's Torn ID" />
+          </div>
+          <div style="flex:1;min-width:140px;">
+            <label style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:6px;">Mentor Torn ID</label>
+            <input id="mentor-id" type="text" placeholder="Blade+ hunter's Torn ID" />
+          </div>
+          <button class="btn btn-red" id="mentor-assign">Assign</button>
+        </div>
+
+        <div class="section-head" style="margin-top:24px;">Active Mentorships</div>
+        ${Object.keys(mentorships).length === 0
+          ? '<div class="empty">No mentorships assigned yet</div>'
+          : `<div class="card">${Object.entries(mentorships).map(([tid, m]) => `
+              <div class="card-row" style="flex-wrap:wrap;">
+                <span style="color:var(--text);">${esc(m.menteeName)} → ${esc(m.mentorName)}</span>
+                <span style="font-size:10px;color:var(--dim);">since ${new Date(m.assignedAt).toLocaleDateString()}</span>
+                <button class="btn" style="font-size:9px;padding:2px 8px;margin-left:auto;color:var(--dim);"
+                  data-action="remove-mentor" data-id="${esc(tid)}">Remove</button>
+              </div>`).join('')}</div>`}
+      ` : `
+        ${mentorRes.myMentor ? `
+          <div class="section-head">Your Mentor</div>
+          <div class="card">
+            <div class="card-row">
+              <span class="card-label">Assigned Mentor</span>
+              <span class="card-value" style="color:var(--gold);">${esc(mentorRes.myMentor.mentorName)}</span>
+            </div>
+            <div style="font-size:13px;color:var(--dim);margin-top:8px;line-height:1.7;">
+              Your mentor can see your claimed contracts and is here to guide you through your first contracts.
+              Reach out to them in the chat or in-game.
+            </div>
+          </div>` : '<div class="empty">No mentor assigned yet</div>'}
+
+        ${(mentorRes.myMentees||[]).length > 0 ? `
+          <div class="section-head" style="margin-top:24px;">Your Mentees</div>
+          <div class="card">${mentorRes.myMentees.map(m => `
+            <div class="card-row">
+              <span style="color:var(--text);">${esc(m.menteeName)}</span>
+              <span style="font-size:10px;color:var(--dim);">Agent #${m.agentNumber||'?'}</span>
+            </div>`).join('')}</div>` : ''}
+      `}
+    `;
+
+    if (isAdmin) {
+      main.querySelector('#mentor-assign').addEventListener('click', async () => {
+        const menteeId = main.querySelector('#mentee-id').value.trim();
+        const mentorId = main.querySelector('#mentor-id').value.trim();
+        const msgEl    = main.querySelector('#mentor-msg');
+        if (!menteeId || !mentorId) { msgEl.innerHTML = '<div class="msg-error">Both IDs required.</div>'; return; }
+        try {
+          await api('/mentor/assign', { menteeId, mentorId });
+          msgEl.innerHTML = '<div class="msg-success">Mentorship assigned.</div>';
+          setTimeout(() => renderMentors(main), 1000);
+        } catch(e) { msgEl.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; }
+      });
+      main.querySelectorAll('[data-action="remove-mentor"]').forEach(btn =>
+        btn.addEventListener('click', async () => {
+          try {
+            await api('/mentor/assign', { menteeId: btn.dataset.id, mentorId: null });
+            await renderMentors(main);
+          } catch(e) { alert(e.message); }
+        }));
+    }
+  } catch(e) {
+    main.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`;
+  }
+}
+
+// ── REFERRALS ──────────────────────────────────────────────────────────────
+async function renderReferrals(main) {
+  main.innerHTML = `<div class="loading">Loading referral data...</div>`;
+  try {
+    const [codeRes, statsRes] = await Promise.all([
+      api('/referral/get-code'),
+      identity.role === 'admin' ? api('/referral/stats') : Promise.resolve({ leaderboard:[], log:[] }),
+    ]);
+
+    main.innerHTML = `
+      <div class="page-header">
+        <div class="page-eyebrow">Blacklist Recon · Affiliate Program</div>
+        <div class="page-title">🔗 Referral Network</div>
+      </div>
+
+      <div class="section-head">Your Referral Link</div>
+      <div class="card">
+        <p style="font-size:14px;color:var(--dim);line-height:1.7;margin-bottom:16px;">
+          Share your referral link. When a new client places their first contract using your link,
+          the payout on that contract becomes <span style="color:var(--gold);">80/20</span> instead of 75/25
+          — you keep the extra 5% and receive an additional 5% referral bonus from the faction pool.
+        </p>
+        <div style="font-family:Share Tech Mono,monospace;font-size:12px;color:var(--ember);
+                     background:var(--void);border:1px solid var(--border);padding:12px 16px;
+                     word-break:break-all;margin-bottom:12px;">
+          ${esc(codeRes.url || '—')}
+        </div>
+        <div style="display:flex;gap:8px;">
+          <div style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--dim);">
+            Your code: <span style="color:var(--gold);">${esc(codeRes.code||'—')}</span>
+          </div>
+          <button class="btn" style="font-size:10px;padding:4px 12px;margin-left:auto;"
+            onclick="navigator.clipboard.writeText('${esc(codeRes.url||'')}')" >Copy Link</button>
+        </div>
+      </div>
+
+      ${identity.role === 'admin' ? `
+        <div class="section-head" style="margin-top:24px;">Referral Leaderboard</div>
+        ${(statsRes.leaderboard||[]).length === 0
+          ? '<div class="empty">No referrals yet</div>'
+          : `<div class="card">
+              ${statsRes.leaderboard.map((r,i) => `
+                <div class="card-row">
+                  <span style="color:${i===0?'var(--gold)':'var(--text)'};">${esc(r.name)}</span>
+                  <span style="font-size:12px;color:var(--ember);font-family:Share Tech Mono,monospace;">
+                    ${r.referrals} referral${r.referrals!==1?'s':''}
+                  </span>
+                  <span style="font-size:11px;color:var(--green);font-family:Share Tech Mono,monospace;margin-left:8px;">
+                    +${fmt(r.bonusEarned)}
+                  </span>
+                </div>`).join('')}</div>`}
+      ` : ''}
+    `;
   } catch(e) {
     main.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`;
   }
