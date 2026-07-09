@@ -1311,6 +1311,9 @@
     <label style="display:block;font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:6px;">Message <span style="color:var(--ember);">*</span></label>
     <textarea id="contact-message" rows="5" placeholder="Describe your contract request, target, payment confirmation, or inquiry..." maxlength="1000"
       style="width:100%;background:var(--ash);border:1px solid var(--border);color:var(--bright);font-family:Share Tech Mono,monospace;font-size:13px;padding:10px 14px;margin-bottom:20px;outline:none;box-sizing:border-box;resize:vertical;"></textarea>
+    <label style="display:block;font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:6px;">Referral Code (optional)</label>
+    <input id="contact-refcode" type="text" placeholder="Enter referral code if you have one" maxlength="8"
+      style="width:100%;background:var(--ash);border:1px solid var(--border);color:var(--bright);font-family:Share Tech Mono,monospace;font-size:13px;padding:10px 14px;margin-bottom:16px;outline:none;box-sizing:border-box;" />
     <p style="font-family:Share Tech Mono,monospace;font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:16px;">
       * Required. Your Torn ID is used to contact you in-game only. Never shared publicly.
     </p>
@@ -1595,6 +1598,16 @@ window.addEventListener('scroll', () => {
   if (document.getElementById('mobile-nav').classList.contains('open')) closeMobileNav();
 });
 
+// Auto-populate referral code from URL ?ref=CODE
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const ref    = params.get('ref');
+  if (ref) {
+    const el = document.getElementById('contact-refcode');
+    if (el) { el.value = ref; el.style.borderColor = 'var(--gold)'; }
+  }
+})();
+
 // ── CONTACT FORM ─────────────────────────────────────────────────────────
 // ── TESTIMONIALS ────────────────────────────────────────────────────────
 const TIER_LABELS = {
@@ -1720,6 +1733,7 @@ async function sendContactMessage() {
   const tornId   = document.getElementById('contact-tornid').value.trim();
   const subject  = document.getElementById('contact-subject').value.trim();
   const message  = document.getElementById('contact-message').value.trim();
+  const refCode  = document.getElementById('contact-refcode')?.value.trim() || '';
   const msgEl    = document.getElementById('contact-msg');
   const btn      = document.getElementById('contact-submit');
 
