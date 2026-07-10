@@ -1084,20 +1084,43 @@
       Blacklist Recon is recruiting active, combat-ready players. We offer coordinated war operations, faction support, and a tight-knit crew. If you hit hard and show up when it counts, apply below.
     </p>
   </div>
-  <div class="typeform-wrapper reveal" style="padding: 40px 32px; text-align: center;">
-    <p style="font-family: Share Tech Mono, monospace; font-size: 13px; color: #6a7f94; letter-spacing: 1px; margin-bottom: 28px; line-height: 1.8;">
-      Ready to join Blacklist Recon? Fill out your application below.<br>
-      <span style="color: #8b1a1a; font-size: 11px;">Takes less than 2 minutes.</span>
+  <div class="typeform-wrapper reveal" style="padding: 36px 32px;">
+    <p style="font-family: Share Tech Mono, monospace; font-size: 11px; color: #6a7f94; letter-spacing: 1px; margin-bottom: 28px; line-height: 1.8;">
+      Applications are reviewed personally by The Handler. If approved you will be added to the network immediately.
     </p>
-    <a href="https://form.typeform.com/to/DEXYsxXZ" target="_blank" rel="noopener"
-       style="display: inline-block; padding: 16px 48px; background: #8b1a1a; color: #e8f4ff;
-              font-family: Share Tech Mono, monospace; font-size: 13px; letter-spacing: 3px;
-              text-decoration: none; text-transform: uppercase; border: 1px solid #c0392b;
-              transition: all 0.2s;">
-      Apply Now →
-    </a>
-    <p style="font-family: Share Tech Mono, monospace; font-size: 10px; color: #3a4a5c; letter-spacing: 2px; margin-top: 20px; text-transform: uppercase;">
-      Opens in a new tab
+    <div id="apply-msg"></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+      <div style="flex:1;min-width:180px;">
+        <label style="display:block;font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:6px;">Torn Username <span style="color:var(--ember);">*</span></label>
+        <input id="apply-username" type="text" placeholder="Your Torn username" maxlength="100"
+          style="width:100%;background:var(--ash);border:1px solid var(--border);color:var(--bright);font-family:Share Tech Mono,monospace;font-size:13px;padding:10px 14px;outline:none;box-sizing:border-box;" />
+      </div>
+      <div style="flex:1;min-width:140px;">
+        <label style="display:block;font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:6px;">Torn ID <span style="color:var(--ember);">*</span></label>
+        <input id="apply-tornid" type="number" placeholder="e.g. 1234567"
+          style="width:100%;background:var(--ash);border:1px solid var(--border);color:var(--bright);font-family:Share Tech Mono,monospace;font-size:13px;padding:10px 14px;outline:none;box-sizing:border-box;" />
+      </div>
+      <div style="flex:1;min-width:140px;">
+        <label style="display:block;font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:6px;">Timezone</label>
+        <input id="apply-timezone" type="text" placeholder="e.g. EST, GMT+2"
+          style="width:100%;background:var(--ash);border:1px solid var(--border);color:var(--bright);font-family:Share Tech Mono,monospace;font-size:13px;padding:10px 14px;outline:none;box-sizing:border-box;" />
+      </div>
+    </div>
+    <label style="display:block;font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:6px;">Combat Experience <span style="color:var(--ember);">*</span></label>
+    <p style="font-family:Share Tech Mono,monospace;font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:6px;">Do not share your stats — general experience only.</p>
+    <textarea id="apply-experience" rows="3" maxlength="500" placeholder="Describe your Torn combat experience — level, faction history, war participation, how active you are..."
+      style="width:100%;background:var(--ash);border:1px solid var(--border);color:var(--bright);font-family:Share Tech Mono,monospace;font-size:13px;padding:10px 14px;margin-bottom:14px;outline:none;box-sizing:border-box;resize:vertical;"></textarea>
+    <label style="display:block;font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:6px;">Why Blacklist Recon? <span style="color:var(--ember);">*</span></label>
+    <textarea id="apply-why" rows="3" maxlength="500" placeholder="Why do you want to join? What can you bring to the network?"
+      style="width:100%;background:var(--ash);border:1px solid var(--border);color:var(--bright);font-family:Share Tech Mono,monospace;font-size:13px;padding:10px 14px;margin-bottom:14px;outline:none;box-sizing:border-box;resize:vertical;"></textarea>
+    <label style="display:block;font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:6px;">Referral Code (optional)</label>
+    <input id="apply-refcode" type="text" placeholder="If someone referred you" maxlength="8"
+      style="width:100%;background:var(--ash);border:1px solid var(--border);color:var(--bright);font-family:Share Tech Mono,monospace;font-size:13px;padding:10px 14px;margin-bottom:20px;outline:none;box-sizing:border-box;" />
+    <button onclick="submitApplication()"
+      style="width:100%;padding:14px;background:var(--blood);border:1px solid var(--crimson);color:var(--bright);font-family:Share Tech Mono,monospace;font-size:12px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;"
+      id="apply-btn">Submit Application →</button>
+    <p style="font-family:Share Tech Mono,monospace;font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:14px;">
+      * Required. Your Torn ID is used to verify your account. Never shared publicly.
     </p>
   </div>
 </section>
@@ -1603,10 +1626,58 @@ window.addEventListener('scroll', () => {
   const params = new URLSearchParams(window.location.search);
   const ref    = params.get('ref');
   if (ref) {
-    const el = document.getElementById('contact-refcode');
-    if (el) { el.value = ref; el.style.borderColor = 'var(--gold)'; }
+    ['contact-refcode','apply-refcode'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.value = ref; el.style.borderColor = 'var(--gold)'; }
+    });
   }
 })();
+
+// ── APPLICATION FORM ─────────────────────────────────────────────────────
+async function submitApplication() {
+  const username   = document.getElementById('apply-username').value.trim();
+  const tornId     = document.getElementById('apply-tornid').value.trim();
+  const timezone   = document.getElementById('apply-timezone').value.trim();
+  const experience = document.getElementById('apply-experience').value.trim();
+  const whyJoin    = document.getElementById('apply-why').value.trim();
+  const refCode    = document.getElementById('apply-refcode').value.trim();
+  const msgEl      = document.getElementById('apply-msg');
+  const btn        = document.getElementById('apply-btn');
+
+  if (!username || !tornId || !experience || !whyJoin) {
+    msgEl.innerHTML = '<p style="color:var(--ember);font-family:Share Tech Mono,monospace;font-size:12px;margin-bottom:16px;">Please fill in all required fields.</p>';
+    return;
+  }
+  if (isNaN(tornId)) {
+    msgEl.innerHTML = '<p style="color:var(--ember);font-family:Share Tech Mono,monospace;font-size:12px;margin-bottom:16px;">Torn ID must be a number.</p>';
+    return;
+  }
+
+  btn.disabled    = true;
+  btn.textContent = 'Submitting...';
+  msgEl.innerHTML = '';
+
+  try {
+    const res  = await fetch(`${WORKER_URL}/applications/submit`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ tornUsername: username, tornId, timezone, experience, whyJoin, refCode }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      msgEl.innerHTML = '<p style="color:#5fe04f;font-family:Share Tech Mono,monospace;font-size:12px;margin-bottom:16px;">Application received. The Handler will review it shortly. No questions asked — we will reach out in-game if approved.</p>';
+      ['apply-username','apply-tornid','apply-timezone','apply-experience','apply-why','apply-refcode']
+        .forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+    } else {
+      msgEl.innerHTML = `<p style="color:var(--ember);font-family:Share Tech Mono,monospace;font-size:12px;margin-bottom:16px;">${data.error}</p>`;
+    }
+  } catch(e) {
+    msgEl.innerHTML = '<p style="color:var(--ember);font-family:Share Tech Mono,monospace;font-size:12px;margin-bottom:16px;">Failed to submit. Please try again.</p>';
+  }
+
+  btn.disabled    = false;
+  btn.textContent = 'Submit Application →';
+}
 
 // ── CONTACT FORM ─────────────────────────────────────────────────────────
 // ── TESTIMONIALS ────────────────────────────────────────────────────────
