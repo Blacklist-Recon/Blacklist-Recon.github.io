@@ -1170,6 +1170,56 @@ function renderBoard(main) {
   main.querySelectorAll('.filter-btn').forEach(btn =>
     btn.addEventListener('click', () => { filterStatus = btn.dataset.filter; renderBoard(main); }));
 
+  // ── AUTO TARGET STATUS POLLING ──────────────────────────────────────
+  // Collect all board bounties that have a targetXid
+  const targetBounties = bounties.filter(b =>
+    b.targetXid &&
+    ['listed','claimed','pending_verification'].includes(b.status)
+  );
+
+  // Status display helpers
+  const tsColors = { Okay:'#e74c3c', Hospital:'#5fe04f', Jail:'#e0a14f', Traveling:'#22b8cc' };
+  const tsIcons  = { Okay:'⚠ FREE', Hospital:'🏥 DOWN', Jail:'⛓ JAIL', Traveling:'✈️ AWAY' };
+
+  function renderTargetStatus(elId, s) {
+    const el = main.querySelector(`#ts-${elId}`);
+    if (!el || !s) return;
+    const col   = tsColors[s.status] || 'var(--dim)';
+    const label = tsIcons[s.status]  || s.status;
+    const until = s.until ? s.until * 1000 : 0;
+    const mins  = until > Date.now() ? Math.ceil((until - Date.now()) / 60000) : 0;
+    el.style.color = col;
+    el.innerHTML = `${label}${mins > 0 ? ` · ${mins}m` : ''}
+      ${s.status === 'Okay' ? '<span style="color:var(--ember);margin-left:6px;animation:blink 1s step-end infinite;">PRIORITY</span>' : ''}`;
+  }
+
+  async function pollTargetStatuses() {
+    for (const b of targetBounties) {
+      try {
+        const res = await api('/targets/status', { targetXid: b.targetXid });
+        renderTargetStatus(b.id, res.status);
+        // If target is free and this is a campaign — flag it
+        if (res.status?.status === 'Okay' && b.campaignId) {
+          const el = main.querySelector(`#ts-${b.id}`);
+          if (el) el.innerHTML += ' <span style="color:var(--gold);font-size:9px;">⚔️ NEEDS HIT</span>';
+        }
+      } catch(e) {
+        const el = main.querySelector(`#ts-${b.id}`);
+        if (el) { el.textContent = '—'; el.style.color = 'var(--muted)'; }
+      }
+      // Stagger calls — 300ms between each to respect Torn API rate limits
+      await new Promise(r => setTimeout(r, 300));
+    }
+  }
+
+  // Initial poll after board renders
+  if (targetBounties.length > 0) {
+    pollTargetStatuses();
+    // Auto-refresh every 60 seconds
+    if (window._targetPollInterval) clearInterval(window._targetPollInterval);
+    window._targetPollInterval = setInterval(pollTargetStatuses, 60000);
+  }
+
   main.querySelectorAll('[data-action]').forEach(btn =>
     btn.addEventListener('click', async () => {
       const action = btn.dataset.action;
@@ -1765,6 +1815,18 @@ async function renderDashboard(main) {
       <div class="section-head">🎯 Most Targeted Players</div>
       <div class="card">${tfRows}</div>
 
+      <!-- Live Target Status -->
+      <div class="section-head" style="margin-top:24px;">📡 Live Target Intelligence</div>
+      <p style="font-size:13px;color:var(--dim);line-height:1.7;margin-bottom:12px;">
+        Check live Torn status for all active contract targets using your API key.
+        Shows hospital/jail timers, faction, last seen — tells hunters exactly who needs hitting right now.
+      </p>
+      <div id="target-intel-msg"></div>
+      <button class="btn btn-red" id="check-all-targets-btn" style="margin-bottom:16px;padding:10px 24px;">
+        📡 Scan All Active Targets
+      </button>
+      <div id="target-intel-results"></div>
+
       <!-- Client Blacklist -->
       <div class="section-head">🚫 Client Blacklist</div>
       <div id="bl-msg"></div>
@@ -1909,6 +1971,83 @@ async function renderDashboard(main) {
           await renderDashboard(main);
         } catch(e) { alert(e.message); }
       }));
+
+    // Wire scan all targets
+    const scanAllBtn = main.querySelector('#check-all-targets-btn');
+    if (scanAllBtn) {
+      scanAllBtn.addEventListener('click', async () => {
+        const msgEl  = main.querySelector('#target-intel-msg');
+        const resEl  = main.querySelector('#target-intel-results');
+        scanAllBtn.disabled    = true;
+        scanAllBtn.textContent = '📡 Scanning...';
+        msgEl.innerHTML = '';
+        resEl.innerHTML = '<div style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--dim);letter-spacing:2px;padding:16px;">Checking targets — this may take a moment...</div>';
+
+        try {
+          const res     = await api('/targets/status-all');
+          const targets = Object.values(res.targets || {});
+
+          if (targets.length === 0) {
+            resEl.innerHTML = '<div class="empty" style="padding:16px;">No active targets with Torn IDs found.</div>';
+          } else {
+            const stateColors = { Okay:'var(--ember)', Hospital:'var(--green)', Jail:'var(--amber)', Traveling:'#22b8cc' };
+            const stateIcons  = { Okay:'⚠ FREE', Hospital:'🏥 DOWN', Jail:'⛓ JAIL', Traveling:'✈️ TRAVELING' };
+
+            // Sort — free targets first (need hitting), then by time remaining
+            targets.sort((a,b) => {
+              if (a.status === 'Okay' && b.status !== 'Okay') return -1;
+              if (b.status === 'Okay' && a.status !== 'Okay') return 1;
+              return (a.until||0) - (b.until||0);
+            });
+
+            resEl.innerHTML = `
+              <div style="font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;
+                           color:var(--dim);text-transform:uppercase;margin-bottom:12px;">
+                ${res.totalChecked} targets checked · ${targets.filter(t=>t.status==='Okay').length} need hitting now
+              </div>
+              <div class="card" style="padding:0;overflow:hidden;">
+                <table style="width:100%;border-collapse:collapse;">
+                  <thead>
+                    <tr style="background:var(--ash);">
+                      <th style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;padding:8px 12px;text-align:left;">Status</th>
+                      <th style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;padding:8px 12px;text-align:left;">Target</th>
+                      <th style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;padding:8px 12px;text-align:left;">Faction</th>
+                      <th style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;padding:8px 12px;text-align:left;">Timer</th>
+                      <th style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;padding:8px 12px;text-align:left;">Tier</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${targets.map(t => {
+                      const col   = stateColors[t.status] || 'var(--dim)';
+                      const label = stateIcons[t.status]  || t.status;
+                      const until = t.until ? t.until * 1000 : 0;
+                      const remaining = until > Date.now() ? Math.ceil((until-Date.now())/60000) : 0;
+                      return `<tr style="border-bottom:1px solid var(--border);${t.status==='Okay'?'background:rgba(139,26,26,0.08);':''}">
+                        <td style="padding:10px 12px;color:${col};font-family:Share Tech Mono,monospace;font-size:10px;white-space:nowrap;">${label}</td>
+                        <td style="padding:10px 12px;">
+                          <div style="font-size:13px;color:var(--bright);">${esc(t.targetName)}</div>
+                          <a href="https://www.torn.com/profiles.php?XID=${esc(t.tornId)}" target="_blank"
+                             style="font-size:10px;color:var(--dim);">Lv ${t.level} [${esc(t.tornId)} ↗]</a>
+                        </td>
+                        <td style="padding:10px 12px;font-size:11px;color:var(--dim);">${esc(t.faction)}</td>
+                        <td style="padding:10px 12px;font-family:Share Tech Mono,monospace;font-size:11px;color:${remaining>0?col:'var(--muted)'};">
+                          ${remaining > 0 ? remaining+'m' : t.status==='Okay'?'NOW':'-'}
+                        </td>
+                        <td style="padding:10px 12px;font-size:11px;color:var(--dim);">${esc(t.contractTier)}${t.isCampaign?'<br><span style="color:var(--gold);font-size:9px;">⚔️ Campaign</span>':''}</td>
+                      </tr>`;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>`;
+          }
+          msgEl.innerHTML = `<div class="msg-success">Scan complete — ${new Date().toLocaleTimeString()}</div>`;
+        } catch(e) {
+          resEl.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`;
+        }
+        scanAllBtn.disabled    = false;
+        scanAllBtn.textContent = '📡 Scan All Active Targets';
+      });
+    }
 
     // Wire blacklist remove
     main.querySelectorAll('[data-action="unblacklist"]').forEach(btn =>
