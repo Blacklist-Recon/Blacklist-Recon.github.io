@@ -1000,7 +1000,8 @@ function navItems() {
     items.push({ id: 'campaigns', icon: '⚔️', label: 'Campaigns' });
   }
   if (identity.role === 'admin') {
-    items.push({ id: 'ai',        icon: '🤖', label: 'AI Ops'   });
+    items.push({ id: 'ai',        icon: '🤖', label: 'AI Ops'      });
+    items.push({ id: 'applications', icon: '📋', label: 'Applications' });
     items.push({ id: 'dashboard', icon: '📊', label: 'Intel'     });
     items.push({ id: 'challenges',icon: '🏆', label: 'Challenges'});
     items.push({ id: 'mentors',   icon: '🎓', label: 'Mentors'   });
@@ -1056,7 +1057,8 @@ function renderPage() {
   if (currentPage === 'chat')    renderChat(main);
   if (currentPage === 'messages')  renderMessages(main);
   if (currentPage === 'campaigns') renderCampaigns(main);
-  if (currentPage === 'ai')         renderAI(main);
+  if (currentPage === 'ai')           renderAI(main);
+  if (currentPage === 'applications') renderApplications(main);
   if (currentPage === 'dashboard')  renderDashboard(main);
   if (currentPage === 'challenges') renderChallenges(main);
   if (currentPage === 'mentors')    renderMentors(main);
@@ -1915,6 +1917,145 @@ async function renderDashboard(main) {
           await api('/admin/blacklist', { tornId: btn.dataset.id, action: 'remove' });
           await renderDashboard(main);
         } catch(e) {}
+      }));
+
+  } catch(e) {
+    main.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`;
+  }
+}
+
+// ── APPLICATIONS (admin only) ────────────────────────────────────────────
+async function renderApplications(main) {
+  main.innerHTML = `<div class="loading">Loading applications...</div>`;
+  try {
+    const res  = await api('/applications/list', { filter: 'pending' });
+    const all  = await api('/applications/list', { filter: 'all' });
+    const apps = res.applications || [];
+    const past = (all.applications || []).filter(a => a.status !== 'pending');
+
+    function appCard(a, showActions) {
+      const time = new Date(a.submittedAt).toLocaleDateString();
+      return `
+        <div class="card" id="app-${a.id}" style="position:relative;overflow:hidden;">
+          <div style="position:absolute;top:0;left:0;right:0;height:2px;
+                      background:linear-gradient(to right,transparent,${
+                        a.status==='approved'?'var(--green)':a.status==='denied'?'var(--ember)':'var(--gold)'
+                      },transparent);"></div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+            <div>
+              <div style="font-family:Cinzel,serif;font-size:16px;color:var(--gold);margin-bottom:4px;">
+                ${esc(a.tornUsername)}
+                <a href="https://www.torn.com/profiles.php?XID=${esc(a.tornId)}" target="_blank"
+                   style="font-family:Share Tech Mono,monospace;font-size:10px;color:var(--dim);margin-left:8px;">[${esc(a.tornId)} ↗]</a>
+              </div>
+              <div style="font-family:Share Tech Mono,monospace;font-size:10px;color:var(--dim);letter-spacing:1px;">
+                ${esc(a.timezone||'Timezone not provided')} · Applied ${time}
+              </div>
+            </div>
+            <span class="badge badge-${a.status==='approved'?'completed':a.status==='denied'?'payment_pending':'listed'}"
+              style="align-self:flex-start;">
+              ${a.status.toUpperCase()}
+            </span>
+          </div>
+          <div style="margin-bottom:10px;">
+            <div style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:4px;">Combat Experience</div>
+            <div style="font-size:14px;color:var(--text);line-height:1.6;">${esc(a.experience)}</div>
+          </div>
+          <div style="margin-bottom:${showActions?'14px':'0'};">
+            <div style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:4px;">Why Blacklist Recon</div>
+            <div style="font-size:14px;color:var(--text);line-height:1.6;">${esc(a.whyJoin)}</div>
+          </div>
+          ${a.refCode ? `<div style="font-family:Share Tech Mono,monospace;font-size:10px;color:var(--dim);margin-bottom:10px;">Referral code: <span style="color:var(--gold);">${esc(a.refCode)}</span></div>` : ''}
+          ${a.denialReason ? `<div style="font-size:12px;color:var(--ember);margin-bottom:10px;">Denied: ${esc(a.denialReason)}</div>` : ''}
+          ${showActions ? `
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn btn-green" data-action="approve-app" data-id="${a.id}" style="flex:1;">
+                ✓ Approve — Add as Hunter
+              </button>
+              <button class="btn btn-red" data-action="deny-app" data-id="${a.id}" style="flex:1;">
+                ✕ Deny
+              </button>
+            </div>
+            <div class="app-msg" data-id="${a.id}"></div>
+          ` : ''}
+        </div>`;
+    }
+
+    main.innerHTML = `
+      <div class="page-header">
+        <div class="page-eyebrow">Admin · Blacklist Recon</div>
+        <div class="page-title">📋 Applications</div>
+      </div>
+
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;">
+        <div class="stat-card">
+          <div class="stat-value" style="font-size:32px;color:var(--gold);">${apps.length}</div>
+          <div class="stat-label">Pending</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="font-size:32px;color:var(--green);">${past.filter(a=>a.status==='approved').length}</div>
+          <div class="stat-label">Approved</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="font-size:32px;color:var(--ember);">${past.filter(a=>a.status==='denied').length}</div>
+          <div class="stat-label">Denied</div>
+        </div>
+      </div>
+
+      <div class="section-head">Pending Review (${apps.length})</div>
+      ${apps.length === 0
+        ? '<div class="empty">No pending applications</div>'
+        : apps.map(a => appCard(a, true)).join('')}
+
+      ${past.length > 0 ? `
+        <div class="section-head" style="margin-top:24px;">Past Applications</div>
+        ${past.slice(0,20).map(a => appCard(a, false)).join('')}
+      ` : ''}
+    `;
+
+    // Wire approve/deny buttons
+    main.querySelectorAll('[data-action="approve-app"]').forEach(btn =>
+      btn.addEventListener('click', async () => {
+        const id    = btn.dataset.id;
+        const msgEl = main.querySelector(`.app-msg[data-id="${id}"]`);
+        btn.disabled = true;
+        try {
+          await api('/applications/review', { applicationId: id, action: 'approve' });
+          const card = main.querySelector(`#app-${id}`);
+          if (card) {
+            card.style.opacity = '0.5';
+            card.innerHTML = `<div style="padding:20px;text-align:center;font-family:Share Tech Mono,monospace;font-size:12px;color:var(--green);letter-spacing:2px;">
+              ✓ APPROVED — Added to hunter roster. Welcome message posted in chat.
+            </div>`;
+          }
+          // Refresh after short delay to update counts
+          setTimeout(() => renderApplications(main), 1500);
+        } catch(e) {
+          if(msgEl) msgEl.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`;
+          btn.disabled = false;
+        }
+      }));
+
+    main.querySelectorAll('[data-action="deny-app"]').forEach(btn =>
+      btn.addEventListener('click', async () => {
+        const id     = btn.dataset.id;
+        const msgEl  = main.querySelector(`.app-msg[data-id="${id}"]`);
+        const reason = prompt('Denial reason (optional — not shown to applicant):') ?? '';
+        btn.disabled = true;
+        try {
+          await api('/applications/review', { applicationId: id, action: 'deny', denialReason: reason });
+          const card = main.querySelector(`#app-${id}`);
+          if (card) {
+            card.style.opacity = '0.5';
+            card.innerHTML = `<div style="padding:20px;text-align:center;font-family:Share Tech Mono,monospace;font-size:12px;color:var(--ember);letter-spacing:2px;">
+              ✕ DENIED — Application archived.
+            </div>`;
+          }
+          setTimeout(() => renderApplications(main), 1500);
+        } catch(e) {
+          if(msgEl) msgEl.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`;
+          btn.disabled = false;
+        }
       }));
 
   } catch(e) {
