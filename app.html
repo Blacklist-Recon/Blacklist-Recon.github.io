@@ -2775,7 +2775,27 @@ async function renderAdmin(main) {
         } catch (e) { msgEl.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; btn.disabled = false; }
       }));
 
-    try {
+    // Wire auto monitoring registration
+    const scanRegBtn = main.querySelector('#scan-register-btn');
+    if (scanRegBtn) {
+      scanRegBtn.addEventListener('click', async () => {
+        const msgEl = main.querySelector('#scan-reg-msg');
+        scanRegBtn.disabled    = true;
+        scanRegBtn.textContent = 'Registering...';
+        try {
+          const res = await api('/attacks/register-scan-key');
+          msgEl.innerHTML        = `<div class="msg-success">✓ ${res.message}</div>`;
+          scanRegBtn.textContent = '✓ Auto Monitoring Active';
+          scanRegBtn.style.background = 'var(--green)';
+        } catch(e) {
+          msgEl.innerHTML        = `<div class="msg-error">${esc(e.message)}</div>`;
+          scanRegBtn.disabled    = false;
+          scanRegBtn.textContent = '🔍 Enable Auto Monitoring for My Account';
+        }
+      });
+    }
+
+        try {
       const aliasRes = await api('/alias/get');
       const aliasInput = main.querySelector('#alias-input');
       if (aliasInput && aliasRes.alias) aliasInput.value = aliasRes.alias;
