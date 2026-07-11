@@ -467,7 +467,940 @@
   .glitch::after  { color: #0ff; animation: g2 5s infinite; clip-path: polygon(0 66%,100% 66%,100% 100%,0 100%); }
   @keyframes g1 { 0%,88%,100%{transform:none;opacity:0} 90%{transform:translate(-2px,1px);opacity:.6} 93%{transform:translate(2px,-1px);opacity:.6} 95%{transform:none;opacity:0} }
   @keyframes g2 { 0%,86%,100%{transform:none;opacity:0} 88%{transform:translate(2px,2px);opacity:.6} 91%{transform:translate(-2px,-1px);opacity:.6} 93%{transform:none;opacity:0} }
-</style>
+
+    /* Services page — new sections */
+    .services-hero { text-align:center; padding:80px 20px 60px; }
+    .services-hero h1 { font-family:Cinzel,serif; font-size:clamp(28px,5vw,48px); color:var(--bright); margin-bottom:16px; }
+    .services-hero .eyebrow { font-family:Share Tech Mono,monospace; font-size:10px; letter-spacing:4px; color:var(--dim); text-transform:uppercase; margin-bottom:16px; }
+    .services-hero .hero-sub { font-size:15px; color:var(--dim); line-height:1.8; max-width:600px; margin:0 auto; }
+
+    .service-section { border:1px solid var(--border); padding:32px; margin-bottom:20px; background:var(--ash); }
+    .tier-header { display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:16px; }
+    .tier-header h2 { font-family:Cinzel,serif; font-size:26px; color:var(--bright); margin:0; }
+    .tier-price { font-family:Share Tech Mono,monospace; font-size:14px; color:var(--green); margin-left:auto; }
+    .tier-pill { font-family:Share Tech Mono,monospace; font-size:10px; letter-spacing:2px; color:var(--ember); border:1px solid var(--ember); padding:4px 10px; text-transform:uppercase; background:rgba(139,26,26,0.15); }
+    .tier-desc { font-size:14px; color:var(--dim); line-height:1.8; margin-bottom:16px; }
+    .tier-features { display:flex; flex-direction:column; gap:10px; }
+    .feature { font-size:13px; color:var(--text); line-height:1.7; padding:10px 14px; background:var(--void); border-left:2px solid var(--ember); }
+    .feature strong { color:var(--bright); }
+
+  </style>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☠</text></svg>">
+</head>
+<body>
+
+<div id="cursor"><div id="cursor-inner"></div></div>
+<canvas id="bg-canvas"></canvas>
+<div class="scanlines"></div>
+
+<!-- INTRO -->
+<div id="intro">
+  <div class="intro-lines">
+    <span class="intro-line" id="il1">// Blacklist Recon</span>
+    <span class="intro-line" id="il2">// Contract Services</span>
+    <span class="intro-line" id="il3">// Decrypting...</span>
+  </div>
+  <div class="intro-bar"><div class="intro-bar-fill"></div></div>
+</div>
+
+<div class="container">
+
+  <div class="header">
+    <div class="skull-wrap">
+      <span class="skull-icon">☠</span>
+      <div class="skull-rings">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+    <div class="eyebrow">Blacklist Recon · Torn City · Contract Services</div>
+    <h1 class="title" id="typed-title"><span class="title-cursor"></span></h1>
+    <div class="title-sub">We Make It Right.</div>
+    <div class="divider"></div>
+    <div class="tagline">Anonymous. Untraceable. <strong>Guaranteed.</strong><br>Your name never leaves the room.</div>
+  </div>
+
+  <!-- PROMISE -->
+  <div class="promise">
+    <div class="promise-title">The Code of Silence</div>
+    <p>
+      Your identity is known only to <strong>The Handler</strong> and our most trusted Listers.<br>
+      These are hand-picked members bound by silence.<br>
+      <strong>No hunter ever knows who placed the contract.</strong><br>
+      No questions are asked. No details are shared.<br>
+      Money arrives. Target goes down. Contract closed.<br>
+      <strong>We will not speak — for we hold true to silence and trust.</strong>
+    </p>
+  </div>
+
+  <!-- TIERS -->
+  <div class="tier">
+    <div class="tier-inner">
+      <div class="tier-header">
+        <div><div class="tier-num">Tier I</div><div class="tier-name">Standard Hit</div></div>
+        <div class="tier-price">$1,000,000<small>Fixed Price</small></div>
+      </div>
+      <div class="tier-desc">Single hospitalization on your target. Fast turnaround. Ideal for personal retaliation, silencing a problem, or sending a message. No explanation needed.</div>
+    </div>
+  </div>
+
+  <div class="tier">
+    <div class="tier-inner">
+      <div class="tier-header">
+        <div><div class="tier-num">Tier II</div><div class="tier-name">War Support</div></div>
+        <div class="tier-price">$3.5M – $5M<small>Per Contract</small></div>
+      </div>
+      <div class="tier-desc">Sustained pressure during faction wars. Repeated hits on priority targets, chain disruption, and resource drain. We keep them down so your faction moves forward.</div>
+    </div>
+  </div>
+
+  <div class="tier">
+    <div class="tier-inner">
+      <div class="tier-header">
+        <div><div class="tier-num">Tier III</div><div class="tier-name">High-Value Contract</div></div>
+        <div class="tier-price">From $3M<small>Evaluated</small></div>
+      </div>
+      <div class="tier-desc">Extended campaigns on protected or powerful targets. Price assessed based on difficulty and hits required. Results guaranteed or the contract runs until complete.</div>
+    </div>
+  </div>
+
+  <div class="tier" style="margin-bottom:40px;border-color:#8b1a1a;position:relative;">
+    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(to right,transparent,#e74c3c,transparent);"></div>
+    <div class="tier-inner">
+      <div class="tier-header">
+        <div>
+          <div class="tier-num" style="color:#e74c3c;">Tier IV — Flagship Service</div>
+          <div class="tier-name" style="font-size:24px;">Ranked War Support</div>
+        </div>
+        <div class="tier-price" style="color:#c9a84c;">Custom<small>By Arrangement</small></div>
+      </div>
+      <div class="tier-desc" style="color:#c8a8a8;line-height:1.9;">
+        Our premier ranked war protection service. Submit a list of your own inactive or low-level faction members and we keep them hospitalized for the duration of your ranked war — so the enemy cannot score points off them.<br><br>
+        <span style="color:#e74c3c;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1px;">WHY IT MATTERS —</span>
+        <span style="color:#7d5252;"> In a ranked war every hit the enemy lands on your members scores them points. Your low-level and inactive members are easy targets. By keeping them hospitalized they become untouchable — the enemy gets nothing and your faction keeps its advantage.</span><br><br>
+        <span style="color:#e74c3c;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1px;">HOW IT WORKS —</span>
+        <span style="color:#7d5252;"> You submit a list of your own members who need protection. Each name is assigned as a separate bounty across our hunter network. We cycle hits to keep them continuously hospitalized for the duration agreed. Pricing is fully scalable — negotiated directly with The Handler based on member count and war duration. No fixed price. No limits.</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:16px;margin-top:20px;">
+        <div style="flex:1;min-width:160px;background:rgba(139,26,26,0.08);border:1px solid #2e1f1f;padding:14px;text-align:center;">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:22px;color:#e74c3c;margin-bottom:4px;">∞</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:#7d5252;text-transform:uppercase;">No Target Limit</div>
+        </div>
+        <div style="flex:1;min-width:160px;background:rgba(139,26,26,0.08);border:1px solid #2e1f1f;padding:14px;text-align:center;">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:22px;color:#e74c3c;margin-bottom:4px;">⚔️</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:#7d5252;text-transform:uppercase;">Multi-Hunter Deployment</div>
+        </div>
+        <div style="flex:1;min-width:160px;background:rgba(139,26,26,0.08);border:1px solid #2e1f1f;padding:14px;text-align:center;">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:22px;color:#e74c3c;margin-bottom:4px;">🔒</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:#7d5252;text-transform:uppercase;">Full Client Anonymity</div>
+        </div>
+        <div style="flex:1;min-width:160px;background:rgba(139,26,26,0.08);border:1px solid #2e1f1f;padding:14px;text-align:center;">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:22px;color:#c9a84c;margin-bottom:4px;">$</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:#7d5252;text-transform:uppercase;">Scalable Pricing</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SILENCE PROTOCOL -->
+  <div class="silence">
+    <div class="silence-head"><span class="lock-icon">🔐</span> The Silence Protocol</div>
+    <div class="silence-body">
+      <div class="silence-item">
+        <div class="silence-icon">🔐</div>
+        <div class="silence-text">
+          <strong>Your identity is sealed at intake</strong>
+          <span>The moment you contact The Handler your identity is protected. It is stored only with The Handler and trusted Listers — hand-picked members bound by a code of silence. It goes nowhere else. Ever.</span>
+        </div>
+      </div>
+      <div class="silence-item">
+        <div class="silence-icon">🎯</div>
+        <div class="silence-text">
+          <strong>Hunters receive a target — nothing else</strong>
+          <span>The hunter sees a name and a payout. That's it. They don't know you exist. They don't ask why. Money is there, target is there — they move.</span>
+        </div>
+      </div>
+      <div class="silence-item">
+        <div class="silence-icon">🚫</div>
+        <div class="silence-text">
+          <strong>No questions. No leaks. No traces.</strong>
+          <span>Blacklist Recon operates on strict need-to-know. Hunters are anonymous to each other. Clients are anonymous to hunters. The only connection runs through The Handler — and The Handler doesn't talk.</span>
+        </div>
+      </div>
+      <div class="silence-item">
+        <div class="silence-icon">✅</div>
+        <div class="silence-text">
+          <strong>You are notified when the job is done</strong>
+          <span>Once your contract is verified complete you receive confirmation. Clean. Simple. No loose ends.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROCESS -->
+  <div class="process">
+    <div class="process-head">How to Place a Contract</div>
+    <div class="process-body">
+      <div class="proc-step">
+        <div class="proc-num">01</div>
+        <div class="proc-text"><strong>Fill out the contact form.</strong> Use the form at blacklist-recon.github.io. Provide your Torn username and ID so we can reach you back privately.</div>
+      </div>
+      <div class="proc-step">
+        <div class="proc-num">02</div>
+        <div class="proc-text"><strong>Contract is reviewed.</strong> The Handler and a trusted Lister review your request. Payment instructions are sent back to you privately in-game. No public record.</div>
+      </div>
+      <div class="proc-step">
+        <div class="proc-num">03</div>
+        <div class="proc-text"><strong>Payment confirms the contract.</strong> Once payment is verified your contract goes live on the private board. Hunters see only the target — your name is never attached.</div>
+      </div>
+      <div class="proc-step">
+        <div class="proc-num">04</div>
+        <div class="proc-text"><strong>Contract completed.</strong> A trusted verifier confirms the hit. You receive notification. Done. Clean. Silent.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta">
+    <span class="cta-skull">☠</span>
+    <div class="cta-title"><span class="glitch" data-text="Got a Target?">Got a Target?</span></div>
+    <div class="cta-sub">
+      Fill out the contact form below.<br>
+      Your identity stays between you, The Handler, and Listers.<br>
+      Always.<br>
+      <strong>We will not speak — for we hold true to silence and trust.</strong>
+    </div>
+    <a href="https://blacklist-recon.github.io/#contact" class="cta-btn">Place a Contract →</a>
+    <div class="cta-fine">
+      Blacklist Recon · Your Problem. Our Specialty.<br>
+      blacklist-recon.github.io · In-game service only · Torn City
+    </div>
+  </div>
+
+  <div class="footer">Blacklist Recon · Torn City</div>
+</div>
+
+<script>
+// ── CURSOR ──
+const cursor = document.getElementById('cursor');
+let mx=0,my=0,cx=0,cy=0;
+document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; });
+(function animCursor() {
+  cx += (mx-cx)*0.1; cy += (my-cy)*0.1;
+  cursor.style.left=cx+'px'; cursor.style.top=cy+'px';
+  requestAnimationFrame(animCursor);
+})();
+
+// ── BG CANVAS — ROTATING SKULL PATTERN ──
+const canvas = document.getElementById('bg-canvas');
+const ctx    = canvas.getContext('2d');
+function resize() { canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
+resize();
+window.addEventListener('resize', resize);
+
+let angle = 0;
+function drawBg() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  angle += 0.002;
+
+  // Rotating rings
+  const cx2 = canvas.width/2, cy2 = canvas.height/2;
+  [300,450,600,750].forEach((r,i) => {
+    ctx.save();
+    ctx.translate(cx2,cy2);
+    ctx.rotate(angle * (i%2===0?1:-1));
+    ctx.beginPath();
+    ctx.arc(0,0,r,0,Math.PI*2);
+    ctx.strokeStyle = `rgba(139,26,26,${0.04 - i*0.007})`;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+  });
+
+  // Floating particles
+  requestAnimationFrame(drawBg);
+}
+drawBg();
+
+// ── INTRO LINES ──
+setTimeout(() => document.getElementById('il1').classList.add('show'), 200);
+setTimeout(() => document.getElementById('il2').classList.add('show'), 700);
+setTimeout(() => document.getElementById('il3').classList.add('show'), 1200);
+
+// ── TYPEWRITER ──
+const titleEl  = document.getElementById('typed-title');
+const titleText = 'Someone Wronged You.';
+let ti = 0;
+function typeTitle() {
+  if (ti <= titleText.length) {
+    titleEl.innerHTML = titleText.slice(0,ti) + '<span class="title-cursor"></span>';
+    ti++;
+    setTimeout(typeTitle, 60);
+  }
+}
+setTimeout(typeTitle, 4400);
+
+// ── SCROLL REVEAL ──
+const observer = new IntersectionObserver(entries => {
+  entries.forEach((e,i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('visible'), 0);
+    }
+  });
+}, { threshold: 0.12 });
+
+document.querySelectorAll('.tier,.silence,.process').forEach((el,i) => {
+  observer.observe(el);
+});
+
+// ── REDACT REVEAL ON SCROLL ──
+const redactObserver = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('revealed'), 300);
+    }
+  });
+}, { threshold: 0.5 });
+document.querySelectorAll('.redact').forEach(el => redactObserver.observe(el));
+</script>
+</body>
+</html><main>
+<div class="page-wrap">
+
+  <!-- Hero -->
+  <section class="services-hero">
+    <p class="eyebrow">Blacklist Recon · Services</p>
+    <h1>Everything We Offer</h1>
+    <p class="hero-sub">Four contract tiers. Flexible pricing. 24-hour SLA. War protection subscriptions.
+      Every service built for anonymity, speed, and results.</p>
+  </section>
+
+  <!-- Tier I -->
+  <section class="service-section reveal">
+    <div class="tier-header">
+      <span class="tier-pill">Tier I</span>
+      <h2>Standard Hit</h2>
+      <span class="tier-price">$1,000,000 Fixed</span>
+    </div>
+    <p class="tier-desc">Single hospitalization on a specified target. Fixed price — no negotiation, no exceptions.
+      The most efficient way to handle a target quickly and quietly.</p>
+    <div class="tier-features">
+      <div class="feature">⏱ <strong>24-Hour SLA Guarantee</strong> — if not completed in 24 hours the contract is extended at no cost and flagged priority</div>
+      <div class="feature">🔒 Full client anonymity — you are Client #N, nothing more</div>
+      <div class="feature">📋 Proof of completion provided</div>
+      <div class="feature">⚡ Priority upgrades available — +20% front of queue, +50% dedicated hunter</div>
+    </div>
+  </section>
+
+  <!-- Tier II -->
+  <section class="service-section reveal">
+    <div class="tier-header">
+      <span class="tier-pill">Tier II</span>
+      <h2>War Support</h2>
+      <span class="tier-price">$3.5M — $5M</span>
+    </div>
+    <p class="tier-desc">Extended campaigns on strong or well-protected targets. Multi-hit capable.
+      Used when a single hit is not enough — persistent pressure on high-value targets during active conflicts.</p>
+    <div class="tier-features">
+      <div class="feature">🔁 Multi-hit contracts — keep pressure on until the job is done</div>
+      <div class="feature">⚡ Priority queue placement included</div>
+      <div class="feature">✅ Results guaranteed or contract extended at no cost</div>
+      <div class="feature">📊 Live target status monitoring — hunters know the moment a target is free</div>
+    </div>
+  </section>
+
+  <!-- Tier III -->
+  <section class="service-section reveal">
+    <div class="tier-header">
+      <span class="tier-pill">Tier III</span>
+      <h2>High-Value Contract</h2>
+      <span class="tier-price">$3M+ Negotiated</span>
+    </div>
+    <p class="tier-desc">Elite contracts on high-level, politically significant, or heavily-defended targets.
+      Reserved for situations where only our best will do.</p>
+    <div class="tier-features">
+      <div class="feature">🎯 Assigned exclusively to top-ranked hunters</div>
+      <div class="feature">🔕 Maximum operational discretion — no details shared outside The Handler</div>
+      <div class="feature">💬 Direct negotiation with The Handler on scope and pricing</div>
+      <div class="feature">🏆 Dedicated hunter assignment available</div>
+    </div>
+  </section>
+
+  <!-- Tier IV -->
+  <section class="service-section reveal" style="border-color:var(--ember);">
+    <div class="tier-header">
+      <span class="tier-pill" style="background:rgba(139,26,26,0.3);color:var(--ember);border-color:var(--ember);">Tier IV</span>
+      <h2>Ranked War Protection</h2>
+      <span class="tier-price">Custom · Fully Scalable</span>
+    </div>
+    <p class="tier-desc">Our premier service. Submit your inactive or low-level faction members and we keep every
+      name on that list continuously hospitalized during your ranked war — so the enemy cannot score points off them.
+      Every hit the enemy lands on your vulnerable members earns them war points. With those members hospitalized
+      they become untouchable.</p>
+
+    <div style="margin:20px 0;padding:20px;border:1px solid #3d2e0a;background:rgba(201,168,76,0.04);">
+      <div style="font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:16px;">Three Pricing Structures</div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:180px;padding:16px;border:1px solid var(--border);background:var(--void);">
+          <div style="font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--amber);text-transform:uppercase;margin-bottom:8px;">⚡ Flat Per Hit</div>
+          <div style="font-size:13px;color:var(--dim);line-height:1.7;">One fixed price per hit regardless of member level. Simplest structure — ideal for homogeneous groups.</div>
+        </div>
+        <div style="flex:1;min-width:180px;padding:16px;border:1px solid var(--border);background:var(--void);">
+          <div style="font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--ember);text-transform:uppercase;margin-bottom:8px;">📊 Tiered by Level</div>
+          <div style="font-size:13px;color:var(--dim);line-height:1.7;">Price per hit scales with each member's level. Higher-level members cost more to protect — fairer for mixed groups.</div>
+        </div>
+        <div style="flex:1;min-width:180px;padding:16px;border:1px solid var(--border);background:var(--void);">
+          <div style="font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:8px;">💰 Prepaid Hits</div>
+          <div style="font-size:13px;color:var(--dim);line-height:1.7;">Pay upfront for a fixed number of hits per member. Protection stops automatically when hits are exhausted — budget controlled.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tier-features">
+      <div class="feature">♻️ <strong>Subscription available</strong> — ongoing retainer that auto-renews protection for the duration of your war</div>
+      <div class="feature">📅 War dates tracked — protection stops automatically when your war ends, not when a timer expires</div>
+      <div class="feature">📡 Live member status monitoring — hunters know instantly when a protected member is exposed</div>
+      <div class="feature">⚔️ Each member assigned as a separate bounty across the full hunter network simultaneously</div>
+      <div class="feature">🔒 Client identity and member list fully protected — known only to The Handler</div>
+    </div>
+  </section>
+
+  <!-- Priority Queue -->
+  <section class="service-section reveal">
+    <h2 style="font-family:Cinzel,serif;font-size:24px;color:var(--gold);margin-bottom:16px;">⚡ Priority Queue Upgrades</h2>
+    <p class="tier-desc">Add a priority upgrade to any contract to move it ahead of the standard queue.</p>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:20px;">
+      <div style="flex:1;min-width:200px;padding:24px;border:1px solid var(--amber);background:rgba(224,161,79,0.04);">
+        <div style="font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--amber);text-transform:uppercase;margin-bottom:10px;">Front of Queue</div>
+        <div style="font-family:Cinzel,serif;font-size:28px;color:var(--bright);margin-bottom:10px;">+20% Premium</div>
+        <p style="font-size:13px;color:var(--dim);line-height:1.7;">Your contract moves to the front of the active board the moment payment clears. First available hunter takes it — no waiting.</p>
+      </div>
+      <div style="flex:1;min-width:200px;padding:24px;border:1px solid var(--ember);background:rgba(139,26,26,0.06);">
+        <div style="font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--ember);text-transform:uppercase;margin-bottom:10px;">Dedicated Hunter</div>
+        <div style="font-family:Cinzel,serif;font-size:28px;color:var(--bright);margin-bottom:10px;">+50% Premium</div>
+        <p style="font-size:13px;color:var(--dim);line-height:1.7;">A specific hunter is assigned exclusively to your contract. Fastest possible turnaround. Maximum focus. Recommended for time-sensitive targets.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLA -->
+  <section class="service-section reveal" style="border-color:#3d2e0a;">
+    <h2 style="font-family:Cinzel,serif;font-size:24px;color:var(--gold);margin-bottom:16px;">⏱ 24-Hour SLA Guarantee</h2>
+    <p class="tier-desc">Standard Hit contracts carry a guaranteed 24-hour completion window. If your contract is not completed within 24 hours of activation:</p>
+    <div class="tier-features" style="margin-top:16px;">
+      <div class="feature">🔄 Contract is automatically extended at no additional cost</div>
+      <div class="feature">🚨 Flagged immediately for priority review by The Handler</div>
+      <div class="feature">📡 Our system monitors every active contract on a 5-minute cycle</div>
+      <div class="feature">✉ The Handler will reach out in-game if intervention is required</div>
+    </div>
+  </section>
+
+  <!-- Referral -->
+  <section class="service-section reveal">
+    <h2 style="font-family:Cinzel,serif;font-size:24px;color:var(--gold);margin-bottom:16px;">🔗 Referral Program</h2>
+    <p class="tier-desc">Referred by a Blacklist Recon hunter? Enter their referral code when submitting your contract request.
+      Referral codes are unique 8-character codes assigned to each hunter. Enter it in the contact form on the landing page.
+      Codes are anonymous — they do not reveal who referred you.</p>
+  </section>
+
+  <!-- Contact CTA -->
+  <section class="reveal" style="text-align:center;padding:60px 20px;">
+    <p style="font-family:Share Tech Mono,monospace;font-size:11px;letter-spacing:4px;color:var(--dim);text-transform:uppercase;margin-bottom:16px;">Ready to place a contract?</p>
+    <a href="index.html#contact"
+      style="display:inline-block;padding:16px 48px;background:var(--blood);border:1px solid var(--crimson);
+             color:var(--bright);font-family:Share Tech Mono,monospace;font-size:13px;letter-spacing:3px;
+             text-decoration:none;text-transform:uppercase;transition:all 0.2s;">
+      Contact The Handler →
+    </a>
+  </section>
+
+</div>
+</main>YPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blacklist Recon — Contract Services</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&family=Cinzel:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blood: #8b1a1a;
+    --crimson: #c0392b;
+    --ember: #e04f4f;
+    --gold: #c9a84c;
+    --void: #080a0a;
+    --ash: #0c0a0a;
+    --border: #2e1f1f;
+    --dim: #7d5252;
+    --text: #e6c8c8;
+    --bright: #f5dada;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--void);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* ── CURSOR ── */
+  #cursor {
+    position: fixed;
+    width: 36px; height: 36px;
+    pointer-events: none;
+    z-index: 99999;
+    transform: translate(-50%,-50%);
+  }
+  #cursor-inner {
+    width: 100%; height: 100%;
+    border: 1px solid rgba(224,79,79,0.6);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.1s, border-color 0.2s;
+  }
+  #cursor-inner::after {
+    content: '';
+    width: 4px; height: 4px;
+    background: var(--ember);
+    border-radius: 50%;
+    box-shadow: 0 0 6px var(--ember);
+  }
+  body:hover #cursor-inner { border-color: var(--ember); }
+
+  /* ── CANVAS ── */
+  #bg-canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── SCANLINES ── */
+  .scanlines {
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 3px);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* ── INTRO ── */
+  #intro {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 9998;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    animation: introFade 0.5s ease 3.5s forwards;
+  }
+  @keyframes introFade { to { opacity: 0; pointer-events: none; } }
+
+  .intro-lines {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--blood);
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 2.5;
+  }
+  .intro-line {
+    display: block;
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  .intro-line.show { animation: lineIn 0.4s ease forwards; }
+  @keyframes lineIn {
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .intro-bar {
+    width: 200px; height: 2px;
+    background: var(--border);
+    overflow: hidden;
+  }
+  .intro-bar-fill {
+    height: 100%;
+    background: var(--ember);
+    animation: barFill 3s ease forwards;
+  }
+  @keyframes barFill { from { width: 0; } to { width: 100%; } }
+
+  /* ── REDACT EFFECT ── */
+  .redact {
+    position: relative;
+    display: inline;
+  }
+  .redact::before {
+    content: attr(data-redact);
+    position: absolute;
+    top: 0; left: 0;
+    background: var(--blood);
+    color: var(--blood);
+    white-space: nowrap;
+    transition: transform 0.5s ease;
+    transform-origin: left;
+    transform: scaleX(1);
+  }
+  .redact.revealed::before {
+    transform: scaleX(0);
+  }
+
+  /* ── CONTAINER ── */
+  .container {
+    position: relative;
+    z-index: 2;
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 60px 24px 80px;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    text-align: center;
+    margin-bottom: 60px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 4s forwards;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .skull-wrap {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 20px;
+  }
+  .skull-icon {
+    font-size: 72px;
+    display: block;
+    animation: skullGlow 4s ease-in-out infinite 4s;
+  }
+  @keyframes skullGlow {
+    0%,100% { text-shadow: 0 0 20px rgba(224,79,79,0.3); }
+    50% { text-shadow: 0 0 80px rgba(224,79,79,1), 0 0 160px rgba(139,26,26,0.5); }
+  }
+  .skull-rings span {
+    position: absolute;
+    top: 50%; left: 50%;
+    border: 1px solid rgba(224,79,79,0.15);
+    border-radius: 50%;
+    transform: translate(-50%,-50%);
+  }
+  .skull-rings span:nth-child(1) { width: 110px; height: 110px; animation: ringPulse 3s ease-in-out infinite 4s; }
+  .skull-rings span:nth-child(2) { width: 160px; height: 160px; animation: ringPulse 3s ease-in-out infinite 4.5s; }
+  .skull-rings span:nth-child(3) { width: 210px; height: 210px; animation: ringPulse 3s ease-in-out infinite 5s; border-color: rgba(224,79,79,0.06); }
+  @keyframes ringPulse {
+    0%,100% { transform: translate(-50%,-50%) scale(1); opacity: 0.5; }
+    50% { transform: translate(-50%,-50%) scale(1.08); opacity: 1; }
+  }
+
+  .eyebrow {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 6px;
+    color: var(--blood);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  /* ── TYPEWRITER TITLE ── */
+  .title {
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: clamp(28px, 6vw, 52px);
+    line-height: 1.1;
+    color: var(--bright);
+    text-shadow: 0 0 60px rgba(224,79,79,0.3);
+    margin-bottom: 8px;
+    min-height: 1.2em;
+  }
+  .title-cursor {
+    display: inline-block;
+    width: 3px;
+    background: var(--ember);
+    margin-left: 4px;
+    animation: blink 0.8s step-end infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  .title-sub {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(12px,2.5vw,18px);
+    font-weight: 700;
+    color: var(--ember);
+    letter-spacing: 10px;
+    text-shadow: 0 0 30px rgba(224,79,79,0.7);
+    margin-bottom: 24px;
+    opacity: 0;
+    animation: fadeUp 0.6s ease 5.5s forwards;
+  }
+
+  .divider { width: 1px; height: 60px; background: linear-gradient(to bottom, var(--blood), transparent); margin: 0 auto 24px; }
+
+  .tagline {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    color: var(--dim);
+    letter-spacing: 2px;
+    line-height: 1.8;
+    opacity: 0;
+    animation: fadeUp 0.6s ease 5.8s forwards;
+  }
+  .tagline strong { color: var(--ember); }
+
+  /* ── PROMISE BOX ── */
+  .promise {
+    border: 1px solid var(--blood);
+    background: rgba(139,26,26,0.06);
+    padding: 28px;
+    margin-bottom: 40px;
+    text-align: center;
+    position: relative;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 6s forwards;
+  }
+  .promise::before, .promise::after {
+    content: '';
+    position: absolute;
+    width: 14px; height: 14px;
+    border-color: var(--ember);
+    border-style: solid;
+  }
+  .promise::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+  .promise::after  { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+  .promise::after  { animation: cornerGlow 3s ease-in-out infinite; }
+  @keyframes cornerGlow { 0%,100%{box-shadow:none} 50%{box-shadow:4px 4px 12px rgba(224,79,79,0.3)} }
+
+  .promise-title {
+    font-family: 'Cinzel', serif;
+    font-size: 20px;
+    color: var(--bright);
+    margin-bottom: 16px;
+    letter-spacing: 3px;
+  }
+  .promise p {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--text);
+    line-height: 2.2;
+    letter-spacing: 0.5px;
+  }
+  .promise p strong { color: var(--ember); }
+
+  /* ── TIERS ── */
+  .tier {
+    border: 1px solid var(--border);
+    background: rgba(12,10,10,0.85);
+    margin-bottom: 2px;
+    position: relative;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateX(-40px);
+    transition: opacity 0.6s ease, transform 0.6s ease, border-color 0.3s;
+  }
+  .tier.visible { opacity: 1; transform: translateX(0); }
+  .tier:hover { border-color: var(--blood); }
+  .tier::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(224,79,79,0.04), transparent);
+    transition: left 0.6s ease;
+  }
+  .tier:hover::before { left: 150%; }
+  .tier-inner { padding: 22px 28px; }
+  .tier-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
+  .tier-num { font-family: 'Share Tech Mono', monospace; font-size: 9px; letter-spacing: 3px; color: #5a3030; text-transform: uppercase; margin-bottom: 4px; }
+  .tier-name { font-family: 'Cinzel', serif; font-size: 22px; font-weight: 700; color: var(--bright); }
+  .tier-price { font-family: 'Share Tech Mono', monospace; font-size: 24px; color: var(--ember); text-shadow: 0 0 20px rgba(224,79,79,0.4); text-align: right; white-space: nowrap; }
+  .tier-price small { display: block; font-size: 9px; color: #5a3030; letter-spacing: 2px; margin-top: 2px; text-transform: uppercase; }
+  .tier-desc { font-size: 14px; color: var(--dim); line-height: 1.7; }
+
+  /* ── SILENCE SECTION ── */
+  .silence {
+    border: 1px solid var(--border);
+    background: rgba(12,10,10,0.85);
+    margin-bottom: 32px;
+    position: relative;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .silence.visible { opacity: 1; transform: translateY(0); }
+  .silence::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(to right, transparent, var(--ember), transparent);
+    animation: scanLine 4s ease-in-out infinite;
+  }
+  @keyframes scanLine { 0%,100%{opacity:.4} 50%{opacity:1} }
+
+  .silence-head {
+    padding: 16px 24px;
+    background: rgba(139,26,26,0.12);
+    border-bottom: 1px solid var(--border);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: var(--ember);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .lock-icon { font-size: 16px; animation: lockPulse 3s ease-in-out infinite; }
+  @keyframes lockPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.15)} }
+
+  .silence-body { padding: 20px 24px; }
+  .silence-item {
+    display: flex;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(46,31,31,0.4);
+    align-items: flex-start;
+    transition: background 0.2s;
+  }
+  .silence-item:last-child { border-bottom: none; }
+  .silence-item:hover { background: rgba(139,26,26,0.04); margin: 0 -24px; padding: 14px 24px; }
+  .silence-icon { font-size: 18px; min-width: 28px; padding-top: 2px; }
+  .silence-text strong { display: block; font-size: 15px; color: var(--bright); margin-bottom: 4px; }
+  .silence-text span { font-size: 13px; color: var(--dim); line-height: 1.7; }
+
+  /* ── PROCESS ── */
+  .process {
+    border: 1px solid var(--border);
+    background: rgba(12,10,10,0.85);
+    margin-bottom: 40px;
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .process.visible { opacity: 1; transform: translateY(0); }
+  .process-head {
+    padding: 16px 24px;
+    background: rgba(139,26,26,0.1);
+    border-bottom: 1px solid var(--border);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: var(--ember);
+    text-transform: uppercase;
+  }
+  .process-body { padding: 20px 24px; }
+  .proc-step {
+    display: flex;
+    gap: 20px;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(46,31,31,0.4);
+    transition: background 0.2s;
+  }
+  .proc-step:last-child { border-bottom: none; }
+  .proc-step:hover { background: rgba(139,26,26,0.04); margin: 0 -24px; padding: 14px 24px; }
+  .proc-num {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 24px;
+    color: rgba(139,26,26,0.25);
+    min-width: 36px;
+    line-height: 1.3;
+    font-weight: 700;
+    transition: color 0.3s;
+  }
+  .proc-step:hover .proc-num { color: var(--ember); }
+  .proc-text { font-size: 14px; color: var(--dim); line-height: 1.7; padding-top: 3px; }
+  .proc-text strong { color: var(--bright); }
+
+  /* ── CTA ── */
+  .cta {
+    text-align: center;
+    padding: 48px 0;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 6.5s forwards;
+  }
+  .cta-skull { font-size: 40px; display: block; margin-bottom: 14px; animation: skullGlow 3s ease-in-out infinite; }
+  .cta-title { font-family: 'Cinzel', serif; font-size: 30px; font-weight: 700; color: var(--bright); margin-bottom: 16px; }
+  .cta-sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--dim);
+    margin-bottom: 28px;
+    line-height: 2.2;
+  }
+  .cta-sub strong { color: var(--ember); display: block; font-size: 13px; margin-top: 6px; letter-spacing: 2px; }
+  .cta-btn {
+    display: inline-block;
+    padding: 16px 56px;
+    background: var(--blood);
+    border: 1px solid var(--crimson);
+    color: var(--bright);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-decoration: none;
+    text-transform: uppercase;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s;
+    margin-bottom: 20px;
+    display: block;
+    max-width: 320px;
+    margin: 0 auto 20px;
+  }
+  .cta-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.5s;
+  }
+  .cta-btn:hover::after { transform: translateX(100%); }
+  .cta-btn:hover { background: var(--crimson); border-color: var(--ember); transform: translateY(-3px); box-shadow: 0 10px 30px rgba(139,26,26,0.4); }
+  .cta-fine { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #3a1a1a; letter-spacing: 1px; margin-top: 20px; line-height: 2; text-transform: uppercase; }
+
+  .footer { text-align: center; margin-top: 60px; padding-top: 24px; border-top: 1px solid #1a0a0a; font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 4px; color: #3a1a1a; }
+
+  /* ── GLITCH ── */
+  .glitch { position: relative; display: inline-block; }
+  .glitch::before, .glitch::after { content: attr(data-text); position: absolute; top:0; left:0; width:100%; height:100%; }
+  .glitch::before { color: #f00; animation: g1 5s infinite; clip-path: polygon(0 0,100% 0,100% 33%,0 33%); }
+  .glitch::after  { color: #0ff; animation: g2 5s infinite; clip-path: polygon(0 66%,100% 66%,100% 100%,0 100%); }
+  @keyframes g1 { 0%,88%,100%{transform:none;opacity:0} 90%{transform:translate(-2px,1px);opacity:.6} 93%{transform:translate(2px,-1px);opacity:.6} 95%{transform:none;opacity:0} }
+  @keyframes g2 { 0%,86%,100%{transform:none;opacity:0} 88%{transform:translate(2px,2px);opacity:.6} 91%{transform:translate(-2px,-1px);opacity:.6} 93%{transform:none;opacity:0} }
+
+    /* Services page — new sections */
+    .services-hero { text-align:center; padding:80px 20px 60px; }
+    .services-hero h1 { font-family:Cinzel,serif; font-size:clamp(28px,5vw,48px); color:var(--bright); margin-bottom:16px; }
+    .services-hero .eyebrow { font-family:Share Tech Mono,monospace; font-size:10px; letter-spacing:4px; color:var(--dim); text-transform:uppercase; margin-bottom:16px; }
+    .services-hero .hero-sub { font-size:15px; color:var(--dim); line-height:1.8; max-width:600px; margin:0 auto; }
+
+    .service-section { border:1px solid var(--border); padding:32px; margin-bottom:20px; background:var(--ash); }
+    .tier-header { display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:16px; }
+    .tier-header h2 { font-family:Cinzel,serif; font-size:26px; color:var(--bright); margin:0; }
+    .tier-price { font-family:Share Tech Mono,monospace; font-size:14px; color:var(--green); margin-left:auto; }
+    .tier-pill { font-family:Share Tech Mono,monospace; font-size:10px; letter-spacing:2px; color:var(--ember); border:1px solid var(--ember); padding:4px 10px; text-transform:uppercase; background:rgba(139,26,26,0.15); }
+    .tier-desc { font-size:14px; color:var(--dim); line-height:1.8; margin-bottom:16px; }
+    .tier-features { display:flex; flex-direction:column; gap:10px; }
+    .feature { font-size:13px; color:var(--text); line-height:1.7; padding:10px 14px; background:var(--void); border-left:2px solid var(--ember); }
+    .feature strong { color:var(--bright); }
+
+  </style>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☠</text></svg>">
 </head>
 <body>
