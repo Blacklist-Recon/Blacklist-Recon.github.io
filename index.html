@@ -989,35 +989,103 @@
 <section>
   <div class="reveal">
     <p class="section-eyebrow">What We Do</p>
-    <h2 class="section-title">Contract Tiers</h2>
-    <div class="section-divider"></div>
+    <h2 class="section-title">Services & Pricing</h2>
   </div>
+
   <div class="services-grid">
-    <div class="service-card reveal" style="transition-delay:0.1s">
+
+    <div class="service-card reveal" style="transition-delay:0s">
       <div class="service-tier">Tier I</div>
       <div class="service-name">Standard Hit</div>
-      <div class="service-price">$1M</div>
-      <div class="service-desc">Single hospitalization on your specified target. Confirmed within 24 hours of payment. Ideal for personal grudges or one-time retaliation.</div>
+      <div class="service-price">$1,000,000</div>
+      <div class="service-desc">Single elimination contract. Fixed price, no negotiation.
+        <span style="color:var(--ember);"> 24-hour SLA guarantee</span> — if not completed within 24 hours the contract is automatically extended at no cost.</div>
+      <div class="service-tags">
+        <span class="tag">Fixed Price</span><span class="tag">24hr SLA</span>
+      </div>
     </div>
-    <div class="service-card reveal" style="transition-delay:0.2s">
+
+    <div class="service-card reveal" style="transition-delay:0.1s">
       <div class="service-tier">Tier II</div>
       <div class="service-name">War Support</div>
-      <div class="service-price">$3M</div>
-      <div class="service-desc">Sustained pressure during faction wars — repeated hits on priority targets to drain resources and keep them off the chain.</div>
+      <div class="service-price">$3.5M — $5M</div>
+      <div class="service-desc">Extended campaign on strong or well-protected players. Multi-hit capable. Priority queue available. Results guaranteed or contract extended at no cost.</div>
+      <div class="service-tags">
+        <span class="tag">Multi-Hit</span><span class="tag">Priority Queue</span><span class="tag">Guaranteed</span>
+      </div>
     </div>
-    <div class="service-card reveal" style="transition-delay:0.3s">
-      <div class="service-tier">Tier III — High Value</div>
+
+    <div class="service-card reveal" style="transition-delay:0.2s">
+      <div class="service-tier">Tier III</div>
       <div class="service-name">High-Value Contract</div>
-      <div class="service-price">$4M–$5M</div>
-      <div class="service-desc">Extended campaign targeting strong or well-protected players. Priority queue. Coordinated execution. Results guaranteed or contract extended.</div>
+      <div class="service-price">$3M+ Negotiated</div>
+      <div class="service-desc">Elite contracts on high-level or politically significant targets. Assigned exclusively to our most experienced hunters. Full discretion guaranteed.</div>
+      <div class="service-tags">
+        <span class="tag">Elite Hunters</span><span class="tag">Full Discretion</span>
+      </div>
     </div>
-    <div class="service-card reveal" style="transition-delay:0.4s;border-top:2px solid var(--ember);grid-column:1/-1;">
-      <div class="service-tier" style="color:var(--ember);">Tier IV — Ranked War Support</div>
-      <div class="service-name" style="font-size:24px;">Ranked War Support</div>
-      <div class="service-price" style="color:var(--gold);">Custom — By Arrangement</div>
-      <div class="service-desc">Submit a list of your own inactive or low-level faction members. We keep every name on that list continuously hospitalized during your ranked war — so the enemy cannot score points off them. Pricing is fully scalable based on member count and war duration, negotiated directly with The Handler. Each member is assigned as a separate bounty split across our hunter network simultaneously.</div>
+
+    <div class="service-card reveal" style="transition-delay:0.3s;border-color:var(--ember);">
+      <div class="service-tier" style="color:var(--ember);">Tier IV</div>
+      <div class="service-name">Ranked War Protection</div>
+      <div class="service-price">Custom · Fully Scalable</div>
+      <div class="service-desc">
+        Submit your inactive or low-level faction members. We keep every name on that list continuously hospitalized during your ranked war — the enemy cannot score points off them.<br><br>
+        <strong style="color:var(--gold);font-family:Share Tech Mono,monospace;font-size:11px;letter-spacing:1px;">THREE PRICING STRUCTURES:</strong><br>
+        <span style="color:var(--dim);font-size:13px;line-height:2;">
+          ⚡ Flat Per Hit — one fixed rate for all members<br>
+          📊 Tiered by Level — price scales per member level<br>
+          💰 Prepaid Hits — pay upfront for a set number of hits
+        </span><br><br>
+        War dates tracked automatically. Protection stops the moment your war ends — no manual intervention required. Available as a one-time campaign or ongoing subscription retainer.
+      </div>
+      <div class="service-tags">
+        <span class="tag">Auto-Renewal</span><span class="tag">War Tracking</span>
+        <span class="tag">Flexible Pricing</span><span class="tag">Subscription</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Priority Queue -->
+  <div class="reveal" style="margin-top:40px;padding:28px;border:1px solid var(--border);background:var(--ash);">
+    <div style="font-family:Cinzel,serif;font-size:20px;color:var(--gold);margin-bottom:12px;">⚡ Priority Queue Upgrades</div>
+    <p style="font-size:14px;color:var(--dim);line-height:1.8;margin-bottom:20px;">
+      Need your contract handled faster? Priority upgrades move your contract ahead of the queue instantly.
+    </p>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:200px;padding:20px;border:1px solid var(--border);background:var(--void);">
+        <div style="font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--amber);text-transform:uppercase;margin-bottom:8px;">Front of Queue</div>
+        <div style="font-family:Share Tech Mono,monospace;font-size:20px;color:var(--bright);margin-bottom:8px;">+20%</div>
+        <div style="font-size:13px;color:var(--dim);line-height:1.7;">Your contract moves to the front of the active board. First available hunter takes it immediately.</div>
+      </div>
+      <div style="flex:1;min-width:200px;padding:20px;border:1px solid var(--ember);background:var(--void);">
+        <div style="font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--ember);text-transform:uppercase;margin-bottom:8px;">Dedicated Hunter</div>
+        <div style="font-family:Share Tech Mono,monospace;font-size:20px;color:var(--bright);margin-bottom:8px;">+50%</div>
+        <div style="font-size:13px;color:var(--dim);line-height:1.7;">A specific hunter is assigned exclusively to your contract. Maximum speed, maximum focus.</div>
+      </div>
     </div>
   </div>
+
+  <!-- SLA Guarantee -->
+  <div class="reveal" style="margin-top:20px;padding:28px;border:1px solid #3d2e0a;background:rgba(201,168,76,0.04);">
+    <div style="font-family:Cinzel,serif;font-size:20px;color:var(--gold);margin-bottom:12px;">⏱ 24-Hour SLA Guarantee</div>
+    <p style="font-size:14px;color:var(--dim);line-height:1.8;">
+      Every Standard Hit carries a 24-hour completion guarantee. If your contract is not completed within 24 hours
+      of activation it is automatically extended at no additional cost and flagged for priority handling by The Handler.
+      Every active contract is monitored on a 5-minute cycle.
+    </p>
+  </div>
+
+  <!-- Referral -->
+  <div class="reveal" style="margin-top:20px;padding:28px;border:1px solid var(--border);background:var(--ash);">
+    <div style="font-family:Cinzel,serif;font-size:20px;color:var(--gold);margin-bottom:12px;">🔗 Referral Program</div>
+    <p style="font-size:14px;color:var(--dim);line-height:1.8;">
+      Were you referred by a Blacklist Recon hunter? Enter their referral code when submitting your contract form
+      and it will be tracked automatically. Referral codes can be entered in the contact form below.
+    </p>
+  </div>
+
 </section>
 </div>
 </div>
