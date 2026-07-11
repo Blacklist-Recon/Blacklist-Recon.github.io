@@ -2968,24 +2968,51 @@ async function renderAdmin(main) {
       }));
 
     // Wire auto monitoring registration
-    const scanRegBtn = main.querySelector('#scan-register-btn');
-    if (scanRegBtn) {
+    setTimeout(async () => {
+      const scanRegBtn = main.querySelector('#scan-register-btn');
+      const scanMsgEl  = main.querySelector('#scan-reg-msg');
+      if (!scanRegBtn) return;
+
+      function setActive() {
+        scanRegBtn.textContent       = '✓ Auto Monitoring Active';
+        scanRegBtn.style.background  = 'rgba(95,224,79,0.15)';
+        scanRegBtn.style.borderColor = 'var(--green)';
+        scanRegBtn.style.color       = 'var(--green)';
+        scanRegBtn.disabled          = false;
+        if (scanMsgEl) scanMsgEl.innerHTML =
+          '<div class="msg-success">Registered — attack log scanned every 5 minutes automatically.</div>';
+      }
+
+      function setInactive() {
+        scanRegBtn.textContent       = '🔍 Enable Auto Monitoring for My Account';
+        scanRegBtn.style.background  = '';
+        scanRegBtn.style.borderColor = '';
+        scanRegBtn.style.color       = '';
+        scanRegBtn.disabled          = false;
+        if (scanMsgEl) scanMsgEl.innerHTML = '';
+      }
+
+      // Check current registration status from KV
+      try {
+        const status = await api('/attacks/scan-key-status');
+        if (status.registered) { setActive(); } else { setInactive(); }
+      } catch(e) {
+        setInactive();
+      }
+
+      // Wire click — register and persist
       scanRegBtn.addEventListener('click', async () => {
-        const msgEl = main.querySelector('#scan-reg-msg');
         scanRegBtn.disabled    = true;
         scanRegBtn.textContent = 'Registering...';
         try {
           const res = await api('/attacks/register-scan-key');
-          msgEl.innerHTML        = `<div class="msg-success">✓ ${res.message}</div>`;
-          scanRegBtn.textContent = '✓ Auto Monitoring Active';
-          scanRegBtn.style.background = 'var(--green)';
+          setActive();
         } catch(e) {
-          msgEl.innerHTML        = `<div class="msg-error">${esc(e.message)}</div>`;
-          scanRegBtn.disabled    = false;
-          scanRegBtn.textContent = '🔍 Enable Auto Monitoring for My Account';
+          if (scanMsgEl) scanMsgEl.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`;
+          setInactive();
         }
       });
-    }
+    }, 200);
 
         try {
       const aliasRes = await api('/alias/get');
