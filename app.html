@@ -3588,64 +3588,233 @@ async function renderSubscriptions(main) {
     const res  = await api('/subscriptions/list');
     const subs = res.subscriptions || [];
 
+    const pricingModeLabels = {
+      flat_per_hit: '⚡ Flat Per Hit',
+      tiered:       '📊 Tiered by Level',
+      prepaid:      '💰 Prepaid Hits',
+    };
+    const statusColors = {
+      active:    'listed',
+      war_ended: 'completed',
+      expired:   'payment_pending',
+    };
+
+    function subCard(s) {
+      const warEndStr  = s.warEndDate ? new Date(s.warEndDate).toLocaleDateString() : 'No end date';
+      const warStartStr = s.warStartDate ? new Date(s.warStartDate).toLocaleDateString() : 'Unknown';
+      const warOver    = s.warEndDate && Date.now() > s.warEndDate;
+      const warSoon    = s.warEndDate && !warOver && (s.warEndDate - Date.now()) < 86400000;
+      const prepaidTotal = s.pricingMode === 'prepaid'
+        ? s.members.reduce((a,m) => a + (m.prepaidHits||0), 0) : null;
+      const prepaidLeft  = s.pricingMode === 'prepaid'
+        ? s.members.reduce((a,m) => a + (m.hitsRemaining||0), 0) : null;
+
+      return `
+        <div class="card" style="position:relative;overflow:hidden;">
+          <div style="position:absolute;top:0;left:0;right:0;height:2px;
+            background:linear-gradient(to right,transparent,${warOver?'var(--dim)':warSoon?'var(--amber)':'var(--ember)'},transparent);"></div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+            <div>
+              <div style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:4px;">
+                ${pricingModeLabels[s.pricingMode] || s.pricingMode}
+              </div>
+              <div style="font-size:13px;color:var(--dim);">${esc(s.notes||'')}</div>
+            </div>
+            <span class="badge badge-${statusColors[s.status]||'listed'}">${(s.status||'active').replace('_',' ').toUpperCase()}</span>
+          </div>
+
+          <!-- War timeline -->
+          <div style="background:var(--void);border:1px solid var(--border);padding:12px;margin-bottom:12px;border-radius:2px;">
+            <div style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:8px;">War Timeline</div>
+            <div style="display:flex;gap:16px;flex-wrap:wrap;">
+              <div>
+                <div style="font-size:10px;color:var(--muted);">Started</div>
+                <div style="font-family:Share Tech Mono,monospace;font-size:12px;color:var(--text);">${warStartStr}</div>
+              </div>
+              <div>
+                <div style="font-size:10px;color:var(--muted);">Ends</div>
+                <div style="font-family:Share Tech Mono,monospace;font-size:12px;color:${warOver?'var(--dim)':warSoon?'var(--amber)':'var(--green)'};">
+                  ${warEndStr} ${warSoon?'⚠ SOON':''}${warOver?'(ended)':''}
+                </div>
+              </div>
+              ${s.warEndDate ? `
+              <div>
+                <div style="font-size:10px;color:var(--muted);">Remaining</div>
+                <div style="font-family:Share Tech Mono,monospace;font-size:12px;color:${warOver?'var(--dim)':'var(--ember)'};">
+                  ${warOver ? 'War ended' : Math.ceil((s.warEndDate - Date.now())/86400000)+'d left'}
+                </div>
+              </div>` : ''}
+            </div>
+          </div>
+
+          <!-- Stats -->
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+            <div class="stat-card" style="flex:1;min-width:100px;padding:10px;">
+              <div style="font-size:22px;font-family:Share Tech Mono,monospace;color:var(--ember);">${s.members.length}</div>
+              <div style="font-size:10px;color:var(--muted);">Protected</div>
+            </div>
+            <div class="stat-card" style="flex:1;min-width:100px;padding:10px;">
+              <div style="font-size:22px;font-family:Share Tech Mono,monospace;color:var(--green);">${s.renewCount||0}</div>
+              <div style="font-size:10px;color:var(--muted);">Auto-Bounties</div>
+            </div>
+            <div class="stat-card" style="flex:1;min-width:100px;padding:10px;">
+              <div style="font-size:22px;font-family:Share Tech Mono,monospace;color:var(--gold);">${fmt(s.totalValue||0)}</div>
+              <div style="font-size:10px;color:var(--muted);">Total Value</div>
+            </div>
+            ${s.pricingMode === 'prepaid' ? `
+            <div class="stat-card" style="flex:1;min-width:100px;padding:10px;">
+              <div style="font-size:22px;font-family:Share Tech Mono,monospace;color:${prepaidLeft===0?'var(--dim)':'var(--amber)'};">${prepaidLeft}/${prepaidTotal}</div>
+              <div style="font-size:10px;color:var(--muted);">Hits Left</div>
+            </div>` : ''}
+          </div>
+
+          <!-- Member list -->
+          <div style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:6px;">Protected Members</div>
+          <div style="background:var(--void);border:1px solid var(--border);">
+            ${s.members.map(m => `
+              <div style="display:flex;align-items:center;gap:12px;padding:8px 12px;border-bottom:1px solid var(--border);">
+                <span style="flex:1;font-size:13px;color:var(--text);">${esc(m.name)}</span>
+                ${m.level ? `<span style="font-size:10px;color:var(--dim);">Lv ${m.level}</span>` : ''}
+                <span style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--green);">${fmt((m.pricePerHit||s.flatPricePerHit||0)*1000000)}/hit</span>
+                ${s.pricingMode === 'prepaid' ? `
+                  <span style="font-family:Share Tech Mono,monospace;font-size:10px;color:${m.hitsRemaining===0?'var(--dim)':'var(--amber)'};">
+                    ${m.hitsRemaining||0}/${m.prepaidHits||0} left
+                  </span>` : ''}
+                <span style="font-size:10px;color:var(--dim);">${m.hitsCompleted||0} done</span>
+              </div>`).join('')}
+          </div>
+        </div>`;
+    }
+
     main.innerHTML = `
       <div class="page-header">
         <div class="page-eyebrow">Admin · Blacklist Recon</div>
         <div class="page-title">♻️ War Protection Subscriptions</div>
       </div>
       <p style="font-size:14px;color:var(--dim);line-height:1.7;margin-bottom:24px;">
-        Monthly protection retainers. The Worker automatically re-creates protection bounties
-        every time a protected member comes out of hospital — zero manual work.
+        Ongoing war protection retainers. Auto-posts new bounties every time a protected member
+        comes out of hospital. Stops automatically when the war ends.
       </p>
 
       <div class="section-head">New Subscription</div>
       <div id="sub-msg"></div>
       <div class="card" style="margin-bottom:20px;">
-        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+
+        <!-- Pricing Mode -->
+        <div style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:8px;">Pricing Mode</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+          <button class="btn pricing-mode-btn active-mode" data-mode="flat_per_hit"
+            style="flex:1;padding:10px;color:var(--ember);border-color:var(--ember);">⚡ Flat Per Hit</button>
+          <button class="btn pricing-mode-btn" data-mode="tiered"
+            style="flex:1;padding:10px;">📊 Tiered by Level</button>
+          <button class="btn pricing-mode-btn" data-mode="prepaid"
+            style="flex:1;padding:10px;">💰 Prepaid Hits</button>
+        </div>
+
+        <!-- Flat per hit price -->
+        <div id="flat-price-row" style="margin-bottom:14px;">
+          <label style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:6px;">Price Per Hit ($M) — applies to all members</label>
+          <input id="sub-flat-price" type="number" min="0.1" step="0.1" placeholder="e.g. 2" style="width:100%;" />
+        </div>
+
+        <!-- War dates -->
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
           <div style="flex:1;min-width:140px;">
-            <label style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:6px;">Total Price ($M)</label>
-            <input id="sub-price" type="number" min="1" step="0.5" placeholder="e.g. 50" />
+            <label style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:6px;">War Start Date</label>
+            <input id="sub-war-start" type="date" />
           </div>
           <div style="flex:1;min-width:140px;">
+            <label style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:6px;">War End Date (or)</label>
+            <input id="sub-war-end" type="date" />
+          </div>
+          <div style="flex:1;min-width:120px;">
             <label style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:6px;">Duration (days)</label>
-            <input id="sub-days" type="number" min="1" max="90" placeholder="e.g. 30" value="30" />
+            <input id="sub-war-days" type="number" min="1" max="90" placeholder="e.g. 7" />
           </div>
         </div>
-        <label style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:6px;">Members to Protect — Name,XID per line</label>
-        <textarea id="sub-members" rows="5" placeholder="InactiveMember1,1234567&#10;LowLevel2,2345678" style="margin-bottom:12px;"></textarea>
+
+        <!-- Members -->
+        <label style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:6px;">Protected Members</label>
+        <div id="flat-members-note" style="font-size:11px;color:var(--muted);margin-bottom:6px;">Format: Name, TornID per line</div>
+        <div id="tiered-members-note" style="font-size:11px;color:var(--muted);margin-bottom:6px;display:none;">Format: Name, TornID, Level, PricePerHit($M) per line</div>
+        <div id="prepaid-members-note" style="font-size:11px;color:var(--muted);margin-bottom:6px;display:none;">Format: Name, TornID, PricePerHit($M), PrepaidHits per line</div>
+        <textarea id="sub-members" rows="6" placeholder="MemberName,1234567" style="margin-bottom:12px;"></textarea>
+
         <label style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:6px;">Notes</label>
-        <input id="sub-notes" type="text" placeholder="Client faction, war details..." style="margin-bottom:12px;" />
-        <button class="btn btn-red" id="sub-create-btn" style="width:100%;padding:10px;">♻️ Create Subscription</button>
+        <input id="sub-notes" type="text" placeholder="Client faction name, war context..." style="margin-bottom:16px;width:100%;" />
+        <button class="btn btn-red" id="sub-create-btn" style="width:100%;padding:12px;">♻️ Create War Protection Subscription</button>
       </div>
 
-      <div class="section-head">Active Subscriptions</div>
+      <div class="section-head">Active & Past Subscriptions (${subs.length})</div>
       ${subs.length === 0
         ? '<div class="empty">No subscriptions yet</div>'
-        : subs.map(s => `
-          <div class="card">
-            <div class="card-row"><span class="card-label">Status</span><span class="badge badge-${s.status==='active'?'listed':'completed'}">${s.status}</span></div>
-            <div class="card-row"><span class="card-label">Members</span><span class="card-value" style="color:var(--ember);">${s.members.length} protected</span></div>
-            <div class="card-row"><span class="card-label">Price</span><span class="card-value" style="color:var(--green);">${fmt(s.totalPrice*1000000)}</span></div>
-            <div class="card-row"><span class="card-label">Duration</span><span class="card-value">${s.durationDays} days</span></div>
-            <div class="card-row"><span class="card-label">Expires</span><span class="card-value" style="color:${Date.now()>s.endsAt-86400000*3?'var(--ember)':'var(--dim)'};">${new Date(s.endsAt).toLocaleDateString()}</span></div>
-            <div class="card-row"><span class="card-label">Auto-Renewals</span><span class="card-value">${s.renewCount||0} bounties auto-posted</span></div>
-            ${s.notes ? `<div class="card-row"><span class="card-label">Notes</span><span class="card-value">${esc(s.notes)}</span></div>` : ''}
-          </div>`).join('')}
+        : subs.map(s => subCard(s)).join('')}
     `;
 
+    // Pricing mode toggle
+    let currentMode = 'flat_per_hit';
+    main.querySelectorAll('.pricing-mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        main.querySelectorAll('.pricing-mode-btn').forEach(b => {
+          b.classList.remove('active-mode');
+          b.style.color = ''; b.style.borderColor = '';
+        });
+        btn.classList.add('active-mode');
+        btn.style.color = 'var(--ember)'; btn.style.borderColor = 'var(--ember)';
+        currentMode = btn.dataset.mode;
+        main.querySelector('#flat-price-row').style.display    = currentMode === 'flat_per_hit' ? 'block' : 'none';
+        main.querySelector('#flat-members-note').style.display   = currentMode === 'flat_per_hit' ? 'block' : 'none';
+        main.querySelector('#tiered-members-note').style.display = currentMode === 'tiered'       ? 'block' : 'none';
+        main.querySelector('#prepaid-members-note').style.display= currentMode === 'prepaid'      ? 'block' : 'none';
+        const placeholders = {
+          flat_per_hit: 'MemberName,1234567',
+          tiered:       'MemberName,1234567,85,3.5',
+          prepaid:      'MemberName,1234567,2,10',
+        };
+        main.querySelector('#sub-members').placeholder = placeholders[currentMode];
+      });
+    });
+
     main.querySelector('#sub-create-btn')?.addEventListener('click', async () => {
-      const price   = parseFloat(main.querySelector('#sub-price').value);
-      const days    = parseInt(main.querySelector('#sub-days').value);
-      const rawText = main.querySelector('#sub-members').value.trim();
-      const notes   = main.querySelector('#sub-notes').value.trim();
-      const msgEl   = main.querySelector('#sub-msg');
-      if (!price || !days || !rawText) { msgEl.innerHTML = '<div class="msg-error">Price, duration and members required.</div>'; return; }
-      const members = rawText.split('\n').map(l => { const p = l.trim().split(','); return { name: p[0]?.trim(), xid: p[1]?.trim()||null }; }).filter(m=>m.name);
+      const rawText    = main.querySelector('#sub-members').value.trim();
+      const notes      = main.querySelector('#sub-notes').value.trim();
+      const flatPrice  = parseFloat(main.querySelector('#sub-flat-price').value) || null;
+      const warStart   = main.querySelector('#sub-war-start').value;
+      const warEnd     = main.querySelector('#sub-war-end').value;
+      const warDays    = parseInt(main.querySelector('#sub-war-days').value) || null;
+      const msgEl      = main.querySelector('#sub-msg');
+
+      if (!rawText) { msgEl.innerHTML = '<div class="msg-error">At least one member required.</div>'; return; }
+      if (currentMode === 'flat_per_hit' && !flatPrice) { msgEl.innerHTML = '<div class="msg-error">Price per hit required.</div>'; return; }
+
+      // Parse members based on mode
+      const members = rawText.split('\n').map(l => {
+        const p = l.trim().split(',').map(x => x.trim());
+        if (currentMode === 'flat_per_hit') return { name: p[0], xid: p[1]||null };
+        if (currentMode === 'tiered')       return { name: p[0], xid: p[1]||null, level: p[2]||null, pricePerHit: parseFloat(p[3])||flatPrice||1 };
+        if (currentMode === 'prepaid')      return { name: p[0], xid: p[1]||null, pricePerHit: parseFloat(p[2])||flatPrice||1, prepaidHits: parseInt(p[3])||1 };
+        return { name: p[0], xid: p[1]||null };
+      }).filter(m => m.name);
+
       if (!members.length) { msgEl.innerHTML = '<div class="msg-error">No valid members found.</div>'; return; }
+
       try {
-        const res = await api('/subscriptions/create', { members, totalPrice: price, durationDays: days, notes });
-        msgEl.innerHTML = `<div class="msg-success">♻️ Subscription created! ${members.length} protection bounties posted. Auto-renews via cron every 5 minutes.</div>`;
-        setTimeout(() => renderSubscriptions(main), 1500);
+        const res = await api('/subscriptions/create', {
+          members,
+          pricingMode:     currentMode,
+          flatPricePerHit: flatPrice,
+          warStartDate:    warStart ? new Date(warStart).getTime() : Date.now(),
+          warEndDate:      warEnd   ? new Date(warEnd).getTime()   : null,
+          warDurationDays: warDays,
+          notes,
+        });
+        const endStr = res.warEndDate ? `War ends ${new Date(res.warEndDate).toLocaleDateString()}.` : 'No end date set.';
+        msgEl.innerHTML = `<div class="msg-success">
+          ♻️ Subscription created! ${members.length} protection bounties posted.<br>
+          Total value: ${fmt(res.totalValue||0)} · ${endStr}<br>
+          Auto-renews every 5 minutes. Stops when war ends.
+        </div>`;
+        setTimeout(() => renderSubscriptions(main), 2000);
       } catch(e) { msgEl.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; }
     });
 
