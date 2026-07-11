@@ -900,9 +900,9 @@ async function login() {
 
     await loadBounties();
     showApp();
-
-    // Refresh session every 23 hours
     setTimeout(refreshSession, 23 * 3600 * 1000);
+    // Request push notification permission
+    setupPushNotifications();
   } catch (e) {
     errEl.textContent = e.message;
     btn.disabled = false;
@@ -1040,6 +1040,8 @@ function navItems() {
     items.push({ id: 'seasons',       icon: '🏆', label: 'Seasons'      });
     items.push({ id: 'audit',         icon: '📜', label: 'Audit Log'    });
     items.push({ id: 'weekly',        icon: '📈', label: 'Weekly'       });
+    items.push({ id: 'sla',           icon: '⏱',  label: 'SLA'         });
+    items.push({ id: 'vip',           icon: '⭐', label: 'VIP Clients'  });
     items.push({ id: 'dashboard', icon: '📊', label: 'Intel'     });
     items.push({ id: 'challenges',icon: '🏆', label: 'Challenges'});
     items.push({ id: 'mentors',   icon: '🎓', label: 'Mentors'   });
@@ -1054,6 +1056,8 @@ function navItems() {
     items.push({ id: 'giveaways',  icon: '🎉', label: 'Giveaways'  });
     items.push({ id: 'seasons',    icon: '🏆', label: 'Seasons'    });
   }
+  items.push({ id: 'profile',    icon: '🪪', label: 'My Card'    });
+  items.push({ id: 'streaks',    icon: '🔥', label: 'Streaks'    });
   return items;
 }
 
@@ -1103,7 +1107,11 @@ function renderPage() {
   if (currentPage === 'subscriptions') renderSubscriptions(main);
   if (currentPage === 'seasons')       renderSeasons(main);
   if (currentPage === 'audit')         renderAuditLog(main);
-  if (currentPage === 'weekly')        renderWeeklyReport(main);
+  if (currentPage === 'weekly')   renderWeeklyReport(main);
+  if (currentPage === 'sla')      renderSLAAlerts(main);
+  if (currentPage === 'vip')      renderVIPClients(main);
+  if (currentPage === 'profile')  renderProfileCard(main);
+  if (currentPage === 'streaks')  renderStreaks(main);
   if (currentPage === 'dashboard')  renderDashboard(main);
   if (currentPage === 'challenges') renderChallenges(main);
   if (currentPage === 'mentors')    renderMentors(main);
@@ -3820,6 +3828,369 @@ async function renderWeeklyReport(main) {
       </div>
     `;
   } catch(e) { main.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; }
+}
+
+
+// ── PUSH NOTIFICATIONS ────────────────────────────────────────────────────
+const VAPID_PUBLIC_KEY = ''; // Add your VAPID public key here if using web push
+
+async function setupPushNotifications() {
+  if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
+  if (Notification.permission === 'granted') return; // Already set up
+  // Ask permission quietly — don't block login flow
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm === 'granted') {
+      // Store that this member wants notifications
+      await api('/push/subscribe', { subscription: { type: 'browser', tornId: identity.tornId } });
+    }
+  } catch(e) {}
+}
+
+function sendBrowserNotification(title, body, tag) {
+  if (Notification.permission !== 'granted') return;
+  new Notification(title, {
+    body,
+    icon:  'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">☠</text></svg>',
+    badge: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">☠</text></svg>',
+    tag:   tag || 'blr-notification',
+  });
+}
+
+// Check for new high-priority contracts and notify — called in board refresh
+function checkAndNotifyNewContracts(newBounties, oldBounties) {
+  if (!newBounties || !oldBounties) return;
+  const oldIds = new Set(oldBounties.map(b => b.id));
+  newBounties.forEach(b => {
+    if (!oldIds.has(b.id) && b.status === 'listed') {
+      const isHighPriority = b.tier === 'high_value' || b.tier === 'ranked_war_support';
+      if (isHighPriority) {
+        sendBrowserNotification(
+          '☠ Blacklist Recon — Priority Contract',
+          `${b.tierLabel}: ${b.targetName || 'Unknown'} · ${fmt(b.price * 1000000)}`,
+          'priority-contract'
+        );
+      }
+    }
+  });
+}
+
+// ── STREAKS ───────────────────────────────────────────────────────────────
+async function renderStreaks(main) {
+  main.innerHTML = `<div class="loading">Loading streaks...</div>`;
+  try {
+    const res = await api('/streaks/get');
+    const streaks = res.streaks || [];
+    const mine    = res.myStreak || { current: 0, best: 0 };
+
+    function flameIcon(count) {
+      if (count >= 20) return '🔥🔥🔥';
+      if (count >= 10) return '🔥🔥';
+      if (count >= 5)  return '🔥';
+      return '';
+    }
+
+    main.innerHTML = `
+      <div class="page-header">
+        <div class="page-eyebrow">Blacklist Recon · Hunter Competition</div>
+        <div class="page-title">🔥 Contract Streaks</div>
+      </div>
+      <p style="font-size:14px;color:var(--dim);line-height:1.7;margin-bottom:24px;">
+        Consecutive contracts completed without a miss. A streak breaks when a claimed contract
+        expires without completion. 🔥 appears at 5+ · 🔥🔥 at 10+ · 🔥🔥🔥 at 20+
+      </p>
+
+      <div class="card" style="text-align:center;margin-bottom:20px;padding:28px;">
+        <div style="font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:4px;color:var(--dim);text-transform:uppercase;margin-bottom:8px;">Your Current Streak</div>
+        <div style="font-size:64px;line-height:1;color:${mine.current>=10?'var(--ember)':mine.current>=5?'var(--amber)':'var(--dim)'};">
+          ${mine.current} ${flameIcon(mine.current)}
+        </div>
+        <div style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--muted);margin-top:8px;">
+          Personal best: ${mine.best}
+        </div>
+      </div>
+
+      <div class="section-head">Network Streak Leaderboard</div>
+      ${streaks.length === 0
+        ? '<div class="empty">No streak data yet</div>'
+        : `<div class="card" style="padding:0;overflow:hidden;">
+            <table style="width:100%;border-collapse:collapse;">
+              <thead>
+                <tr style="background:var(--ash);">
+                  <th style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;padding:10px 12px;text-align:left;">#</th>
+                  <th style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;padding:10px 12px;text-align:left;">Agent</th>
+                  <th style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;padding:10px 12px;text-align:left;">Streak</th>
+                  <th style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;padding:10px 12px;text-align:left;">Best</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${streaks.map((s, i) => `
+                  <tr style="border-bottom:1px solid var(--border);">
+                    <td style="padding:10px 12px;color:${i===0?'var(--gold)':'var(--dim)'};font-family:Share Tech Mono,monospace;font-size:11px;">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</td>
+                    <td style="padding:10px 12px;color:var(--bright);">${esc(s.displayName)}</td>
+                    <td style="padding:10px 12px;font-family:Share Tech Mono,monospace;font-size:14px;color:${s.current>=10?'var(--ember)':s.current>=5?'var(--amber)':'var(--text)'};">
+                      ${s.current} ${flameIcon(s.current)}
+                    </td>
+                    <td style="padding:10px 12px;font-family:Share Tech Mono,monospace;font-size:11px;color:var(--dim);">${s.best}</td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>`}
+    `;
+  } catch(e) { main.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; }
+}
+
+// ── SLA ALERTS ────────────────────────────────────────────────────────────
+async function renderSLAAlerts(main) {
+  main.innerHTML = `<div class="loading">Checking SLA status...</div>`;
+  try {
+    const res    = await api('/sla/alerts');
+    const alerts = res.alerts || [];
+    const urgent  = alerts.filter(a => a.urgent && !a.breached);
+    const breached = alerts.filter(a => a.breached);
+
+    main.innerHTML = `
+      <div class="page-header">
+        <div class="page-eyebrow">Admin · Blacklist Recon</div>
+        <div class="page-title">⏱ SLA Monitor</div>
+      </div>
+      <p style="font-size:14px;color:var(--dim);line-height:1.7;margin-bottom:24px;">
+        Standard Hit contracts carry a 24-hour completion guarantee. Alerts fire at 20 hours.
+        Breached contracts should be reviewed and clients contacted immediately.
+      </p>
+
+      <div class="stats-grid" style="grid-template-columns:repeat(2,1fr);margin-bottom:20px;">
+        <div class="stat-card">
+          <div class="stat-value" style="font-size:36px;color:${urgent.length>0?'var(--amber)':'var(--green)'};">${urgent.length}</div>
+          <div class="stat-label">⚠ Approaching Deadline</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="font-size:36px;color:${breached.length>0?'var(--ember)':'var(--green)'};">${breached.length}</div>
+          <div class="stat-label">🚨 SLA Breached</div>
+        </div>
+      </div>
+
+      ${breached.length > 0 ? `
+        <div class="section-head" style="color:var(--ember);">🚨 Breached Contracts</div>
+        ${breached.map(a => `
+          <div style="background:rgba(231,76,60,0.1);border:1px solid var(--ember);padding:16px;margin-bottom:8px;border-radius:2px;">
+            <div style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--ember);letter-spacing:1px;margin-bottom:6px;">SLA BREACHED — ${a.ageHours}h elapsed</div>
+            <div style="font-size:14px;color:var(--bright);">${esc(a.targetName)}</div>
+            <div style="font-size:12px;color:var(--dim);margin-top:4px;">Status: ${a.status} · Contract must be resolved immediately</div>
+          </div>`).join('')}
+      ` : ''}
+
+      ${urgent.length > 0 ? `
+        <div class="section-head" style="color:var(--amber);">⚠ Approaching 24h Deadline</div>
+        ${urgent.map(a => `
+          <div style="background:rgba(224,161,79,0.08);border:1px solid var(--amber);padding:16px;margin-bottom:8px;border-radius:2px;">
+            <div style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--amber);letter-spacing:1px;margin-bottom:6px;">${a.minsLeft}m REMAINING</div>
+            <div style="font-size:14px;color:var(--bright);">${esc(a.targetName)}</div>
+            <div style="font-size:12px;color:var(--dim);margin-top:4px;">Status: ${a.status} · ${a.ageHours}h elapsed of 24h guarantee</div>
+          </div>`).join('')}
+      ` : ''}
+
+      ${alerts.length === 0 ? '<div class="empty" style="padding:32px;">✓ All Standard Hit contracts are within SLA</div>' : ''}
+    `;
+  } catch(e) { main.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; }
+}
+
+// ── VIP CLIENTS ───────────────────────────────────────────────────────────
+async function renderVIPClients(main) {
+  main.innerHTML = `<div class="loading">Loading client data...</div>`;
+  try {
+    const res     = await api('/clients/tracker');
+    const clients = res.clients || [];
+    const vip     = clients.filter(c => c.isVIP);
+    const regular = clients.filter(c => !c.isVIP);
+
+    main.innerHTML = `
+      <div class="page-header">
+        <div class="page-eyebrow">Admin · Blacklist Recon</div>
+        <div class="page-title">⭐ VIP Client Tracker</div>
+      </div>
+      <p style="font-size:14px;color:var(--dim);line-height:1.7;margin-bottom:24px;">
+        Clients who have placed 3+ contracts are automatically flagged as VIP.
+        Their client number is shown — identity always protected.
+      </p>
+
+      <div class="stats-grid" style="grid-template-columns:repeat(2,1fr);margin-bottom:20px;">
+        <div class="stat-card">
+          <div class="stat-value" style="font-size:36px;color:var(--gold);">${vip.length}</div>
+          <div class="stat-label">⭐ VIP Clients</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="font-size:36px;">${clients.length}</div>
+          <div class="stat-label">Total Clients</div>
+        </div>
+      </div>
+
+      ${vip.length > 0 ? `
+        <div class="section-head">⭐ VIP Clients (3+ Contracts)</div>
+        <div class="card">
+          ${vip.map(c => `
+            <div class="card-row" style="padding:12px 0;border-bottom:1px solid var(--border);">
+              <div>
+                <span style="color:var(--gold);font-family:Share Tech Mono,monospace;font-size:12px;">
+                  ⭐ Client #${c.clientNumber || '?'}
+                </span>
+                <a href="https://www.torn.com/profiles.php?XID=${esc(c.tornId)}" target="_blank"
+                   style="font-size:10px;color:var(--dim);margin-left:8px;">[${esc(c.tornId)} ↗]</a>
+              </div>
+              <span style="font-family:Share Tech Mono,monospace;font-size:14px;color:var(--ember);margin-left:auto;">
+                ${c.contracts} contracts
+              </span>
+            </div>`).join('')}
+        </div>
+      ` : '<div class="empty">No VIP clients yet — clients reach VIP after 3+ contracts</div>'}
+
+      ${regular.length > 0 ? `
+        <div class="section-head" style="margin-top:20px;">Regular Clients</div>
+        <div class="card">
+          ${regular.map(c => `
+            <div class="card-row">
+              <span style="color:var(--dim);font-family:Share Tech Mono,monospace;font-size:11px;">Client #${c.clientNumber||'?'}</span>
+              <span style="font-size:12px;color:var(--text);margin-left:auto;">${c.contracts} contract${c.contracts!==1?'s':''}</span>
+            </div>`).join('')}
+        </div>
+      ` : ''}
+    `;
+  } catch(e) { main.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; }
+}
+
+// ── HUNTER PROFILE CARD ───────────────────────────────────────────────────
+async function renderProfileCard(main) {
+  main.innerHTML = `<div class="loading">Loading profile card...</div>`;
+  try {
+    const res  = await api('/profile/card');
+    const card = res.card;
+
+    const rankColors = {
+      ghost:'#6a7f94', blade:'#4f9ce0', phantom:'#c084fc',
+      reaper:'#e74c3c', wraith:'#c8d8e8', shadow_hand:'#c9a84c',
+    };
+    const rankBgs = {
+      ghost:'#1a2332', blade:'#1a2030', phantom:'#2c1f38',
+      reaper:'#2e1010', wraith:'#1a1a2a', shadow_hand:'#2a1e08',
+    };
+    const col = rankColors[card.rank?.id] || '#6a7f94';
+    const bg  = rankBgs[card.rank?.id]   || '#1a2332';
+
+    const joinDate = card.joinedAt ? new Date(card.joinedAt).toLocaleDateString('en-US', {year:'numeric',month:'short'}) : 'Unknown';
+    const flameStr = card.streak >= 20 ? '🔥🔥🔥' : card.streak >= 10 ? '🔥🔥' : card.streak >= 5 ? '🔥' : '';
+
+    // Build SVG profile card
+    const svgCard = `<svg viewBox="0 0 480 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:480px;border-radius:4px;">
+      <defs>
+        <linearGradient id="cardBg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#0d1117"/>
+          <stop offset="100%" stop-color="#080a0c"/>
+        </linearGradient>
+        <linearGradient id="rankGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="${col}" stop-opacity="0.8"/>
+          <stop offset="100%" stop-color="${col}" stop-opacity="0.1"/>
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+        </filter>
+      </defs>
+
+      <!-- Background -->
+      <rect width="480" height="280" fill="url(#cardBg)" rx="6"/>
+
+      <!-- Top accent bar -->
+      <rect width="480" height="3" fill="${col}" opacity="0.8"/>
+
+      <!-- Left rank stripe -->
+      <rect width="6" height="280" fill="url(#rankGrad)"/>
+
+      <!-- Corner brackets -->
+      <path d="M20 20 L20 36 M20 20 L36 20" stroke="${col}" stroke-width="1.5" fill="none" opacity="0.6"/>
+      <path d="M460 20 L460 36 M460 20 L444 20" stroke="${col}" stroke-width="1.5" fill="none" opacity="0.6"/>
+      <path d="M20 260 L20 244 M20 260 L36 260" stroke="${col}" stroke-width="1.5" fill="none" opacity="0.6"/>
+      <path d="M460 260 L460 244 M460 260 L444 260" stroke="${col}" stroke-width="1.5" fill="none" opacity="0.6"/>
+
+      <!-- Skull watermark -->
+      <text x="340" y="200" font-size="180" fill="${col}" opacity="0.04" font-family="serif">☠</text>
+
+      <!-- Grid lines -->
+      <line x1="0" y1="60" x2="480" y2="60" stroke="${col}" stroke-width="0.5" opacity="0.1"/>
+      <line x1="0" y1="220" x2="480" y2="220" stroke="${col}" stroke-width="0.5" opacity="0.1"/>
+
+      <!-- ORG NAME -->
+      <text x="30" y="44" font-family="Georgia,serif" font-size="10" fill="${col}" letter-spacing="5" opacity="0.8">BLACKLIST RECON</text>
+      <text x="398" y="44" font-family="monospace" font-size="9" fill="${col}" opacity="0.5" text-anchor="end">TORN CITY</text>
+
+      <!-- Agent number -->
+      <text x="30" y="110" font-family="Georgia,serif" font-size="13" fill="${col}" opacity="0.6" letter-spacing="3">AGENT</text>
+      <text x="30" y="150" font-family="Georgia,serif" font-size="48" font-weight="bold" fill="${col}">#${esc(String(card.agentNumber||'?'))}</text>
+
+      <!-- Display name -->
+      <text x="30" y="182" font-family="Georgia,serif" font-size="18" fill="#e8f4ff">${esc(card.displayName)}</text>
+
+      <!-- Rank badge -->
+      <rect x="30" y="195" width="${card.rank?.name?.length * 9 + 20||80}" height="22" rx="11" fill="${bg}" stroke="${col}" stroke-width="1"/>
+      <circle cx="44" cy="206" r="4" fill="${col}"/>
+      <text x="52" y="210" font-family="monospace" font-size="10" fill="${col}" letter-spacing="1">${esc((card.rank?.name||'Ghost').toUpperCase())}</text>
+
+      <!-- Stats divider -->
+      <line x1="280" y1="70" x2="280" y2="210" stroke="${col}" stroke-width="0.5" opacity="0.2"/>
+
+      <!-- Stats right side -->
+      <text x="300" y="100" font-family="monospace" font-size="9" fill="${col}" opacity="0.5" letter-spacing="2">CONTRACTS</text>
+      <text x="300" y="130" font-family="Georgia,serif" font-size="40" font-weight="bold" fill="#e8f4ff">${card.contracts}</text>
+
+      <text x="300" y="158" font-family="monospace" font-size="9" fill="${col}" opacity="0.5" letter-spacing="2">STREAK</text>
+      <text x="300" y="182" font-family="Georgia,serif" font-size="24" fill="${col}">${card.streak} ${flameStr}</text>
+
+      <!-- Joined date -->
+      <text x="30" y="245" font-family="monospace" font-size="9" fill="${col}" opacity="0.4" letter-spacing="2">MEMBER SINCE ${joinDate.toUpperCase()}</text>
+
+      <!-- Seasonal badges -->
+      ${card.seasonBadges?.slice(0,3).map((b,i) =>
+        `<text x="${400 + i*18}" y="245" font-size="14" text-anchor="middle">${b.badge.split(' ')[2]||'🏅'}</text>`
+      ).join('')||''}
+
+      <!-- Bottom bar -->
+      <rect y="270" width="480" height="10" fill="${col}" opacity="0.15"/>
+      <text x="240" y="278" font-family="monospace" font-size="8" fill="${col}" opacity="0.5" text-anchor="middle" letter-spacing="3">WE FIND THEM. YOU FINISH THEM.</text>
+    </svg>`;
+
+    main.innerHTML = `
+      <div class="page-header">
+        <div class="page-eyebrow">Blacklist Recon · Hunter Identity</div>
+        <div class="page-title">🪪 My Profile Card</div>
+      </div>
+      <p style="font-size:14px;color:var(--dim);line-height:1.7;margin-bottom:24px;">
+        Your shareable identity card. No real name. No Torn ID. Safe to share on Discord,
+        faction forums, or anywhere you want to show your standing in Blacklist Recon.
+      </p>
+
+      <div id="profile-card-svg" style="margin-bottom:20px;">${svgCard}</div>
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <button class="btn" style="flex:1;padding:12px;color:var(--gold);border-color:var(--gold-dim);"
+          onclick="downloadProfileCard()">⬇ Download Card</button>
+        <button class="btn" style="flex:1;padding:12px;"
+          onclick="navigator.clipboard.writeText(document.getElementById('profile-card-svg').innerHTML)">
+          Copy SVG
+        </button>
+      </div>
+    `;
+  } catch(e) { main.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; }
+}
+
+function downloadProfileCard() {
+  const svg  = document.getElementById('profile-card-svg')?.querySelector('svg');
+  if (!svg) return;
+  const blob = new Blob([svg.outerHTML], { type: 'image/svg+xml' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'blacklist-recon-card.svg';
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 </script>
