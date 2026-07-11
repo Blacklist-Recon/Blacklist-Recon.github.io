@@ -486,6 +486,12 @@
 
   </style>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☠</text></svg>">
+  <!-- Animation Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+  <link  href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/typed.js/2.0.16/typed.umd.js"></script>
 </head>
 <body>
 
@@ -762,6 +768,53 @@ const redactObserver = new IntersectionObserver(entries => {
 }, { threshold: 0.5 });
 document.querySelectorAll('.redact').forEach(el => redactObserver.observe(el));
 </script>
+<script>
+// ── AOS Init ──
+AOS.init({ once: true, offset: 60, easing: 'ease-out-cubic' });
+
+// ── GSAP ──
+gsap.registerPlugin(ScrollTrigger);
+
+gsap.from('.services-hero h1', {
+  duration: 1, opacity: 0, y: 40, ease: 'power3.out', delay: 0.3,
+});
+gsap.from('.services-hero .eyebrow', {
+  duration: 0.7, opacity: 0, y: -20, ease: 'power3.out', delay: 0.1,
+});
+gsap.from('.services-hero .hero-sub', {
+  duration: 0.8, opacity: 0, y: 20, ease: 'power3.out', delay: 0.7,
+});
+
+// Hover lift on pricing cards
+document.querySelectorAll('[data-aos="zoom-in"]').forEach(card => {
+  card.addEventListener('mouseenter', () =>
+    gsap.to(card, { duration: 0.25, y: -5, ease: 'power2.out' })
+  );
+  card.addEventListener('mouseleave', () =>
+    gsap.to(card, { duration: 0.25, y: 0, ease: 'power2.out' })
+  );
+});
+
+// ── Typed.js Hero ──
+const heroEl = document.getElementById('typed-hero');
+if (heroEl) {
+  new Typed('#typed-hero', {
+    strings: [
+      'Four contract tiers. Flexible pricing. 24-hour SLA guarantee.',
+      'War protection subscriptions. Auto-renewal. Zero manual work.',
+      'Every service built for anonymity, speed, and results.',
+      'Four contract tiers. Flexible pricing. 24-hour SLA guarantee.',
+    ],
+    typeSpeed:    35,
+    backSpeed:    18,
+    backDelay:    2800,
+    startDelay:   1000,
+    loop:         true,
+    showCursor:   true,
+    cursorChar:   '▋',
+  });
+}
+</script>
 </body>
 </html><main>
 <div class="page-wrap">
@@ -770,12 +823,11 @@ document.querySelectorAll('.redact').forEach(el => redactObserver.observe(el));
   <section class="services-hero">
     <p class="eyebrow">Blacklist Recon · Services</p>
     <h1>Everything We Offer</h1>
-    <p class="hero-sub">Four contract tiers. Flexible pricing. 24-hour SLA. War protection subscriptions.
-      Every service built for anonymity, speed, and results.</p>
+    <p class="hero-sub"><span id="typed-hero"></span></p>
   </section>
 
   <!-- Tier I -->
-  <section class="service-section reveal">
+  <section class="service-section" data-aos="fade-up" data-aos-delay="0" data-aos-duration="700">
     <div class="tier-header">
       <span class="tier-pill">Tier I</span>
       <h2>Standard Hit</h2>
@@ -784,15 +836,15 @@ document.querySelectorAll('.redact').forEach(el => redactObserver.observe(el));
     <p class="tier-desc">Single hospitalization on a specified target. Fixed price — no negotiation, no exceptions.
       The most efficient way to handle a target quickly and quietly.</p>
     <div class="tier-features">
-      <div class="feature">⏱ <strong>24-Hour SLA Guarantee</strong> — if not completed in 24 hours the contract is extended at no cost and flagged priority</div>
-      <div class="feature">🔒 Full client anonymity — you are Client #N, nothing more</div>
-      <div class="feature">📋 Proof of completion provided</div>
-      <div class="feature">⚡ Priority upgrades available — +20% front of queue, +50% dedicated hunter</div>
+      <div class="feature" data-aos="fade-right" data-aos-duration="500">⏱ <strong>24-Hour SLA Guarantee</strong> — if not completed in 24 hours the contract is extended at no cost and flagged priority</div>
+      <div class="feature" data-aos="fade-right" data-aos-duration="500">🔒 Full client anonymity — you are Client #N, nothing more</div>
+      <div class="feature" data-aos="fade-right" data-aos-duration="500">📋 Proof of completion provided</div>
+      <div class="feature" data-aos="fade-right" data-aos-duration="500">⚡ Priority upgrades available — +20% front of queue, +50% dedicated hunter</div>
     </div>
   </section>
 
   <!-- Tier II -->
-  <section class="service-section reveal">
+  <section class="service-section" data-aos="fade-up" data-aos-delay="100" data-aos-duration="700">
     <div class="tier-header">
       <span class="tier-pill">Tier II</span>
       <h2>War Support</h2>
@@ -801,15 +853,15 @@ document.querySelectorAll('.redact').forEach(el => redactObserver.observe(el));
     <p class="tier-desc">Extended campaigns on strong or well-protected targets. Multi-hit capable.
       Used when a single hit is not enough — persistent pressure on high-value targets during active conflicts.</p>
     <div class="tier-features">
-      <div class="feature">🔁 Multi-hit contracts — keep pressure on until the job is done</div>
-      <div class="feature">⚡ Priority queue placement included</div>
-      <div class="feature">✅ Results guaranteed or contract extended at no cost</div>
-      <div class="feature">📊 Live target status monitoring — hunters know the moment a target is free</div>
+      <div class="feature" data-aos="fade-right" data-aos-duration="500">🔁 Multi-hit contracts — keep pressure on until the job is done</div>
+      <div class="feature" data-aos="fade-right" data-aos-duration="500">⚡ Priority queue placement included</div>
+      <div class="feature" data-aos="fade-right" data-aos-duration="500">✅ Results guaranteed or contract extended at no cost</div>
+      <div class="feature" data-aos="fade-right" data-aos-duration="500">📊 Live target status monitoring — hunters know the moment a target is free</div>
     </div>
   </section>
 
   <!-- Tier III -->
-  <section class="service-section reveal">
+  <section class="service-section" data-aos="fade-up" data-aos-delay="200" data-aos-duration="700">
     <div class="tier-header">
       <span class="tier-pill">Tier III</span>
       <h2>High-Value Contract</h2>
@@ -818,15 +870,15 @@ document.querySelectorAll('.redact').forEach(el => redactObserver.observe(el));
     <p class="tier-desc">Elite contracts on high-level, politically significant, or heavily-defended targets.
       Reserved for situations where only our best will do.</p>
     <div class="tier-features">
-      <div class="feature">🎯 Assigned exclusively to top-ranked hunters</div>
-      <div class="feature">🔕 Maximum operational discretion — no details shared outside The Handler</div>
-      <div class="feature">💬 Direct negotiation with The Handler on scope and pricing</div>
-      <div class="feature">🏆 Dedicated hunter assignment available</div>
+      <div class="feature" data-aos="fade-right" data-aos-duration="500">🎯 Assigned exclusively to top-ranked hunters</div>
+      <div class="feature" data-aos="fade-right" data-aos-duration="500">🔕 Maximum operational discretion — no details shared outside The Handler</div>
+      <div class="feature" data-aos="fade-right" data-aos-duration="500">💬 Direct negotiation with The Handler on scope and pricing</div>
+      <div class="feature" data-aos="fade-right" data-aos-duration="500">🏆 Dedicated hunter assignment available</div>
     </div>
   </section>
 
   <!-- Tier IV -->
-  <section class="service-section reveal" style="border-color:var(--ember);">
+  <section class="service-section" data-aos="fade-up" data-aos-delay="300" data-aos-duration="700" style="border-color:var(--ember);">
     <div class="tier-header">
       <span class="tier-pill" style="background:rgba(139,26,26,0.3);color:var(--ember);border-color:var(--ember);">Tier IV</span>
       <h2>Ranked War Protection</h2>
@@ -840,15 +892,15 @@ document.querySelectorAll('.redact').forEach(el => redactObserver.observe(el));
     <div style="margin:20px 0;padding:20px;border:1px solid #3d2e0a;background:rgba(201,168,76,0.04);">
       <div style="font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:16px;">Three Pricing Structures</div>
       <div style="display:flex;gap:16px;flex-wrap:wrap;">
-        <div style="flex:1;min-width:180px;padding:16px;border:1px solid var(--border);background:var(--void);">
+        <div data-aos="zoom-in" data-aos-duration="500" style="flex:1;min-width:180px;padding:16px;border:1px solid var(--border);background:var(--void);">
           <div style="font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--amber);text-transform:uppercase;margin-bottom:8px;">⚡ Flat Per Hit</div>
           <div style="font-size:13px;color:var(--dim);line-height:1.7;">One fixed price per hit regardless of member level. Simplest structure — ideal for homogeneous groups.</div>
         </div>
-        <div style="flex:1;min-width:180px;padding:16px;border:1px solid var(--border);background:var(--void);">
+        <div data-aos="zoom-in" data-aos-duration="500" style="flex:1;min-width:180px;padding:16px;border:1px solid var(--border);background:var(--void);">
           <div style="font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--ember);text-transform:uppercase;margin-bottom:8px;">📊 Tiered by Level</div>
           <div style="font-size:13px;color:var(--dim);line-height:1.7;">Price per hit scales with each member's level. Higher-level members cost more to protect — fairer for mixed groups.</div>
         </div>
-        <div style="flex:1;min-width:180px;padding:16px;border:1px solid var(--border);background:var(--void);">
+        <div data-aos="zoom-in" data-aos-duration="500" style="flex:1;min-width:180px;padding:16px;border:1px solid var(--border);background:var(--void);">
           <div style="font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:8px;">💰 Prepaid Hits</div>
           <div style="font-size:13px;color:var(--dim);line-height:1.7;">Pay upfront for a fixed number of hits per member. Protection stops automatically when hits are exhausted — budget controlled.</div>
         </div>
@@ -856,16 +908,16 @@ document.querySelectorAll('.redact').forEach(el => redactObserver.observe(el));
     </div>
 
     <div class="tier-features">
-      <div class="feature">♻️ <strong>Subscription available</strong> — ongoing retainer that auto-renews protection for the duration of your war</div>
-      <div class="feature">📅 War dates tracked — protection stops automatically when your war ends, not when a timer expires</div>
-      <div class="feature">📡 Live member status monitoring — hunters know instantly when a protected member is exposed</div>
-      <div class="feature">⚔️ Each member assigned as a separate bounty across the full hunter network simultaneously</div>
-      <div class="feature">🔒 Client identity and member list fully protected — known only to The Handler</div>
+      <div class="feature" data-aos="fade-right" data-aos-duration="500">♻️ <strong>Subscription available</strong> — ongoing retainer that auto-renews protection for the duration of your war</div>
+      <div class="feature" data-aos="fade-right" data-aos-duration="500">📅 War dates tracked — protection stops automatically when your war ends, not when a timer expires</div>
+      <div class="feature" data-aos="fade-right" data-aos-duration="500">📡 Live member status monitoring — hunters know instantly when a protected member is exposed</div>
+      <div class="feature" data-aos="fade-right" data-aos-duration="500">⚔️ Each member assigned as a separate bounty across the full hunter network simultaneously</div>
+      <div class="feature" data-aos="fade-right" data-aos-duration="500">🔒 Client identity and member list fully protected — known only to The Handler</div>
     </div>
   </section>
 
   <!-- Priority Queue -->
-  <section class="service-section reveal">
+  <section class="service-section" data-aos="fade-up" data-aos-delay="300" data-aos-duration="700">
     <h2 style="font-family:Cinzel,serif;font-size:24px;color:var(--gold);margin-bottom:16px;">⚡ Priority Queue Upgrades</h2>
     <p class="tier-desc">Add a priority upgrade to any contract to move it ahead of the standard queue.</p>
     <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:20px;">
@@ -887,15 +939,15 @@ document.querySelectorAll('.redact').forEach(el => redactObserver.observe(el));
     <h2 style="font-family:Cinzel,serif;font-size:24px;color:var(--gold);margin-bottom:16px;">⏱ 24-Hour SLA Guarantee</h2>
     <p class="tier-desc">Standard Hit contracts carry a guaranteed 24-hour completion window. If your contract is not completed within 24 hours of activation:</p>
     <div class="tier-features" style="margin-top:16px;">
-      <div class="feature">🔄 Contract is automatically extended at no additional cost</div>
-      <div class="feature">🚨 Flagged immediately for priority review by The Handler</div>
-      <div class="feature">📡 Our system monitors every active contract on a 5-minute cycle</div>
-      <div class="feature">✉ The Handler will reach out in-game if intervention is required</div>
+      <div class="feature" data-aos="fade-right" data-aos-duration="500">🔄 Contract is automatically extended at no additional cost</div>
+      <div class="feature" data-aos="fade-right" data-aos-duration="500">🚨 Flagged immediately for priority review by The Handler</div>
+      <div class="feature" data-aos="fade-right" data-aos-duration="500">📡 Our system monitors every active contract on a 5-minute cycle</div>
+      <div class="feature" data-aos="fade-right" data-aos-duration="500">✉ The Handler will reach out in-game if intervention is required</div>
     </div>
   </section>
 
   <!-- Referral -->
-  <section class="service-section reveal">
+  <section class="service-section" data-aos="fade-up" data-aos-delay="300" data-aos-duration="700">
     <h2 style="font-family:Cinzel,serif;font-size:24px;color:var(--gold);margin-bottom:16px;">🔗 Referral Program</h2>
     <p class="tier-desc">Referred by a Blacklist Recon hunter? Enter their referral code when submitting your contract request.
       Referral codes are unique 8-character codes assigned to each hunter. Enter it in the contact form on the landing page.
@@ -1677,6 +1729,53 @@ const redactObserver = new IntersectionObserver(entries => {
   });
 }, { threshold: 0.5 });
 document.querySelectorAll('.redact').forEach(el => redactObserver.observe(el));
+</script>
+<script>
+// ── AOS Init ──
+AOS.init({ once: true, offset: 60, easing: 'ease-out-cubic' });
+
+// ── GSAP ──
+gsap.registerPlugin(ScrollTrigger);
+
+gsap.from('.services-hero h1', {
+  duration: 1, opacity: 0, y: 40, ease: 'power3.out', delay: 0.3,
+});
+gsap.from('.services-hero .eyebrow', {
+  duration: 0.7, opacity: 0, y: -20, ease: 'power3.out', delay: 0.1,
+});
+gsap.from('.services-hero .hero-sub', {
+  duration: 0.8, opacity: 0, y: 20, ease: 'power3.out', delay: 0.7,
+});
+
+// Hover lift on pricing cards
+document.querySelectorAll('[data-aos="zoom-in"]').forEach(card => {
+  card.addEventListener('mouseenter', () =>
+    gsap.to(card, { duration: 0.25, y: -5, ease: 'power2.out' })
+  );
+  card.addEventListener('mouseleave', () =>
+    gsap.to(card, { duration: 0.25, y: 0, ease: 'power2.out' })
+  );
+});
+
+// ── Typed.js Hero ──
+const heroEl = document.getElementById('typed-hero');
+if (heroEl) {
+  new Typed('#typed-hero', {
+    strings: [
+      'Four contract tiers. Flexible pricing. 24-hour SLA guarantee.',
+      'War protection subscriptions. Auto-renewal. Zero manual work.',
+      'Every service built for anonymity, speed, and results.',
+      'Four contract tiers. Flexible pricing. 24-hour SLA guarantee.',
+    ],
+    typeSpeed:    35,
+    backSpeed:    18,
+    backDelay:    2800,
+    startDelay:   1000,
+    loop:         true,
+    showCursor:   true,
+    cursorChar:   '▋',
+  });
+}
 </script>
 </body>
 </html>
