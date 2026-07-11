@@ -3640,8 +3640,7 @@ async function renderSubscriptions(main) {
       const notes   = main.querySelector('#sub-notes').value.trim();
       const msgEl   = main.querySelector('#sub-msg');
       if (!price || !days || !rawText) { msgEl.innerHTML = '<div class="msg-error">Price, duration and members required.</div>'; return; }
-      const members = rawText.split('
-').map(l => { const p = l.trim().split(','); return { name: p[0]?.trim(), xid: p[1]?.trim()||null }; }).filter(m=>m.name);
+      const members = rawText.split('\n').map(l => { const p = l.trim().split(','); return { name: p[0]?.trim(), xid: p[1]?.trim()||null }; }).filter(m=>m.name);
       if (!members.length) { msgEl.innerHTML = '<div class="msg-error">No valid members found.</div>'; return; }
       try {
         const res = await api('/subscriptions/create', { members, totalPrice: price, durationDays: days, notes });
