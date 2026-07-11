@@ -958,7 +958,7 @@
     <span>Recon</span>
   </h1>
   <div class="hero-divider"></div>
-  <p class="hero-sub">Elite contract hunters operating out of Torn City. Every target. Every timezone. No questions asked.</p>
+  <p class="hero-sub" id="hero-tagline" style="min-height:28px;">Elite contract hunters operating out of Torn City. Every target. Every timezone. No questions asked.</p>
 
   <div class="stats-bar">
     <div class="bounty-counter-hero">
@@ -1972,23 +1972,23 @@ document.querySelectorAll('.service-card').forEach(card => {
 // ── Typed.js Hero Tagline ─────────────────────────────────────────────────
 const taglineEl = document.getElementById('hero-tagline');
 if (taglineEl) {
-  // Clear existing content and let Typed.js write it
   taglineEl.innerHTML = '<span id="typed-tagline"></span>';
   new Typed('#typed-tagline', {
     strings: [
-      'Hunters Wanted · <strong>No Questions Asked</strong> · Get Paid',
-      'We Find Them. <strong>You Finish Them.</strong>',
-      'Contracts Posted. Targets Confirmed. <strong>Balance Updated.</strong>',
-      'Hunters Wanted · <strong>No Questions Asked</strong> · Get Paid',
+      'Elite contract hunters operating across Torn City.',
+      'Every target. Every timezone. <strong>No questions asked.</strong>',
+      'Post a contract. We handle the rest. <strong>Anonymous. Untraceable.</strong>',
+      'We find them. <strong>You finish them.</strong>',
     ],
-    typeSpeed:     40,
-    backSpeed:     20,
-    backDelay:     3000,
-    startDelay:    1800,
-    loop:          true,
-    showCursor:    true,
-    cursorChar:    '▋',
+    typeSpeed:      38,
+    backSpeed:      18,
+    backDelay:      2800,
+    startDelay:     1200,
+    loop:           true,
+    showCursor:     true,
+    cursorChar:     '▋',
     smartBackspace: true,
+    contentType:    'html',
   });
 }
 
