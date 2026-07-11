@@ -871,26 +871,59 @@ async function api(path, body = {}) {
 }
 
 // ── AUTH ──────────────────────────────────────────────────────────────────
+let sessionToken = localStorage.getItem('blhq_session') || '';
+
 async function login() {
   const key = document.getElementById('api-key-input').value.trim();
   if (!key) return;
-  const btn = document.getElementById('login-btn');
+  const btn   = document.getElementById('login-btn');
   const errEl = document.getElementById('login-error');
   btn.disabled = true;
   btn.textContent = 'Authenticating...';
   errEl.textContent = '';
   try {
-    apiKey = key;
-    const res = await api('/whoami');
-    identity = { tornId: res.tornId, name: res.name, role: res.role };
-    localStorage.setItem('blhq_api_key', apiKey);
+    // Exchange API key for session token — key only travels once
+    const res = await fetch(`${WORKER_URL}/auth/session`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiKey: key }),
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Authentication failed.');
+
+    sessionToken = data.token;
+    apiKey       = key; // keep for target status calls only
+    identity     = { tornId: data.tornId, name: data.name, role: data.role };
+
+    localStorage.setItem('blhq_session', sessionToken);
+    localStorage.setItem('blhq_api_key', key); // for Torn API direct calls
+
     await loadBounties();
     showApp();
+
+    // Refresh session every 23 hours
+    setTimeout(refreshSession, 23 * 3600 * 1000);
   } catch (e) {
     errEl.textContent = e.message;
     btn.disabled = false;
     btn.textContent = 'Authenticate';
   }
+}
+
+async function refreshSession() {
+  try {
+    const res  = await fetch(`${WORKER_URL}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: sessionToken }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      sessionToken = data.token;
+      localStorage.setItem('blhq_session', sessionToken);
+      setTimeout(refreshSession, 23 * 3600 * 1000);
+    }
+  } catch(e) {}
 }
 
 function logout() {
@@ -1000,8 +1033,13 @@ function navItems() {
     items.push({ id: 'campaigns', icon: '⚔️', label: 'Campaigns' });
   }
   if (identity.role === 'admin') {
-    items.push({ id: 'ai',        icon: '🤖', label: 'AI Ops'      });
-    items.push({ id: 'applications', icon: '📋', label: 'Applications' });
+    items.push({ id: 'ai',           icon: '🤖', label: 'AI Ops'      });
+    items.push({ id: 'applications',  icon: '📋', label: 'Applications' });
+    items.push({ id: 'giveaways',     icon: '🎉', label: 'Giveaways'    });
+    items.push({ id: 'subscriptions', icon: '♻️', label: 'War Subs'     });
+    items.push({ id: 'seasons',       icon: '🏆', label: 'Seasons'      });
+    items.push({ id: 'audit',         icon: '📜', label: 'Audit Log'    });
+    items.push({ id: 'weekly',        icon: '📈', label: 'Weekly'       });
     items.push({ id: 'dashboard', icon: '📊', label: 'Intel'     });
     items.push({ id: 'challenges',icon: '🏆', label: 'Challenges'});
     items.push({ id: 'mentors',   icon: '🎓', label: 'Mentors'   });
@@ -1010,9 +1048,11 @@ function navItems() {
     items.push({ id: 'roster',    icon: '👥', label: 'Roster'    });
     items.push({ id: 'admin',     icon: '⚙️', label: 'Admin'     });
   }
-  // Challenges visible to all roles
-  if (identity.role === 'hunter' || identity.role === 'verifier') {
+  // Visible to all roles
+  if (identity.role !== 'admin') {
     items.push({ id: 'challenges', icon: '🏆', label: 'Challenges' });
+    items.push({ id: 'giveaways',  icon: '🎉', label: 'Giveaways'  });
+    items.push({ id: 'seasons',    icon: '🏆', label: 'Seasons'    });
   }
   return items;
 }
@@ -1058,7 +1098,12 @@ function renderPage() {
   if (currentPage === 'messages')  renderMessages(main);
   if (currentPage === 'campaigns') renderCampaigns(main);
   if (currentPage === 'ai')           renderAI(main);
-  if (currentPage === 'applications') renderApplications(main);
+  if (currentPage === 'applications')  renderApplications(main);
+  if (currentPage === 'giveaways')     renderGiveaways(main);
+  if (currentPage === 'subscriptions') renderSubscriptions(main);
+  if (currentPage === 'seasons')       renderSeasons(main);
+  if (currentPage === 'audit')         renderAuditLog(main);
+  if (currentPage === 'weekly')        renderWeeklyReport(main);
   if (currentPage === 'dashboard')  renderDashboard(main);
   if (currentPage === 'challenges') renderChallenges(main);
   if (currentPage === 'mentors')    renderMentors(main);
@@ -3164,6 +3209,24 @@ async function renderMessages(main) {
     `;
 
     // Wire buttons
+    // Wire two-way Torn messaging
+    main.querySelectorAll('[data-action="torn-reply"]').forEach(btn =>
+      btn.addEventListener('click', async () => {
+        const tornId = btn.dataset.tornid;
+        if (!tornId) { alert('No Torn ID on this message.'); return; }
+        const msg = prompt('Message to send via Torn:');
+        if (!msg) return;
+        btn.disabled = true;
+        try {
+          await api('/messages/torn-send', { recipientId: tornId, message: msg });
+          btn.textContent = '✓ Sent';
+          btn.style.color = 'var(--green)';
+        } catch(e) {
+          alert(`Failed: ${e.message}`);
+          btn.disabled = false;
+        }
+      }));
+
     main.querySelectorAll('[data-action="mark-read"]').forEach(btn =>
       btn.addEventListener('click', async () => {
         btn.disabled = true;
@@ -3363,20 +3426,402 @@ document.getElementById('login-btn').addEventListener('click', login);
 document.getElementById('api-key-input').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
 document.getElementById('logout-btn').addEventListener('click', logout);
 
-// Auto-login if key saved
-if (apiKey) {
+// Auto-login if session token saved
+if (sessionToken) {
   (async () => {
     try {
-      const res = await api('/whoami');
-      identity = { tornId: res.tornId, name: res.name, role: res.role };
+      // Validate session token
+      const res = await fetch(`${WORKER_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: sessionToken }),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error('Session expired');
+      sessionToken = data.token;
+      localStorage.setItem('blhq_session', sessionToken);
+      // Get identity from whoami
+      const whoami = await api('/whoami');
+      identity = { tornId: whoami.tornId, name: whoami.name, role: whoami.role };
       await loadBounties();
       showApp();
+      setTimeout(refreshSession, 23 * 3600 * 1000);
     } catch (e) {
-      localStorage.removeItem('blhq_api_key');
-      apiKey = '';
+      localStorage.removeItem('blhq_session');
+      sessionToken = '';
+      if (apiKey) {
+        try { await login(); } catch(e2) { apiKey = ''; }
+      }
     }
   })();
 }
+
+// ── GIVEAWAYS ─────────────────────────────────────────────────────────────
+async function renderGiveaways(main) {
+  main.innerHTML = `<div class="loading">Loading giveaways...</div>`;
+  try {
+    const res       = await api('/giveaways/list');
+    const giveaways = res.giveaways || [];
+    const isAdmin   = identity.role === 'admin';
+
+    main.innerHTML = `
+      <div class="page-header">
+        <div class="page-eyebrow">Blacklist Recon · Member Perks</div>
+        <div class="page-title">🎉 Giveaways</div>
+      </div>
+      <p style="font-size:14px;color:var(--dim);line-height:1.7;margin-bottom:24px;">
+        Random giveaways for full members. Eligibility requires 30 days of active membership
+        after your 7-day probation period ends — 37 days total from joining.
+      </p>
+
+      ${isAdmin ? `
+        <div class="section-head">Create Giveaway</div>
+        <div id="giveaway-msg"></div>
+        <div class="card" style="margin-bottom:20px;">
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+            <div style="flex:2;min-width:200px;">
+              <label style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:6px;">Prize</label>
+              <input id="gw-prize" type="text" placeholder="e.g. $5,000,000 in-game cash" />
+            </div>
+            <div style="flex:1;min-width:140px;">
+              <label style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:6px;">Draw Date</label>
+              <input id="gw-date" type="date" />
+            </div>
+          </div>
+          <label style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:6px;">Description (optional)</label>
+          <input id="gw-desc" type="text" placeholder="Any extra details..." style="margin-bottom:12px;" />
+          <button class="btn btn-red" id="gw-create-btn" style="width:100%;padding:10px;">🎉 Create Giveaway</button>
+        </div>
+      ` : ''}
+
+      <div class="section-head">Active & Past Giveaways</div>
+      ${giveaways.length === 0
+        ? '<div class="empty">No giveaways yet</div>'
+        : giveaways.map(g => `
+          <div class="card" id="gw-${g.id}" style="position:relative;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+              <div>
+                <div style="font-family:Cinzel,serif;font-size:18px;color:var(--gold);margin-bottom:4px;">${esc(g.prize)}</div>
+                ${g.description ? `<div style="font-size:13px;color:var(--dim);">${esc(g.description)}</div>` : ''}
+              </div>
+              <span class="badge badge-${g.status === 'open' ? 'listed' : g.status === 'drawn' ? 'completed' : 'payment_pending'}">${g.status.toUpperCase()}</span>
+            </div>
+            <div class="card-row">
+              <span class="card-label">Draw Date</span>
+              <span class="card-value">${new Date(g.drawAt).toLocaleDateString()}</span>
+            </div>
+            <div class="card-row">
+              <span class="card-label">Entries</span>
+              <span class="card-value" style="color:var(--ember);">${g.entries} ${g.hasEntered ? '<span style="color:var(--green);font-size:10px;">✓ You are entered</span>' : ''}</span>
+            </div>
+            ${g.winner ? `<div class="card-row"><span class="card-label">Winner</span><span class="card-value" style="color:var(--gold);">🏆 ${esc(g.winner)}</span></div>` : ''}
+            ${isAdmin && g.entryList ? `<div style="font-size:10px;color:var(--dim);margin-top:8px;line-height:1.8;">Entries: ${g.entryList.join(', ')}</div>` : ''}
+            ${g.status === 'open' && !g.hasEntered ? `
+              <button class="btn btn-red gw-enter-btn" data-id="${g.id}" style="width:100%;margin-top:12px;padding:10px;">
+                Enter Giveaway
+              </button>
+              <div class="gw-enter-msg" data-id="${g.id}"></div>` : ''}
+            ${isAdmin && g.status === 'open' ? `
+              <button class="btn gw-draw-btn" data-id="${g.id}"
+                style="width:100%;margin-top:8px;padding:8px;color:var(--gold);border-color:var(--gold-dim);">
+                🎲 Draw Winner Now
+              </button>` : ''}
+          </div>`).join('')}
+    `;
+
+    if (isAdmin) {
+      main.querySelector('#gw-create-btn')?.addEventListener('click', async () => {
+        const prize = main.querySelector('#gw-prize').value.trim();
+        const date  = main.querySelector('#gw-date').value;
+        const desc  = main.querySelector('#gw-desc').value.trim();
+        const msgEl = main.querySelector('#giveaway-msg');
+        if (!prize || !date) { msgEl.innerHTML = '<div class="msg-error">Prize and date required.</div>'; return; }
+        try {
+          await api('/giveaways/create', { prize, description: desc, drawAt: new Date(date).getTime() });
+          msgEl.innerHTML = '<div class="msg-success">Giveaway created and announced in chat!</div>';
+          setTimeout(() => renderGiveaways(main), 1200);
+        } catch(e) { msgEl.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; }
+      });
+
+      main.querySelectorAll('.gw-draw-btn').forEach(btn =>
+        btn.addEventListener('click', async () => {
+          if (!confirm('Draw a winner now?')) return;
+          try {
+            const res = await api('/giveaways/draw', { giveawayId: btn.dataset.id });
+            alert(`Winner: ${res.winner}`);
+            renderGiveaways(main);
+          } catch(e) { alert(e.message); }
+        }));
+    }
+
+    main.querySelectorAll('.gw-enter-btn').forEach(btn =>
+      btn.addEventListener('click', async () => {
+        const id    = btn.dataset.id;
+        const msgEl = main.querySelector(`.gw-enter-msg[data-id="${id}"]`);
+        btn.disabled = true;
+        try {
+          const res = await api('/giveaways/enter', { giveawayId: id });
+          btn.textContent = '✓ Entered!';
+          btn.style.background = 'var(--green)';
+          if (msgEl) msgEl.innerHTML = `<div class="msg-success">You're in! Total entries: ${res.entries}</div>`;
+        } catch(e) {
+          if (msgEl) msgEl.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`;
+          btn.disabled = false;
+        }
+      }));
+
+  } catch(e) { main.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; }
+}
+
+// ── SUBSCRIPTIONS ─────────────────────────────────────────────────────────
+async function renderSubscriptions(main) {
+  main.innerHTML = `<div class="loading">Loading subscriptions...</div>`;
+  try {
+    const res  = await api('/subscriptions/list');
+    const subs = res.subscriptions || [];
+
+    main.innerHTML = `
+      <div class="page-header">
+        <div class="page-eyebrow">Admin · Blacklist Recon</div>
+        <div class="page-title">♻️ War Protection Subscriptions</div>
+      </div>
+      <p style="font-size:14px;color:var(--dim);line-height:1.7;margin-bottom:24px;">
+        Monthly protection retainers. The Worker automatically re-creates protection bounties
+        every time a protected member comes out of hospital — zero manual work.
+      </p>
+
+      <div class="section-head">New Subscription</div>
+      <div id="sub-msg"></div>
+      <div class="card" style="margin-bottom:20px;">
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+          <div style="flex:1;min-width:140px;">
+            <label style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:6px;">Total Price ($M)</label>
+            <input id="sub-price" type="number" min="1" step="0.5" placeholder="e.g. 50" />
+          </div>
+          <div style="flex:1;min-width:140px;">
+            <label style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:6px;">Duration (days)</label>
+            <input id="sub-days" type="number" min="1" max="90" placeholder="e.g. 30" value="30" />
+          </div>
+        </div>
+        <label style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:6px;">Members to Protect — Name,XID per line</label>
+        <textarea id="sub-members" rows="5" placeholder="InactiveMember1,1234567&#10;LowLevel2,2345678" style="margin-bottom:12px;"></textarea>
+        <label style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:6px;">Notes</label>
+        <input id="sub-notes" type="text" placeholder="Client faction, war details..." style="margin-bottom:12px;" />
+        <button class="btn btn-red" id="sub-create-btn" style="width:100%;padding:10px;">♻️ Create Subscription</button>
+      </div>
+
+      <div class="section-head">Active Subscriptions</div>
+      ${subs.length === 0
+        ? '<div class="empty">No subscriptions yet</div>'
+        : subs.map(s => `
+          <div class="card">
+            <div class="card-row"><span class="card-label">Status</span><span class="badge badge-${s.status==='active'?'listed':'completed'}">${s.status}</span></div>
+            <div class="card-row"><span class="card-label">Members</span><span class="card-value" style="color:var(--ember);">${s.members.length} protected</span></div>
+            <div class="card-row"><span class="card-label">Price</span><span class="card-value" style="color:var(--green);">${fmt(s.totalPrice*1000000)}</span></div>
+            <div class="card-row"><span class="card-label">Duration</span><span class="card-value">${s.durationDays} days</span></div>
+            <div class="card-row"><span class="card-label">Expires</span><span class="card-value" style="color:${Date.now()>s.endsAt-86400000*3?'var(--ember)':'var(--dim)'};">${new Date(s.endsAt).toLocaleDateString()}</span></div>
+            <div class="card-row"><span class="card-label">Auto-Renewals</span><span class="card-value">${s.renewCount||0} bounties auto-posted</span></div>
+            ${s.notes ? `<div class="card-row"><span class="card-label">Notes</span><span class="card-value">${esc(s.notes)}</span></div>` : ''}
+          </div>`).join('')}
+    `;
+
+    main.querySelector('#sub-create-btn')?.addEventListener('click', async () => {
+      const price   = parseFloat(main.querySelector('#sub-price').value);
+      const days    = parseInt(main.querySelector('#sub-days').value);
+      const rawText = main.querySelector('#sub-members').value.trim();
+      const notes   = main.querySelector('#sub-notes').value.trim();
+      const msgEl   = main.querySelector('#sub-msg');
+      if (!price || !days || !rawText) { msgEl.innerHTML = '<div class="msg-error">Price, duration and members required.</div>'; return; }
+      const members = rawText.split('
+').map(l => { const p = l.trim().split(','); return { name: p[0]?.trim(), xid: p[1]?.trim()||null }; }).filter(m=>m.name);
+      if (!members.length) { msgEl.innerHTML = '<div class="msg-error">No valid members found.</div>'; return; }
+      try {
+        const res = await api('/subscriptions/create', { members, totalPrice: price, durationDays: days, notes });
+        msgEl.innerHTML = `<div class="msg-success">♻️ Subscription created! ${members.length} protection bounties posted. Auto-renews via cron every 5 minutes.</div>`;
+        setTimeout(() => renderSubscriptions(main), 1500);
+      } catch(e) { msgEl.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; }
+    });
+
+  } catch(e) { main.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; }
+}
+
+// ── SEASONS ───────────────────────────────────────────────────────────────
+async function renderSeasons(main) {
+  main.innerHTML = `<div class="loading">Loading seasonal rankings...</div>`;
+  try {
+    const res     = await api('/seasons/list');
+    const seasons = res.seasons || [];
+    const current = res.currentSeason || {};
+    const isAdmin = identity.role === 'admin';
+
+    main.innerHTML = `
+      <div class="page-header">
+        <div class="page-eyebrow">Blacklist Recon · Seasonal Competition</div>
+        <div class="page-title">🏆 Seasonal Rankings</div>
+      </div>
+      <div class="card" style="text-align:center;margin-bottom:20px;padding:24px;">
+        <div style="font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:4px;color:var(--dim);text-transform:uppercase;margin-bottom:8px;">Current Season</div>
+        <div style="font-family:Cinzel,serif;font-size:32px;color:var(--gold);">${esc(current.label||'—')}</div>
+        <div style="font-size:13px;color:var(--dim);margin-top:8px;">Ranks are never reset — seasonal badges are awarded to top 3 each quarter</div>
+      </div>
+      ${isAdmin ? `
+        <div id="season-msg"></div>
+        <button class="btn" id="close-season-btn" style="width:100%;padding:10px;margin-bottom:20px;color:var(--gold);border-color:var(--gold-dim);">
+          🏁 Close Current Season & Award Badges
+        </button>` : ''}
+      <div class="section-head">Past Seasons</div>
+      ${seasons.length === 0
+        ? '<div class="empty">No completed seasons yet</div>'
+        : seasons.map(s => `
+          <div class="card">
+            <div style="font-family:Cinzel,serif;font-size:18px;color:var(--gold);margin-bottom:12px;">${esc(s.label)} ${s.year}</div>
+            ${s.top3.map(h => `
+              <div class="card-row">
+                <span style="font-size:16px;">${h.position===1?'🥇':h.position===2?'🥈':'🥉'}</span>
+                <span style="color:var(--bright);">${esc(h.displayName)}</span>
+                <span style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--dim);margin-left:auto;">${h.contracts} contracts</span>
+              </div>`).join('')}
+            <div style="font-size:10px;color:var(--muted);margin-top:8px;">${s.totalParticipants} participants · Closed ${new Date(s.closedAt).toLocaleDateString()}</div>
+          </div>`).join('')}
+    `;
+
+    if (isAdmin) {
+      main.querySelector('#close-season-btn')?.addEventListener('click', async () => {
+        if (!confirm(`Close season ${current.label} and award badges to top 3 hunters?`)) return;
+        const msgEl = main.querySelector('#season-msg');
+        try {
+          const res = await api('/seasons/close');
+          msgEl.innerHTML = `<div class="msg-success">Season ${current.label} closed! 🥇 ${res.top3[0]?.displayName} 🥈 ${res.top3[1]?.displayName} 🥉 ${res.top3[2]?.displayName}</div>`;
+          setTimeout(() => renderSeasons(main), 1500);
+        } catch(e) { msgEl.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; }
+      });
+    }
+  } catch(e) { main.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; }
+}
+
+// ── AUDIT LOG ─────────────────────────────────────────────────────────────
+async function renderAuditLog(main) {
+  main.innerHTML = `<div class="loading">Loading audit log...</div>`;
+  try {
+    const res = await api('/audit/log');
+    const log = res.log || [];
+
+    const actionColors = {
+      session_created: 'var(--dim)', role_add: 'var(--green)', role_remove: 'var(--ember)',
+      member_banned: 'var(--ember)', member_unbanned: 'var(--green)',
+      application_approved: 'var(--green)', application_denied: 'var(--amber)',
+      giveaway_created: 'var(--gold)', giveaway_drawn: 'var(--gold)',
+      season_closed: 'var(--gold)', subscription_created: 'var(--cyan-bright)',
+      torn_message_sent: 'var(--cyan-bright)',
+    };
+
+    main.innerHTML = `
+      <div class="page-header">
+        <div class="page-eyebrow">Admin · Blacklist Recon</div>
+        <div class="page-title">📜 Audit Log</div>
+      </div>
+      <p style="font-size:13px;color:var(--dim);line-height:1.7;margin-bottom:20px;">
+        Every admin action logged permanently. Last 200 entries shown.
+      </p>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr style="background:var(--ash);">
+              <th style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;padding:10px 12px;text-align:left;">Time</th>
+              <th style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;padding:10px 12px;text-align:left;">Member</th>
+              <th style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;padding:10px 12px;text-align:left;">Action</th>
+              <th style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;padding:10px 12px;text-align:left;">Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${log.length === 0
+              ? '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--muted);font-family:Share Tech Mono,monospace;">No audit entries yet</td></tr>'
+              : log.map(e => `
+                  <tr style="border-bottom:1px solid var(--border);">
+                    <td style="padding:8px 12px;font-family:Share Tech Mono,monospace;font-size:10px;color:var(--muted);white-space:nowrap;">${new Date(e.at).toLocaleString()}</td>
+                    <td style="padding:8px 12px;font-size:12px;color:var(--text);">${esc(e.name)}</td>
+                    <td style="padding:8px 12px;font-family:Share Tech Mono,monospace;font-size:10px;color:${actionColors[e.action]||'var(--dim)'};">${e.action.replace(/_/g,' ').toUpperCase()}</td>
+                    <td style="padding:8px 12px;font-size:11px;color:var(--dim);">${esc(JSON.stringify(e.details||{}))}</td>
+                  </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  } catch(e) { main.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; }
+}
+
+// ── WEEKLY REPORT ─────────────────────────────────────────────────────────
+async function renderWeeklyReport(main) {
+  main.innerHTML = `<div class="loading">Generating weekly report...</div>`;
+  try {
+    const r = await api('/reports/weekly');
+
+    main.innerHTML = `
+      <div class="page-header">
+        <div class="page-eyebrow">Admin · Blacklist Recon</div>
+        <div class="page-title">📈 Weekly Intelligence Report</div>
+      </div>
+      <div style="font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:20px;">
+        ${esc(r.period.from)} — ${esc(r.period.to)}
+      </div>
+
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:24px;">
+        <div class="stat-card">
+          <div class="stat-value" style="font-size:36px;color:var(--ember);">${r.weekCompleted}</div>
+          <div class="stat-label">Contracts This Week</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="font-size:28px;color:var(--green);">${fmt(r.weekRevenue)}</div>
+          <div class="stat-label">Faction Revenue</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="font-size:36px;color:var(--gold);">${r.newMembers}</div>
+          <div class="stat-label">New Members</div>
+        </div>
+      </div>
+
+      <div class="card">
+        ${r.topHunter ? `
+          <div class="card-row">
+            <span class="card-label">Top Hunter</span>
+            <span class="card-value" style="color:var(--gold);">🥇 ${esc(r.topHunter.name)} — ${r.topHunter.contracts} contracts</span>
+          </div>` : ''}
+        <div class="card-row">
+          <span class="card-label">Challenges Awarded</span>
+          <span class="card-value">${r.weekAwards}</span>
+        </div>
+        <div class="card-row">
+          <span class="card-label">Faction Pool Total</span>
+          <span class="card-value" style="color:var(--green);">${fmt(r.factionPoolTotal)}</span>
+        </div>
+        <div class="card-row">
+          <span class="card-label">Current Season</span>
+          <span class="card-value" style="color:var(--gold);">${esc(r.currentSeason)}</span>
+        </div>
+      </div>
+
+      <div style="margin-top:24px;border:1px solid var(--border);background:var(--ash);padding:20px;">
+        <div style="font-family:Share Tech Mono,monospace;font-size:9px;letter-spacing:3px;color:var(--dim);text-transform:uppercase;margin-bottom:12px;">Torn Forum BBCode — Copy & Post</div>
+        <div id="bbcode-output" style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--text);line-height:1.8;white-space:pre-wrap;background:var(--void);padding:16px;border:1px solid var(--border);">[b][color=#c9a84c]☠ BLACKLIST RECON — WEEKLY REPORT[/color][/b]
+[color=#6a7f94]${r.period.from} to ${r.period.to}[/color]
+
+[b]Contracts Completed:[/b] [color=#e74c3c]${r.weekCompleted}[/color]
+[b]New Members:[/b] [color=#e74c3c]${r.newMembers}[/color]
+[b]Top Hunter:[/b] [color=#c9a84c]${r.topHunter ? r.topHunter.name + ' — ' + r.topHunter.contracts + ' contracts' : 'TBD'}[/color]
+
+[b]Services:[/b] Standard Hit · War Support · High-Value · Ranked War Support
+[b]Join the network:[/b] blacklist-recon.github.io
+
+[color=#8b1a1a]We find them. You finish them.[/color]</div>
+        <button class="btn" style="margin-top:12px;width:100%;"
+          onclick="navigator.clipboard.writeText(document.getElementById('bbcode-output').textContent)">
+          Copy BBCode →
+        </button>
+      </div>
+    `;
+  } catch(e) { main.innerHTML = `<div class="msg-error">${esc(e.message)}</div>`; }
+}
+
 </script>
 </body>
 </html>
